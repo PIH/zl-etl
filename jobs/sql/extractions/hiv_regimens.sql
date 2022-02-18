@@ -17,6 +17,8 @@ encounter_id int(11),
 order_action varchar(50),
 encounter_datetime datetime,
 visit_location varchar(255),
+date_entered DATETIME,
+user_entered VARCHAR(50),
 obs_group_id int(11),
 art_treatment_line varchar(255),
 drug_id int(11),
@@ -68,7 +70,7 @@ where t.end_date is null
 -- encounter datetime
 update temp_HIV_regimens t
 inner join encounter e on e.encounter_id = t.encounter_id 
-set t.encounter_datetime = e.encounter_datetime;
+set t.encounter_datetime = e.encounter_datetime, t.date_entered = e.date_created, t.user_entered = username(e.creator);
 
 -- update drug info
 update temp_HIV_regimens t
@@ -260,6 +262,8 @@ order_action,
 encounter_id,
 encounter_datetime,
 visit_location,
+date_entered,
+user_entered,
 drug_category,
 art_treatment_line,
 drug_id,

@@ -10,6 +10,8 @@
 	emr_id			VARCHAR(25),
 	hivemr_v1		varchar(25),	
 	encounter_type 	varchar(255),
+    date_entered    DATETIME,
+    user_entered    VARCHAR(50),
 	pregnant		BIT,
 	visit_date		DATE,
 	next_visit_date	DATE,
@@ -21,8 +23,8 @@
 CREATE INDEX temp_hiv_visit_pid ON temp_hiv_visit (patient_id);
 CREATE INDEX temp_hiv_visit_eid ON temp_hiv_visit (encounter_id);
 	
-	INSERT INTO temp_hiv_visit(patient_id, encounter_id, emr_id, visit_date,encounter_type)
-	SELECT patient_id, encounter_id, ZLEMR(patient_id),  DATE(encounter_datetime), encounter_type_name(encounter_id) FROM encounter WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup);
+	INSERT INTO temp_hiv_visit(patient_id, encounter_id, emr_id, visit_date,encounter_type, date_entered, user_entered)
+	SELECT patient_id, encounter_id, ZLEMR(patient_id),  DATE(encounter_datetime), encounter_type_name(encounter_id), date_created, username(creator) FROM encounter WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup);
 	
 	DELETE FROM temp_hiv_visit
 	WHERE

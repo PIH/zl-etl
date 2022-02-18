@@ -16,7 +16,8 @@ CREATE TEMPORARY TABLE temp_hiv_construct_encounters
     visit_id                        INT,
     visit_location                  VARCHAR(255),
     vl_sample_taken_date            DATETIME,
-    date_created                    DATETIME,
+    date_entered                    DATETIME,
+    user_entered                    VARCHAR(50),
     vl_sample_taken_date_estimated  VARCHAR(11),
     vl_result_date                  DATE,
     specimen_number                 VARCHAR(255),
@@ -38,7 +39,7 @@ SET	vl_sample_taken_date = e.encounter_datetime,
 
 -- date encounter was created
 UPDATE temp_hiv_construct_encounters tvl JOIN encounter e ON tvl.encounter_id = e.encounter_id
-SET	tvl.date_created = e.date_created;
+SET	tvl.date_entered = e.date_created, tvl.user_entered = username(e.creator);
 
 ## Delete test patients
 DELETE FROM temp_hiv_construct_encounters WHERE
@@ -89,20 +90,20 @@ CREATE TEMPORARY TABLE temp_vl_index_asc
     SELECT
             patient_id,
             vl_sample_taken_date,
-            date_created,
+            date_entered,
             encounter_id,
             index_asc
 FROM (SELECT
             @r:= IF(@u = patient_id, @r + 1,1) index_asc,
             vl_sample_taken_date,
-            date_created,
+            date_entered,
             encounter_id,
             patient_id,
             @u:= patient_id
       FROM temp_hiv_construct_encounters,
                     (SELECT @r:= 1) AS r,
                     (SELECT @u:= 0) AS u
-            ORDER BY patient_id, vl_sample_taken_date ASC, date_created ASC
+            ORDER BY patient_id, vl_sample_taken_date ASC, date_entered ASC
         ) index_ascending );
 
 ### index descending
@@ -111,20 +112,20 @@ CREATE TEMPORARY TABLE temp_vl_index_desc
     SELECT
             patient_id,
             vl_sample_taken_date,
-            date_created,
+            date_entered,
             encounter_id,
             index_desc
 FROM (SELECT
             @r:= IF(@u = patient_id, @r + 1,1) index_desc,
             vl_sample_taken_date,
-            date_created,
+            date_entered,
             encounter_id,
             patient_id,
             @u:= patient_id
       FROM temp_hiv_construct_encounters,
                     (SELECT @r:= 1) AS r,
                     (SELECT @u:= 0) AS u
-            ORDER BY patient_id, vl_sample_taken_date DESC, date_created DESC
+            ORDER BY patient_id, vl_sample_taken_date DESC, date_entered DESC
         ) index_descending );
 
 ### Final query
@@ -132,6 +133,8 @@ SELECT
         tvl.patient_id,
         tvl.encounter_id,
         tvl.visit_location,
+        tvl.date_entered,
+        tvl.user_entered,
         DATE(tvl.vl_sample_taken_date) vl_sample_taken_date,
         vl_sample_taken_date_estimated,
         vl_result_date,

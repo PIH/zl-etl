@@ -3,6 +3,8 @@ CREATE TABLE hiv_viral_load
     hiv_patient_id                 INT,
     encounter_id                   INT,
     visit_location                 VARCHAR(255),
+    date_entered                   DATETIME,
+    user_entered                   VARCHAR(50),
     vl_sample_taken_date           DATE,
     vl_sample_taken_date_estimated VARCHAR(255),
     vl_result_date                 DATE,

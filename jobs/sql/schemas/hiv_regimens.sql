@@ -7,6 +7,8 @@ create table hiv_regimens
     encounter_id              int,
     encounter_datetime        datetime,
     visit_location            varchar(255),
+    date_entered              DATETIME,
+    user_entered              VARCHAR(50),
     drug_category             varchar(255),
     art_treatment_line        varchar(255),
     drug_id                   varchar(255),

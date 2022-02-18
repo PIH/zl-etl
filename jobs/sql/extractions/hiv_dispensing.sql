@@ -7,6 +7,8 @@ patient_id int(11),
 encounter_id int(11),
 dispense_date datetime,
 encounter_location_id  int(11),
+date_entered DATETIME,
+user_entered VARCHAR(50),
 dispense_site  varchar(255),
 age_at_dispense_date int,
 dac char(1),
@@ -49,8 +51,8 @@ regimen_match char(1)
  create index temp_HIV_dispensing_dispense_date on temp_HIV_dispensing (dispense_date);
  create index temp_HIV_dispensing_encounter_id on temp_HIV_dispensing (encounter_id);
 
- insert into temp_HIV_dispensing (patient_id, encounter_id, dispense_date)
- select patient_id, encounter_id,encounter_datetime from encounter
+ insert into temp_HIV_dispensing (patient_id, encounter_id, dispense_date, date_entered, user_entered)
+ select patient_id, encounter_id,encounter_datetime, date_created, username(creator) from encounter
  where encounter_type = @HIV_dispensing and voided = 0;
 
 update temp_HIV_dispensing t
@@ -315,6 +317,8 @@ t.patient_id,
 t.encounter_id,
 t.dispense_date,
 t.dispense_site,
+t.date_entered,
+t.user_entered,
 t.age_at_dispense_date,
 t.dac,
 t.dispensed_to,
