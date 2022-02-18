@@ -14,6 +14,8 @@ CREATE TEMPORARY TABLE temp_covid_admission_encounter
 	encounter_id				INT PRIMARY KEY,
 	patient_id				INT,
 	encounter_datetime			DATETIME,
+    date_entered                 DATETIME,
+    user_entered                 VARCHAR(50),
 	health_care_worker			VARCHAR(11),
 	health_care_worker_type		VARCHAR(255),
 	home_medications			TEXT,
@@ -50,12 +52,16 @@ INSERT INTO temp_covid_admission_encounter
 (
 	encounter_id,
 	patient_id,
-	encounter_datetime
+	encounter_datetime,
+    date_entered,
+    user_entered
 )
 SELECT
 	encounter_id,
 	patient_id,
-	encounter_datetime
+	encounter_datetime,
+    date_created,
+    username(creator)
 FROM
 	encounter
 WHERE
@@ -168,6 +174,8 @@ SELECT
 	encounter_id,
 	patient_id,
 	encounter_datetime,
+    date_entered,
+    user_entered,
 	IF(health_care_worker like "%Yes%", 1, NULL)			health_care_worker,
   health_care_worker_type,
 	home_medications,

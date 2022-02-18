@@ -4,6 +4,8 @@ CREATE TABLE covid_discharge
     patient_id                  INT,
     encounter_date              DATE,
     encounter_type              VARCHAR(255),
+    date_entered                DATETIME,
+    user_entered                VARCHAR(50),
     location                    TEXT,
     oxygen_therapy              VARCHAR(255),
     non_inv_ventilation         VARCHAR(255),

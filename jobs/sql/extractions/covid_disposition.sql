@@ -13,6 +13,8 @@ CREATE TEMPORARY TABLE temp_covid_dispositon
 	encounter_date	 			DATE,
 	encounter_type				VARCHAR(255),
 	location				TEXT,
+    date_entered          DATETIME,
+    user_entered          VARCHAR(50),
 	disposition				VARCHAR(255),
 	discharge_condition			VARCHAR(255)
 );
@@ -24,14 +26,18 @@ INSERT INTO temp_covid_dispositon
 	encounter_type_id,
 	patient_id,
 	encounter_date,
-	location
+	location,
+    date_entered,
+    user_entered
 )
 SELECT
 	encounter_id,
 	encounter_type,
 	patient_id,
 	DATE(encounter_datetime),
-	encounter_location_name(encounter_id)
+	encounter_location_name(encounter_id),
+    date_created,
+    username(creator)
 FROM
 	encounter
 WHERE
@@ -105,6 +111,8 @@ SELECT
 	encounter_type,
 	location,
 	encounter_date,
+    date_entered,
+    user_entered,
 	disposition,				
 	discharge_condition,
 	index_asc,

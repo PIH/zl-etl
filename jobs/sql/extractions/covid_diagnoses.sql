@@ -16,6 +16,8 @@ CREATE TEMPORARY TABLE temp_covid_encounters
 	encounter_date        DATE,
 	encounter_type        VARCHAR(255),
 	location              TEXT,
+    date_entered          DATETIME,
+    user_entered          VARCHAR(50),
 	covid19_diagnosis     VARCHAR(255)
 );
 
@@ -26,14 +28,18 @@ INSERT INTO temp_covid_encounters
 	encounter_type_id,
 	patient_id,
 	encounter_date,
-	location
+	location,
+    date_entered,
+    user_entered
 )
 SELECT
 	encounter_id,
 	encounter_type,
 	patient_id,
 	DATE(encounter_datetime),
-	ENCOUNTER_LOCATION_NAME(encounter_id)
+	ENCOUNTER_LOCATION_NAME(encounter_id),
+    date_created,
+    username(creator)
 FROM
 	encounter
 WHERE
@@ -210,6 +216,8 @@ SELECT
   ce.encounter_type,
   ce.location,
   ce.encounter_date,
+  ce.date_entered,
+  ce.user_entered,
   dor.diagnosis_order,
   d.diagnosis,
   dc.diagnosis_confirmation,

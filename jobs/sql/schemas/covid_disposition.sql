@@ -5,6 +5,8 @@ CREATE TABLE covid_disposition
     encounter_type      VARCHAR(255),
     location            TEXT,
     encounter_date      DATE,
+    date_entered        DATETIME,
+    user_entered        VARCHAR(50),
     disposition         VARCHAR(255),
     discharge_condition VARCHAR(255),
     index_asc           INT,

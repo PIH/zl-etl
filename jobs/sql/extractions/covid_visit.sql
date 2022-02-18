@@ -17,6 +17,8 @@ CREATE TEMPORARY TABLE temp_covid_visit
 	encounter_date                DATE,
 	encounter_type                VARCHAR(255),
 	location                      TEXT,
+    date_entered                  DATETIME,
+    user_entered                  VARCHAR(50),
 	case_condition                VARCHAR(255),
 	overall_condition             VARCHAR(255),
 	fever                         VARCHAR(11),
@@ -138,14 +140,18 @@ INSERT INTO temp_covid_visit
 	encounter_type_id,
 	patient_id,
 	encounter_date,
-	location
+	location,
+    date_entered,
+    user_entered
 )
 SELECT
 	encounter_id,
 	encounter_type,
 	patient_id,
 	DATE(encounter_datetime),
-	ENCOUNTER_LOCATION_NAME(encounter_id)
+	ENCOUNTER_LOCATION_NAME(encounter_id),
+    date_created,
+    username(creator)
 FROM
 	encounter
 WHERE
@@ -497,6 +503,8 @@ SELECT
         encounter_date,
         location,
         encounter_type,
+        date_entered,
+        user_entered,
         case_condition,
 	      overall_condition,
         IF(fever like "%Yes%", 1, NULL)	                fever,

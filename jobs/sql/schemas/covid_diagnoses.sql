@@ -5,6 +5,8 @@ CREATE TABLE covid_diagnoses
     encounter_type         VARCHAR(255),
     location               TEXT,
     encounter_date         DATE,
+    date_entered           DATETIME,
+    user_entered           VARCHAR(50),
     diagnosis_order        TEXT,
     diagnosis              TEXT,
     diagnosis_confirmation TEXT,

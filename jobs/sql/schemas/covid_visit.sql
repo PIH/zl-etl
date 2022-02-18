@@ -5,6 +5,8 @@ CREATE TABLE covid_visit
     encounter_date           DATE,
     location                 TEXT,
     encounter_type           VARCHAR(255),
+    date_entered             DATETIME,
+    user_entered             VARCHAR(50),
     case_condition           VARCHAR(255),
     overall_condition        VARCHAR(255),
     fever                    VARCHAR(11),

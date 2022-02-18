@@ -3,6 +3,8 @@ CREATE TABLE covid_admission
     encounter_id                 INT,
     patient_id                   INT,
     encounter_datetime           DATETIME,
+    date_entered                 DATETIME,
+    user_entered                 VARCHAR(50),
     health_care_worker           VARCHAR(11),
     health_care_worker_type      VARCHAR(255),
     home_medications             TEXT,
