@@ -5,6 +5,8 @@ CREATE TABLE mch_pregnancy
     patient_id                 INT,
     emr_id                     VARCHAR(25),
     encounter_date             DATE,
+    date_entered               DATETIME,
+    user_entered               VARCHAR(50),
     gravidity                  INT,
     parity                     INT,
     num_abortions              INT,

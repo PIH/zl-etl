@@ -3,6 +3,8 @@ CREATE TABLE mch_birth
     patient_id                   INT,
     mother_emr_id                VARCHAR(25),
     encounter_date               DATE,
+    date_entered                 DATETIME,
+    user_entered                 VARCHAR(50),
     birth_number                 INT,
     multiples                    INT,
     birth_apgar                  INT,

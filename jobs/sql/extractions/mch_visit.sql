@@ -16,9 +16,8 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     visit_date      DATE,
     visit_site      VARCHAR(100),
     age_at_visit    DOUBLE,
-    entry_date      DATETIME,
-    entered_by_id   INT,
-    entered_by      VARCHAR(100),
+    date_entered    DATETIME,
+    user_entered    VARCHAR(50),
     consultation_type  	 VARCHAR (30), 
     consultation_type_fp VARCHAR(30),
     pregnant        BIT,
@@ -82,22 +81,12 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
 CREATE INDEX temp_obgyn_visit_patient_id ON temp_obgyn_visit (patient_id);
 CREATE INDEX temp_obgyn_visit_encounter_id ON temp_obgyn_visit (encounter_id);
 
-INSERT INTO temp_obgyn_visit(patient_id, encounter_id, visit_date, visit_site, entry_date, entered_by_id)
-SELECT patient_id, encounter_id, DATE(encounter_datetime), LOCATION_NAME(location_id), date_created, creator FROM encounter WHERE voided = 0 AND encounter_type = @obgyn_encounter;
+INSERT INTO temp_obgyn_visit(patient_id, encounter_id, visit_date, visit_site, date_entered, user_entered)
+SELECT patient_id, encounter_id, DATE(encounter_datetime), LOCATION_NAME(location_id), date_created, username(creator) FROM encounter WHERE voided = 0 AND encounter_type = @obgyn_encounter;
 
 UPDATE temp_obgyn_visit t 
 SET 
     examining_doctor = PROVIDER(t.encounter_id);
-
-UPDATE temp_obgyn_visit t
-        JOIN
-    users u ON u.retired = 0
-        AND u.user_id = t.entered_by_id
-        JOIN
-    person_name p ON p.voided = 0
-        AND p.person_id = u.person_id 
-SET 
-    entered_by = CONCAT(p.given_name, ' ', p.family_name);
 
 DELETE FROM temp_obgyn_visit 
 WHERE
@@ -802,8 +791,8 @@ SELECT
     consultation_type,
     consultation_type_fp,
     age_at_visit,
-    entry_date,
-    entered_by,
+    date_entered,
+    user_entered,
     examining_doctor,
     pregnant,
     breastfeeding,

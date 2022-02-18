@@ -6,11 +6,13 @@ CREATE TEMPORARY TABLE temp_mch_birth
 (
 patient_id INT,
 encounter_id INT,
-encounter_date DATE
+encounter_date DATE,
+date_entered DATETIME,
+user_entered VARCHAR(50)
 );
 
-INSERT INTO temp_mch_birth(patient_id, encounter_id, encounter_date)
-SELECT patient_id, encounter_id, DATE(encounter_datetime)
+INSERT INTO temp_mch_birth(patient_id, encounter_id, encounter_date, date_entered, user_entered)
+SELECT patient_id, encounter_id, DATE(encounter_datetime), date_created, username(creator)
 FROM encounter WHERE voided = 0 AND encounter_type = @delivery_encounter_type;
 
 DROP TEMPORARY TABLE IF EXISTS temp_mch_birth1;
@@ -19,6 +21,8 @@ patient_id INT,
 mother_emr_id VARCHAR(25),
 encounter_id INT,
 encounter_date DATE,
+date_entered DATETIME,
+user_entered VARCHAR(50),
 birth_number INT,
 multiples INT,
 birth_apgar INT,
@@ -28,8 +32,8 @@ birth_neonatal_resuscitation VARCHAR(5),
 birth_macerated_fetus VARCHAR(5)
 );
 
-INSERT INTO temp_mch_birth1(patient_id, encounter_id, encounter_date)
-SELECT patient_id, encounter_id, encounter_date FROM temp_mch_birth;
+INSERT INTO temp_mch_birth1(patient_id, encounter_id, encounter_date, date_entered, user_entered)
+SELECT patient_id, encounter_id, encounter_date, date_entered, user_entered FROM temp_mch_birth;
 UPDATE temp_mch_birth1 SET birth_number = 1;
 UPDATE temp_mch_birth1 SET birth_outcome = OBS_FROM_GROUP_ID_VALUE_CODED_LIST(OBS_ID(encounter_id,'CIEL','1585', 0),'CIEL','161033',@locale);
 UPDATE temp_mch_birth1 SET birth_weight = OBS_FROM_GROUP_ID_VALUE_NUMERIC(OBS_ID(encounter_id,'CIEL','1585', 0),'CIEL','5916');
@@ -43,6 +47,8 @@ patient_id INT,
 mother_emr_id VARCHAR(25),
 encounter_id INT,
 encounter_date DATE,
+date_entered DATETIME,
+user_entered VARCHAR(50),
 birth_number INT,
 multiples INT,
 birth_apgar INT,
@@ -52,8 +58,8 @@ birth_neonatal_resuscitation VARCHAR(5),
 birth_macerated_fetus VARCHAR(5)
 );
 
-INSERT INTO temp_mch_birth2(patient_id, encounter_id, encounter_date)
-SELECT patient_id, encounter_id, encounter_date FROM temp_mch_birth;
+INSERT INTO temp_mch_birth2(patient_id, encounter_id, encounter_date, date_entered, user_entered)
+SELECT patient_id, encounter_id, encounter_date, date_entered, user_entered FROM temp_mch_birth;
 UPDATE temp_mch_birth2 SET birth_number = 2;
 UPDATE temp_mch_birth2 SET birth_outcome = OBS_FROM_GROUP_ID_VALUE_CODED_LIST(OBS_ID(encounter_id,'CIEL','1585', 1),'CIEL','161033',@locale);
 UPDATE temp_mch_birth2 SET birth_weight = OBS_FROM_GROUP_ID_VALUE_NUMERIC(OBS_ID(encounter_id,'CIEL','1585', 1),'CIEL','5916');
@@ -67,6 +73,8 @@ patient_id INT,
 mother_emr_id VARCHAR(25),
 encounter_id INT,
 encounter_date DATE,
+date_entered DATETIME,
+user_entered VARCHAR(50),
 birth_number INT,
 multiples INT,
 birth_apgar INT,
@@ -75,8 +83,8 @@ birth_weight DOUBLE,
 birth_neonatal_resuscitation VARCHAR(5),
 birth_macerated_fetus VARCHAR(5)
 );
-INSERT INTO temp_mch_birth3(patient_id, encounter_id, encounter_date)
-SELECT patient_id, encounter_id, encounter_date FROM temp_mch_birth;
+INSERT INTO temp_mch_birth3(patient_id, encounter_id, encounter_date, date_entered, user_entered)
+SELECT patient_id, encounter_id, encounter_date, date_entered, user_entered FROM temp_mch_birth;
 UPDATE temp_mch_birth3 SET birth_number = 3;
 UPDATE temp_mch_birth3 SET birth_outcome = OBS_FROM_GROUP_ID_VALUE_CODED_LIST(OBS_ID(encounter_id,'CIEL','1585', 2),'CIEL','161033',@locale);
 UPDATE temp_mch_birth3 SET birth_weight = OBS_FROM_GROUP_ID_VALUE_NUMERIC(OBS_ID(encounter_id,'CIEL','1585', 2),'CIEL','5916');
@@ -90,6 +98,8 @@ patient_id INT,
 mother_emr_id VARCHAR(25),
 encounter_id INT,
 encounter_date DATE,
+date_entered DATETIME,
+user_entered VARCHAR(50),
 birth_number INT,
 multiples INT,
 birth_apgar INT,
@@ -99,8 +109,8 @@ birth_neonatal_resuscitation VARCHAR(5),
 birth_macerated_fetus VARCHAR(5)
 );
 
-INSERT INTO temp_mch_birth4(patient_id, encounter_id, encounter_date)
-SELECT patient_id, encounter_id, encounter_date FROM temp_mch_birth;
+INSERT INTO temp_mch_birth4(patient_id, encounter_id, encounter_date, date_entered, user_entered)
+SELECT patient_id, encounter_id, encounter_date, date_entered, user_entered FROM temp_mch_birth;
 UPDATE temp_mch_birth4 SET birth_number = 4;
 UPDATE temp_mch_birth4 SET birth_outcome = OBS_FROM_GROUP_ID_VALUE_CODED_LIST(OBS_ID(encounter_id,'CIEL','1585', 3),'CIEL','161033',@locale);
 UPDATE temp_mch_birth4 SET birth_weight = OBS_FROM_GROUP_ID_VALUE_NUMERIC(OBS_ID(encounter_id,'CIEL','1585', 3),'CIEL','5916');
@@ -129,6 +139,8 @@ SELECT
 patient_id,
 mother_emr_id,
 encounter_date,
+date_entered,
+user_entered,
 birth_number,
 multiples,
 birth_apgar,
