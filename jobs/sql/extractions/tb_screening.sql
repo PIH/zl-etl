@@ -24,7 +24,9 @@ tb_screening VARCHAR(30),
 tb_screening_bool VARCHAR(5),
 tb_screening_date DATETIME,
 index_ascending INT(11),
-index_descending INT(11)
+index_descending INT(11),
+date_entered DATETIME,
+user_entered VARCHAR(50)
 );
 
 CREATE INDEX temp_TB_screening_patient_id ON temp_TB_screening (patient_id);
@@ -32,8 +34,8 @@ CREATE INDEX temp_TB_screening_tb_screening_date ON temp_TB_screening (tb_screen
 CREATE INDEX temp_TB_screening_encounter_id ON temp_TB_screening (encounter_id);
 
 -- load temp table with all intake/followup forms with any TB screening answer given
-INSERT INTO temp_TB_screening (patient_id, encounter_id,tb_screening_date)
-SELECT e.patient_id, e.encounter_id,e.encounter_datetime FROM encounter e
+INSERT INTO temp_TB_screening (patient_id, encounter_id, tb_screening_date, date_entered, user_entered)
+SELECT e.patient_id, e.encounter_id,e.encounter_datetime, date_created, username(creator) FROM encounter e
 WHERE e.voided =0 
 AND e.encounter_type IN (@HIV_adult_intake,@HIV_adult_followup,@HIV_ped_intake,@HIV_ped_followup)
 AND EXISTS
@@ -159,6 +161,8 @@ IF(chest_pain_result_concept = @present,'yes',IF(chest_pain_result_concept = @ab
 COALESCE(tb_screening, tb_screening_bool) "tb_screening_result",
 tb_screening_date,
 index_ascending,
-index_descending
+index_descending,
+date_entered,
+user_entered
 FROM temp_TB_screening
 ORDER BY patient_id ASC, tb_screening_date ASC, encounter_id ASC;
