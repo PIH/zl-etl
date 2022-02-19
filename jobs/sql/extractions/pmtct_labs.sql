@@ -32,7 +32,7 @@ and e.voided = 0;
 -- this pulls all the obs for the encounters above
 drop temporary table if exists temp_lab_obs;
 create temporary table temp_lab_obs
-select  o.obs_id , o.encounter_id ,o.person_id, o.obs_datetime ,o.concept_id, o.value_coded, o.value_numeric, o.value_text from obs o 
+select  o.obs_id , o.encounter_id ,o.person_id, o.obs_datetime ,o.concept_id, o.value_coded, o.value_numeric, o.value_text, o.date_created, o.creator from obs o
 inner join temp_lab_encounters t on t.encounter_id = o.encounter_id 
 where o.voided = 0
 and concept_class_id(o.concept_id) = @testClass;
@@ -49,11 +49,13 @@ test_result_date datetime,
 coded_result varchar(255),
 numeric_result double,
 text_result text,
+date_created datetime,
+creator int,
 index_asc int,
 index_desc int)
 ;
 set @r = 0;
-insert into temp_labs_1(index_asc,patient_id,obs_id,encounter_id,test_type,test_date,coded_result, numeric_result,text_result)
+insert into temp_labs_1(index_asc,patient_id,obs_id,encounter_id,test_type,test_date,coded_result, numeric_result,text_result,date_created,creator)
 select 
 @r:= IF(@p = person_id, @r + 1,1) 'index_asc',
 @p:=t.person_id as patient_id,
@@ -63,7 +65,9 @@ concept_name(t.concept_id,@locale),
 t.obs_datetime,
 concept_name(t.value_coded,'en'),
 t.value_numeric, 
-t.value_text
+t.value_text,
+t.date_created,
+t.creator
 from temp_lab_obs t
 order by patient_id asc, obs_datetime asc, obs_id asc  ;
 
@@ -84,6 +88,8 @@ t.test_type,
 t.test_date,
 t.test_result_date,
 COALESCE (coded_result, numeric_result, text_result) as test_result,
+t.date_created,
+t.creator,
 t.index_asc
 from temp_labs_1 t
 order by patient_id asc, test_date desc, obs_id desc;
@@ -96,6 +102,8 @@ test_date,
 test_result_date,
 test_type,
 test_result,
+date_created as date_entered,
+username(creator) as user_entered,
 index_asc,
 index_desc
 from temp_labs_2
