@@ -12,6 +12,8 @@ CREATE TEMPORARY TABLE temp_pmtct_visit (
     emr_id 					VARCHAR(25),
     visit_date              DATE,
     health_facility         VARCHAR(100),
+    date_entered            DATETIME,
+    user_entered            VARCHAR(50),
     hiv_test_date           DATE,
     tb_screening_date 		DATE,
     has_provided_contact 	BIT,
@@ -21,8 +23,8 @@ CREATE TEMPORARY TABLE temp_pmtct_visit (
     index_desc              INT
 );
 
-INSERT INTO temp_pmtct_visit (visit_id, encounter_id, patient_id, emr_id)
-SELECT visit_id, encounter_id, patient_id, zlemr(patient_id) FROM encounter WHERE encounter_type IN (@initial_pmtct_encounter, @followup_pmtct_encounter) AND voided = 0;
+INSERT INTO temp_pmtct_visit (visit_id, encounter_id, patient_id, emr_id, date_entered, user_entered)
+SELECT visit_id, encounter_id, patient_id, zlemr(patient_id), date_created, username(creator) FROM encounter WHERE encounter_type IN (@initial_pmtct_encounter, @followup_pmtct_encounter) AND voided = 0;
 
 -- visit date
 UPDATE temp_pmtct_visit t SET t.visit_date = VISIT_DATE(t.encounter_id);
