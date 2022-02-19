@@ -8,6 +8,8 @@ create table vaccinations_anc
     encounter_location VARCHAR(50),
     encounter_type     VARCHAR(50),
     provider           VARCHAR(500),
+    date_entered       DATETIME,
+    user_entered       VARCHAR(50),
     bcg_1              DATETIME,
     polio_0            DATETIME,
     polio_1            DATETIME,

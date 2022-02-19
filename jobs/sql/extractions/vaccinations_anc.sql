@@ -115,6 +115,8 @@ create temporary table temp_encounter
     encounter_location varchar(50),
     encounter_type     varchar(50),
     provider           varchar(500),
+    date_entered       DATETIME,
+    user_entered       VARCHAR(50),
     bcg_1              datetime,
     polio_0            datetime,
     polio_1            datetime,
@@ -135,13 +137,15 @@ create temporary table temp_encounter
     tetanus_booster_1  datetime,
     tetanus_booster_2  datetime
 );
-insert into temp_encounter (encounter_id, patient_id, encounter_datetime, encounter_location, encounter_type, provider)
+insert into temp_encounter (encounter_id, patient_id, encounter_datetime, encounter_location, encounter_type, provider, date_entered, user_entered)
 SELECT e.encounter_id,
        e.patient_id,
        e.encounter_datetime,
        el.name,
        et.name,
-       CONCAT(pn.given_name, ' ', pn.family_name)
+       CONCAT(pn.given_name, ' ', pn.family_name),
+       e.date_created,
+       username(e.creator)
 FROM temp_patient p
          INNER JOIN encounter e ON p.patient_id = e.patient_id
          INNER JOIN encounter_type et on e.encounter_type = et.encounter_type_id
@@ -278,6 +282,8 @@ SELECT p.patient_id,
        e.encounter_location,
        e.encounter_type,
        e.provider,
+       e.date_entered,
+       e.user_entered,
        e.bcg_1             as 'BCG dose 1',
        e.polio_0           as 'Polio dose 0',
        e.polio_1           as 'Polio dose 1',
