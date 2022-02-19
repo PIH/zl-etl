@@ -10,5 +10,7 @@ reference_date datetime,
 contact_index int,
 contact_type varchar(255),
 contact_gender varchar(50),
-contact_age int
+contact_age int,
+date_entered DATETIME,
+user_entered VARCHAR(50),
 );

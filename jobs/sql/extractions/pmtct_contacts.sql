@@ -22,7 +22,9 @@ reference_date datetime,
 contact_index int,
 contact_type varchar(255),
 contact_gender varchar(50),
-contact_age int 
+contact_age int,
+date_entered DATETIME,
+user_entered VARCHAR(50)
 );
 
 create index temp_contacts_pp_id on temp_contacts (latest_patient_program_id);
@@ -74,6 +76,10 @@ set contact_gender = obs_from_group_id_value_coded_list(t.concept_obs_group_id, 
 update temp_contacts t 
 set contact_age= obs_from_group_id_value_numeric(t.concept_obs_group_id, 'PIH','3467');
 
+-- date_entered and user_entered
+update temp_contacts t inner join obs o on t.concept_obs_group_id = o.obs_id
+set t.date_entered = o.date_created, t.user_entered = username(o.creator);
+
 select 
 patient_id,
 zlemrid,
@@ -85,6 +91,8 @@ reference_date,
 contact_index,
 contact_type,
 contact_gender,
-contact_age 
+contact_age,
+date_entered,
+user_entered
 from temp_contacts
 ;
