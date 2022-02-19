@@ -6,6 +6,8 @@ CREATE TABLE ovc_program_encounters
     location                    VARCHAR(255),
     encounter_id                INT,
     encounter_date              DATE,
+    date_entered                DATETIME,
+    user_entered                VARCHAR(50),
     ovc_program_enrollment_date DATE,
     ovc_program_completion_date DATE,
     program_status_start_date   DATE,
