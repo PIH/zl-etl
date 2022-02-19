@@ -15,5 +15,6 @@ CREATE TABLE tb_lab_results
     test_result_numeric         FLOAT,
     index_asc                   INT,
     index_desc                  INT,
-    date_created                DATETIME
+    date_entered                DATETIME,
+    user_entered                VARCHAR(50)
 );
