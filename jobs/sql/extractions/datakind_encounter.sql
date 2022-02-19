@@ -13,8 +13,8 @@ SELECT
     ENCOUNTER_TYPE_NAME(e.encounter_id) 'encounter_type',
     ENCOUNTER_LOCATION_NAME(e.encounter_id) 'encounter_location',
     PROVIDER(e.encounter_id) 'provider',
-    ENCOUNTER_CREATOR(e.encounter_id) 'data_entry_clerk',
     date_created 'date_entered',
+    username(creator) 'user_entered',
     date_changed,
     toc.obs_count
 FROM
@@ -82,8 +82,8 @@ SELECT
     t.encounter_type,
     t.encounter_location,
     t.provider,
-    t.data_entry_clerk,
     t.date_entered,
+    t.user_entered,
     t.date_changed,
     t.obs_count,
     index_asc,
