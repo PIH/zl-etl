@@ -5,17 +5,29 @@ schedule:
 configuration:
   maxConcurrentJobs: 5  # Import into up to 5 sites concurrently
   iterations:
-    - siteName: "cange"   #siteName is populated in each table and also used to identify the appropriate data source
-      partitionNum: "1"   #partitionNum is used to identify the sqlserver partition that this site's data is loaded into
+    - siteName: "cange"
+      partitionNum: "1"
+      dataset: "site-data"
     - siteName: "hinche"
       partitionNum: "2"
+      dataset: "site-data"
     - siteName: "saint_marc_hsn"
       partitionNum: "3"
+      dataset: "site-data"
     - siteName: "lacolline"
       partitionNum: "4"
+      dataset: "site-data"
     - siteName: "thomonde"
       partitionNum: "5"
+      dataset: "site-data"
     - siteName: "mirebalais"
       partitionNum: "6"
+      dataset: "site-data"
+    - siteName: "mirebalais"
+      partitionNum: "6"
+      dataset: "site-data"
+    - siteName: "hiv"
+      partitionNum: "8"
+      dataset: "hiv-data"
   jobTemplate:
-    path: "refresh-base-tables.yml"
+    path: "load-${dataset}.yml"

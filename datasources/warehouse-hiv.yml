@@ -1,6 +1,0 @@
-databaseType: "sqlserver"
-host: ${datasources.warehouse-hiv.host}
-port: ${datasources.warehouse-hiv.port}
-databaseName: ${datasources.warehouse-hiv.databaseName}
-user: ${datasources.warehouse-hiv.user}
-password: ${datasources.warehouse-hiv.password}

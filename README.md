@@ -46,7 +46,6 @@ configurations/datasources#
 ├── openmrs-mirebalais.yml
 ├── openmrs-saint_marc_hsn.yml
 ├── openmrs-thomonde.yml
-├── warehouse-hiv.yml
 └── warehouse.yml
 
 configurations/jobs#

@@ -1,12 +1,5 @@
-# For the HIV Server, we only execute the "hiv", "ovc", and "hivmigration" ETL jobs
-
 type: "job-pipeline"
 description: "Refresh HIV Data for ${siteName}"
-parameters:
-  siteName: "hiv"
-  partitionNum: "8"
-schedule:
-  cron: "${executeCron.refreshHivData}"
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
@@ -21,7 +14,7 @@ configuration:
               datasource: "openmrs-${siteName}.yml"
               query:  "sql/extractions/${tableName}.sql"
             load:
-              datasource: "warehouse-hiv.yml"
+              datasource: "warehouse.yml"
               table: "${tableName}"
               schema: "sql/schemas/${tableName}.sql"
         iterations:
@@ -50,9 +43,9 @@ configuration:
         extract:
           datasource: "openmrs-${siteName}.yml"
           query:  "sql/extractions/hivmigration_data_warnings.sql"
-          conditional: "select if(count(*)>0,true,false) from information_schema.tables where table_name = 'hivmigration_data_warnings'"
+          conditional: "select if(count(*)>0,true,false) from information_schema.tables where table_name = 'hivmigration_data_warnings' and table_schema = database()"
         load:
-          datasource: "warehouse-hiv.yml"
+          datasource: "warehouse.yml"
           table: "hivmigration_data_warnings"
           schema: "sql/schemas/hivmigration_data_warnings.sql"
           dropAndRecreateTable: "true"
@@ -63,9 +56,9 @@ configuration:
         extract:
           datasource: "openmrs-${siteName}.yml"
           query:  "sql/extractions/hivmigration_aggregrate_data_warnings.sql"
-          conditional: "select if(count(*)>0,true,false) from information_schema.tables where table_name = 'hivmigration_data_warnings'"
+          conditional: "select if(count(*)>0,true,false) from information_schema.tables where table_name = 'hivmigration_data_warnings' and table_schema = database()"
         load:
-          datasource: "warehouse-hiv.yml"
+          datasource: "warehouse.yml"
           table: "hivmigration_aggregrate_data_warnings"
           schema: "sql/schemas/hivmigration_aggregrate_data_warnings.sql"
           dropAndRecreateTable: "false"
