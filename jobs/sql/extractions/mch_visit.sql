@@ -65,6 +65,10 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     risk_factors_other TEXT,
     examining_doctor   VARCHAR(100),
     hiv_test_admin		BIT,
+    hiv_test_date DATE,
+    hiv_test_result VARCHAR(255),
+    received_post_test_counseling VARCHAR(255),
+    post_test_counseling_date DATE,
 	medication_order TEXT,
     primary_diagnosis TEXT,
     secondary_diagnosis TEXT,
@@ -586,6 +590,11 @@ UPDATE temp_obgyn_visit te
 SET 
     hiv_test_admin = value_coded;
 
+UPDATE temp_obgyn_visit SET hiv_test_date = obs_value_datetime(encounter_id, 'CIEL', '164400');
+UPDATE temp_obgyn_visit SET hiv_test_result = obs_value_coded_list(encounter_id, 'CIEL', '159427', 'en');
+UPDATE temp_obgyn_visit SET received_post_test_counseling = obs_value_coded_list(encounter_id, 'CIEL', '159382', 'en');
+UPDATE temp_obgyn_visit SET post_test_counseling_date = obs_value_datetime(encounter_id, 'PIH', '11525');
+
 UPDATE temp_obgyn_visit te 
 SET 
     medication_order = (SELECT 
@@ -829,6 +838,10 @@ SELECT
     wh_exam,
     previous_history,
     hiv_test_admin,
+    hiv_test_date,
+    hiv_test_result,
+    received_post_test_counseling,
+    post_test_counseling_date,
     cervical_cancer_screening_date,
     cervical_cancer_screening_result,
     primary_diagnosis,

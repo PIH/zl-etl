@@ -1,0 +1,10 @@
+type: "job-pipeline"
+description: "Test Import To Table Partition"
+parameters:
+  siteName: "humci"
+  partitionNum: "1"
+  tableName: "mch_visit"
+configuration:
+  jobs:
+    - path: "create-source-views-and-functions.yml"
+    - path: "import-to-table-partition.yml"
