@@ -3,7 +3,7 @@ description: "Test Import To Table Partition"
 parameters:
   siteName: "humci"
   partitionNum: "1"
-  tableName: "pmtct_infant_delivery"
+  tableName: "mch_patient"
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"

@@ -103,6 +103,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS temp_mch_patient
     patient_program_id          INT(11),
     last_encounter_id           INT(11),
     mch_emr_id                  VARCHAR(15),
+    dossier_id                  VARCHAR(50),
     given_name                  VARCHAR(50),
     initial_encounter_type_name VARCHAR(150),
     encounter_type_name         VARCHAR(150),
@@ -171,11 +172,15 @@ UPDATE temp_mch_patient tm SET age_cat_1 =  CASE WHEN tm.age < 10 THEN "Group 1"
                                                     WHEN tm.age > 49 THEN "Group 10"
                                                     WHEN tm.age IS NULL THEN "Group 10"
                                                     END;
-                                                    
+
+# Dossier Number
+UPDATE temp_mch_patient tm SET tm.dossier_id = dosId(tm.patient_id);
+
 ### Final query
 SELECT
     patient_id,
     mch_emr_id                      pih_emr_id,
+    dossier_id                      dossier_id,
     initial_encounter_type_name     first_encounter_type,
     encounter_type_name             last_encounter_type,
     first_encounter_date,
