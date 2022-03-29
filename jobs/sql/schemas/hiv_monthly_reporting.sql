@@ -15,5 +15,9 @@ latest_expected_dispensing_date datetime,
 dispensing_days_late            int,
 latest_hiv_viral_load_date      datetime,
 latest_hiv_viral_load_coded     varchar(255),
-latest_hiv_viral_load           int
+latest_hiv_viral_load           int,
+latest_arv_regimen_date         datetime,
+latest_arv_regimen_line         varchar(255), 
+latest_arv_dispensed_date       datetime,
+latest_arv_dispensed_line       varchar(255)  
 ); 
