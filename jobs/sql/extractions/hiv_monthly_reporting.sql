@@ -15,30 +15,30 @@ FROM patient_program WHERE voided=0 AND program_id = @hiv_program_id;
 DROP TEMPORARY TABLE IF EXISTS temp_eom_appts;
 CREATE TEMPORARY TABLE temp_eom_appts
 (
-monthly_reporting_id		INT(11) AUTO_INCREMENT,
-patient_id			INT(11),
-patient_program_id		INT(11),
-date_enrolled			DATETIME,
-date_completed			DATETIME,
-reporting_date			DATE,
+monthly_reporting_id			INT(11) AUTO_INCREMENT,
+patient_id						INT(11),
+patient_program_id				INT(11),
+date_enrolled					DATETIME,
+date_completed					DATETIME,
+reporting_date					DATE,
 latest_hiv_note_encounter_id	INT(11),
-latest_hiv_visit_date		DATETIME,
+latest_hiv_visit_date			DATETIME,
 latest_expected_hiv_visit_date	DATETIME,
-hiv_visit_days_late		INT,
+hiv_visit_days_late				INT,
 latest_dispensing_encounter_id	INT(11),
-latest_dispensing_date		DATETIME,
+latest_dispensing_date			DATETIME,
 latest_expected_dispensing_date	DATETIME,
-dispensing_days_late		INT,
+dispensing_days_late			INT,
 latest_hiv_viral_load_obs_group	INT(11),
-latest_hiv_viral_load_date	DATETIME,
-latest_hiv_viral_load_coded	VARCHAR(255),
-latest_hiv_viral_load		INT,
+latest_hiv_viral_load_date		DATETIME,
+latest_hiv_viral_load_coded		VARCHAR(255),
+latest_hiv_viral_load			INT,
 latest_arv_regimen_encounter_id	INT(11),
-latest_arv_regimen_date		DATETIME,
-latest_arv_regimen_line		VARCHAR(255),
-latest_arv_dispensed_id		INT(11),
-latest_arv_dispensed_date	DATETIME,
-latest_arv_dispensed_line	VARCHAR(255),
+latest_arv_regimen_date			DATETIME,
+latest_arv_regimen_line			VARCHAR(255),
+latest_arv_dispensed_id			INT(11),
+latest_arv_dispensed_date		DATETIME,
+latest_arv_dispensed_line		VARCHAR(255),
 PRIMARY KEY (monthly_reporting_id)
 );
 
@@ -138,8 +138,7 @@ create temporary table temp_last_arv_dispensing_id
 	inner join 
 		(select e2.patient_id, e2.encounter_id, e2.encounter_datetime 
 		from encounter e2
-		inner join obs o on o.voided = 0 and o.encounter_id = e2.encounter_id and  o.concept_id =  concept_from_mapping('PIH','1535') -- medication name
-			and o.value_coded in (concept_from_mapping('PIH','3013'),concept_from_mapping('PIH','2848'),concept_from_mapping('PIH','13960')) -- ARV1, ARV2 and ARV3
+		inner join obs o on o.voided = 0 and o.encounter_id = e2.encounter_id and concept_id = concept_from_mapping('PIH','13115') 
 		where e2.voided = 0
 		and e2.encounter_type = @hiv_Dispensing_id 
 		order by e2.encounter_datetime desc, e2.encounter_id desc) e on e.patient_id  = t.patient_id and e.encounter_datetime <= t.reporting_date 
