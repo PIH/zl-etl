@@ -313,7 +313,7 @@ where t.dispense_date_descending = 1;
 
 # final query
 Select
-t.patient_id,
+zlemr(t.patient_id),
 t.encounter_id,
 t.dispense_date,
 t.dispense_site,
