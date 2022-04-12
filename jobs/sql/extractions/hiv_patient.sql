@@ -626,7 +626,6 @@ UPDATE temp_hiv_art t set art_regimen = ActiveDrugConceptNameList(t.patient_id, 
 
 ### Final Query
 SELECT 
-t.patient_id,
 t.zl_emr_id,
 t.hivemr_v1_id,
 t.hiv_dossier_id,
