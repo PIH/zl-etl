@@ -1,7 +1,6 @@
 create table hiv_monthly_reporting
 (
-patient_id                      int,
-zl_emr_id                       varchar(255),
+emr_id                          varchar(255),
 date_enrolled                   datetime,
 date_completed                  datetime,
 reporting_date                  date,
