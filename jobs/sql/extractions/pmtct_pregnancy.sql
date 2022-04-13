@@ -117,7 +117,7 @@ UPDATE temp_pmtct_pregnancy t SET has_birthplan = ANSWEREVEREXISTS(t.patient_id,
 # note: drug stop date and auto expire date should be null
 # There is a possiblity that this could return a "yes" that has a art start date
 # that is older than the program start date (DQ should be done here)
-UPDATE temp_pmtct_pregnancy t SET is_active_on_art = (SELECT IF(concept_id IS NULL, NULL, 1) FROM orders o WHERE CONCEPT_FROM_MAPPING('PIH','11197') AND voided = 0
+UPDATE temp_pmtct_pregnancy t SET is_active_on_art = (SELECT IF(concept_id IS NULL, NULL, 1) FROM orders o WHERE o.order_reason=CONCEPT_FROM_MAPPING('PIH','11197') AND voided = 0
 AND auto_expire_date IS NULL AND date_stopped IS NULL AND t.patient_id = o.patient_id GROUP BY o.patient_id);
 
 # transfer status
