@@ -330,7 +330,7 @@ UPDATE temp_covid_lab_app_result tcl INNER JOIN temp_final_covid_lab_encounters 
 DROP TEMPORARY TABLE IF EXISTS temp_final_query;
 CREATE TEMPORARY TABLE temp_final_query AS
 SELECT
-    ls.person_id patient_id,
+    zlemr(ls.person_id) emr_id,
     ls.encounter_id encounter_id,
     ls.obs_id,
     e.encounter_date,
