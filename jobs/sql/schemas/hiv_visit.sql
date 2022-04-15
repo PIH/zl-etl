@@ -1,7 +1,6 @@
 CREATE TABLE hiv_visit
 (
     encounter_id    INT,
-    patient_id      INT,
     emr_id          VARCHAR(25),
     hivemr_v1       VARCHAR(25),
     encounter_type  varchar(255),
