@@ -47,14 +47,7 @@ patient_id IN (
 
 -- ZL EMR ID
 UPDATE temp_mch_status t
-INNER JOIN
-   (SELECT patient_id, GROUP_CONCAT(identifier) 'ids'
-    FROM patient_identifier pid
-    WHERE pid.voided = 0
-    AND pid.identifier_type = @mch_emr_id
-    GROUP BY patient_id
-   ) ids ON ids.patient_id = t.patient_id
-SET t.mch_emr_id = ids.ids;
+SET t.mch_emr_id = zlemr(t.patient_id);
 
 ######### index count
 ########## indexes
@@ -228,7 +221,6 @@ SET tmp.encounter_location_name	= tme.encounter_location_name,
 
 ### Final Query
 SELECT
-    patient_id,
     mch_emr_id,
     enrollment_location,
     encounter_location_name,
