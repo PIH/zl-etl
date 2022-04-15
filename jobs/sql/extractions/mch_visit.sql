@@ -791,7 +791,6 @@ SET
     fp_counseling_received = OBS_VALUE_CODED_LIST(te.encounter_id, 'CIEL', '165309', 'en');
    
 SELECT 
-    patient_id,
     ZLEMR(patient_id),
     encounter_id,
     visit_date,
