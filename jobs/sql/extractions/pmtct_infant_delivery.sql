@@ -124,7 +124,6 @@ set health_facility = (select location_name(value_text) from obs where voided = 
 update temp_eid t set t.breastfeeding_status = value_coded_name(latest_obs(t.patient_id, 'CIEL', '1151'), 'en');
 
 select  
-patient_id,
 zlemr(patient_id),
 infant_age_in_months,
 age_cat_infant,
