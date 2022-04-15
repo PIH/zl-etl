@@ -1,6 +1,6 @@
 CREATE TABLE hiv_viral_load
 (
-    hiv_patient_id                 INT,
+    emr_id                         VARCHAR(255),
     encounter_id                   INT,
     visit_location                 VARCHAR(255),
     date_entered                   DATETIME,
