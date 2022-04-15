@@ -1,7 +1,6 @@
 CREATE TABLE pmtct_contacts
 (
-patient_id int,
-zlemrid varchar(255),
+emr_id varchar(255),
 age int, 
 hiv_enrollment_date datetime,
 pmtct_initiation_date datetime,
