@@ -293,7 +293,7 @@ where t.index_descending_category = 1 and t.drug_category = 'ART';
 select
 order_id,    
 previous_order_id,
-patient_id,
+zlemr(patient_id),
 order_action,
 encounter_id,
 encounter_datetime,
