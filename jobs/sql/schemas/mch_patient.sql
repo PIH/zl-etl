@@ -1,7 +1,6 @@
 CREATE TABLE mch_patient
 (
-    patient_id                      INT,
-    pih_emr_id                      VARCHAR(25),
+    emr_id                          VARCHAR(25),
     dossier_id                      VARCHAR(50),
     first_encounter_type            VARCHAR(150),
     latest_encounter_type           VARCHAR(150),
