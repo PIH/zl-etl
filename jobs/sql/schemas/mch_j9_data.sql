@@ -1,6 +1,6 @@
 CREATE TABLE mch_j9_data
 (
-patient_id int,
+emr_id varchar(25),
 patient_age int ,
 education_level varchar(255),
 able_read_write bit,
