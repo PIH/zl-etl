@@ -81,7 +81,6 @@ update temp_contacts t inner join obs o on t.concept_obs_group_id = o.obs_id
 set t.date_entered = o.date_created, t.user_entered = username(o.creator);
 
 select 
-patient_id,
 zlemrid,
 age,
 hiv_enrollment_date,
