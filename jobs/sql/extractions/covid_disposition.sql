@@ -106,7 +106,7 @@ FROM (SELECT
         ) index_descending );
 
 SELECT
-	tcd.patient_id patient_id,
+	zlemr(tcd.patient_id) emr_id,
 	tcd.encounter_id encounter_id,
 	encounter_type,
 	location,
