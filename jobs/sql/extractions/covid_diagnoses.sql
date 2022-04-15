@@ -211,7 +211,7 @@ ORDER BY person_id;
 
 ##### FINAL QUERY EXECUTION
 SELECT
-  ce.patient_id,
+  zlemr(ce.patient_id),
   ce.encounter_id,
   ce.encounter_type,
   ce.location,
