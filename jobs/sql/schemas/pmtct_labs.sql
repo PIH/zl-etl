@@ -1,7 +1,6 @@
 CREATE TABLE pmtct_labs
 (
-patient_id int,
-zlemrid varchar(255),
+emr_id varchar(255),
 test_date datetime,
 test_result_date datetime,
 test_type varchar(255), 
