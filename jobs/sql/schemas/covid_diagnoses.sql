@@ -1,6 +1,6 @@
 CREATE TABLE covid_diagnoses
 (
-    patient_id             INT,
+    emr_id                 VARCHAR(25),
     encounter_id           INT,
     encounter_type         VARCHAR(255),
     location               TEXT,
