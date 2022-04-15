@@ -173,7 +173,6 @@ UPDATE temp_lab_tests_final tbf JOIN temp_hiv_lab_index_desc tbia ON tbf.encount
 SET tbf.index_desc = tbia.index_desc;
 
 SELECT
-	person_id,
     emr_id,
     patient_identifier(person_id, '139766e8-15f5-102d-96e4-000c29c2a5d7') hivemr_v1_id,
     encounter_id,
