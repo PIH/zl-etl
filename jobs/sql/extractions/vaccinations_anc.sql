@@ -274,8 +274,7 @@ set e.tetanus_booster_2 = v.vaccine_date;
 
 ## EXECUTE FINAL SELECTION, JOINING ON ABOVE TABLES
 
-SELECT p.patient_id,
-       p.dossier_num       as dossierId,
+SELECT p.dossier_num       as dossierId,
        p.zlemr_id          as zlemr,
        p.loc_registered    as loc_registered,
        e.encounter_datetime,
