@@ -498,7 +498,7 @@ FROM (SELECT
 
 #### Final query
 SELECT
-        tcv.patient_id patient_id,
+        zlemr(tcv.patient_id) emr_id,
         tcv.encounter_id encounter_id,
         encounter_date,
         location,
