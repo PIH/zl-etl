@@ -172,7 +172,7 @@ UPDATE temp_covid_admission_encounter SET contact_case_14d = OBS_VALUE_CODED_LIS
 ## EXECUTE FINAL SELECTION
 SELECT
 	encounter_id,
-	patient_id,
+	zlemr(patient_id),
 	encounter_datetime,
     date_entered,
     user_entered,
