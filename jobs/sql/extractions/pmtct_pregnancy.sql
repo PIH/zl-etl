@@ -211,7 +211,6 @@ UPDATE temp_pmtct_pregnancy t SET index_desc = (SELECT index_desc FROM temp_pmtc
 
 ## final query
 SELECT 
-	patient_id,
     zlemr,
     start_date,
     pmtct_enrollment_date,
