@@ -1,7 +1,7 @@
 create table hiv_status
 (
     status_id                 int,
-    patient_id                int,
+    emr_id                    varchar(255),
     zl_emr_id                 varchar(255),
     patient_location          varchar(255),
     transfer_in_from          varchar(255),

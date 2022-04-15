@@ -1,7 +1,6 @@
 CREATE TABLE tb_lab_results
 (
-    patient_id                  INT,
-    zlemr_id                    VARCHAR(50),
+    emr_id                      VARCHAR(50),
     dossier_id                  VARCHAR(50),
     encounter_id                INT,
     test_location               VARCHAR(255),

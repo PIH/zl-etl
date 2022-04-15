@@ -1,6 +1,5 @@
 CREATE TABLE pmtct_pregnancy (
-	patient_id              INT,
-    zlemr                   VARCHAR(25),
+    emr_id                  VARCHAR(25),
     start_date              DATE,
     pmtct_enrollment_date   DATE,
     health_facility         VARCHAR(255),

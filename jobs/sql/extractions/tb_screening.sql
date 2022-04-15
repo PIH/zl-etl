@@ -150,7 +150,6 @@ SET t.index_descending = tsid.index_desc;
 
 
 SELECT
-patient_id,
 ZLEMR(patient_id) emr_id,
 DOSID(patient_id) dossier_id,
 encounter_id,

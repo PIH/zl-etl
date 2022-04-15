@@ -153,7 +153,6 @@ update temp_eom_appts t
 set latest_arv_dispensed_line = obs_value_coded_list(t.latest_arv_dispensed_id, 'PIH','13115',@locale );
 
 SELECT
-	patient_id,
 	zlemr(patient_id),
 	date_enrolled ,
 	date_completed ,

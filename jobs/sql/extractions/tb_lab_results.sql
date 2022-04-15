@@ -378,7 +378,6 @@ UPDATE temp_tb_final_query tbf
    
 ## Final query
 SELECT
-    patient_id,
     zlemr(patient_id),
     dosId(patient_id),
     encounter_id,

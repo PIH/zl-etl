@@ -1,6 +1,6 @@
 create table hiv_dispensing
 (
-    patient_id                  int,
+    emr_id                      varchar(255),
     encounter_id                int,
     dispense_date               datetime,
     dispense_site               varchar(255),

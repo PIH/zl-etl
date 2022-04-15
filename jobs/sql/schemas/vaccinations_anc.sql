@@ -1,6 +1,5 @@
 create table vaccinations_anc
 (
-    patient_id         INT,
     dossier_num        VARCHAR(50),
     zlemr_id           VARCHAR(50),
     loc_registered     VARCHAR(50),

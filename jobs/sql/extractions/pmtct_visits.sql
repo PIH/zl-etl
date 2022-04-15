@@ -183,4 +183,17 @@ CREATE TEMPORARY TABLE temp_pmtct_visit_index_desc
 UPDATE temp_pmtct_visit t SET t.index_asc = (SELECT index_asc FROM temp_pmtct_visit_index_asc a WHERE t.visit_id = a.visit_id);
 UPDATE temp_pmtct_visit t SET t.index_desc = (SELECT index_desc FROM temp_pmtct_visit_index_desc b WHERE t.visit_id = b.visit_id);
 
-SELECT * FROM temp_pmtct_visit ORDER BY patient_id, visit_date, visit_id;
+SELECT 
+visit_id,
+encounter_id,
+emr_id,
+visit_date,
+health_facility,
+date_entered,
+user_entered,
+hiv_test_date,
+tb_screening_date,
+has_provided_contact,
+index_asc,
+index_desc
+FROM temp_pmtct_visit ORDER BY patient_id, visit_date, visit_id;

@@ -1,7 +1,6 @@
 create table hiv_patient
 (
-    patient_id                     INT,
-    zl_emr_id                      VARCHAR(255),
+    emr_id                         VARCHAR(255),
     hivemr_v1_id                   VARCHAR(255),
     hiv_dossier_id                 VARCHAR(255),
     given_name                     VARCHAR(50),

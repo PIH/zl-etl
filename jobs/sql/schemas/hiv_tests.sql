@@ -1,5 +1,4 @@
 CREATE TABLE hiv_tests (
-    patient_id                  INT,
     emr_id                      VARCHAR(25),
     hivemr_v1_id                VARCHAR(25),
     encounter_id                INT,

@@ -34,7 +34,7 @@ set location = location_name(location_id),
 
 select
        patient_program_id,
-       patient_id,
+       zlemr(patient_id),
        date_enrolled,
        date_completed,
        location,

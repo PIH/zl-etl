@@ -130,7 +130,7 @@ FROM (SELECT
 
 ### Final query
 SELECT
-        tvl.patient_id,
+        zlemr(tvl.patient_id),
         tvl.encounter_id,
         tvl.visit_location,
         tvl.date_entered,

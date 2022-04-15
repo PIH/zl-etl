@@ -1,7 +1,6 @@
 CREATE TABLE mch_status
 (
-    patient_id              INT,
-    mch_emr_id              VARCHAR(25),
+    emr_id                  VARCHAR(25),
     enrollment_location     VARCHAR(25),
     encounter_location_name VARCHAR(25),
     start_date              DATE,

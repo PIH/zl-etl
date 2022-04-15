@@ -1066,7 +1066,7 @@ create index temp_index_desc_ei on temp_index_desc(encounter_id);
 
 #### Final query
 SELECT
-        tcv.patient_id patient_id,
+        zlemr(tcv.patient_id) emr_id,
         tcv.encounter_id encounter_id,
         encounter_date,
         location,

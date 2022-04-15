@@ -96,7 +96,6 @@ order by patient_id asc, test_date desc, obs_id desc;
 
 -- final output
 select 
-patient_id,
 zlemr(patient_id),
 test_date,
 test_result_date,

@@ -178,8 +178,7 @@ UPDATE temp_mch_patient tm SET tm.dossier_id = dosId(tm.patient_id);
 
 ### Final query
 SELECT
-    patient_id,
-    mch_emr_id                      pih_emr_id,
+    mch_emr_id                      emr_id,
     dossier_id                      dossier_id,
     initial_encounter_type_name     first_encounter_type,
     encounter_type_name             last_encounter_type,

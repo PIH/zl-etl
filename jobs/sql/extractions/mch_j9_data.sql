@@ -269,7 +269,7 @@ set prenatal_teas = value_coded_name(latest_obs(t.patient_id, 'PIH','13737'),@lo
 
 -- final output
 Select
-patient_id,
+zlemr(patient_id),
 patient_age,
 education_level,
 able_read_write,

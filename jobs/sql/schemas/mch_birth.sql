@@ -1,6 +1,6 @@
 CREATE TABLE mch_birth
 (
-    patient_id                   INT,
+    emr_id                       VARCHAR(25),
     mother_emr_id                VARCHAR(25),
     encounter_date               DATE,
     date_entered                 DATETIME,

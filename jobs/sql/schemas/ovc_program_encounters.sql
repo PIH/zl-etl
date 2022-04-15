@@ -1,6 +1,5 @@
 CREATE TABLE ovc_program_encounters
 (
-    patient_id                  INT,
     emr_id                      VARCHAR(50),
     patient_program_id          INT,
     location                    VARCHAR(255),

@@ -136,7 +136,7 @@ UPDATE temp_mch_birth_final SET mother_emr_id = ZLEMR(patient_id);
 UPDATE temp_mch_birth_final tf SET multiples = (SELECT COUNT(patient_id) FROM temp_mch_birth_stage ts WHERE tf.encounter_id = ts.encounter_id GROUP BY ts.encounter_id);
 
 SELECT
-patient_id,
+zlemr(patient_id),
 mother_emr_id,
 encounter_date,
 date_entered,

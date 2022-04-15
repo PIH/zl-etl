@@ -1,8 +1,7 @@
 create table mch_delivery
 (
-    patient_id                           int,
     dossierId                            varchar(50),
-    zlemrid                              varchar(50),
+    emr_id                               varchar(50),
     loc_registered                       varchar(255),
     encounter_datetime                   datetime,
     encounter_location                   varchar(255),

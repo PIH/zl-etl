@@ -525,7 +525,6 @@ select * from temp_program_no_statuses_encounters;
 
 ###### Final query #######
 SELECT
-    person_id,
 	ZLEMR(person_id),
 	patient_program_id,
 	LOCATION_NAME(location_id),
