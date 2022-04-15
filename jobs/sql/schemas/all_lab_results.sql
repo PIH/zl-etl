@@ -1,6 +1,5 @@
 CREATE TABLE all_lab_results
 (
-    patient_id               INT,
     emr_id                   VARCHAR(50),
     loc_registered           TEXT,
     unknown_patient          VARCHAR(50),
