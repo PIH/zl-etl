@@ -1,6 +1,5 @@
 CREATE TABLE all_lab_orders
 (
-    patient_id                   INT,
     emr_id                       VARCHAR(50),
     loc_registered               VARCHAR(255),
     unknown_patient              VARCHAR(11),
