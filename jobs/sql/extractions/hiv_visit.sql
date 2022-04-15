@@ -101,4 +101,17 @@ update temp_hiv_visit t
 inner join temp_visit_index_desc tvid on tvid.encounter_id = t.encounter_id
 set t.index_desc = tvid.index_desc;
 
-SELECT * FROM temp_hiv_visit;
+SELECT 
+encounter_id,
+emr_id,
+hivemr_v1,	
+encounter_type,
+date_entered,
+user_entered,
+pregnant,
+visit_date,
+next_visit_date,
+visit_location,
+index_asc,
+index_desc
+FROM temp_hiv_visit;
