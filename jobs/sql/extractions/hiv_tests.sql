@@ -166,11 +166,6 @@ create index temp_hiv_lab_index_asc_test_type on temp_hiv_lab_index_asc(test_typ
 create index temp_hiv_lab_index_desc_encounter_id on temp_hiv_lab_index_desc(encounter_id);
 create index temp_hiv_lab_index_desc_test_type on temp_hiv_lab_index_desc(test_type);	
 
-create index temp_hiv_lab_index_asc_encounter_id on temp_hiv_lab_index_asc(encounter_id);
-create index temp_hiv_lab_index_asc_test_type on temp_hiv_lab_index_asc(test_type);
-create index temp_hiv_lab_index_desc_encounter_id on temp_hiv_lab_index_desc(encounter_id);
-create index temp_hiv_lab_index_desc_test_type on temp_hiv_lab_index_desc(test_type);
-
 UPDATE temp_lab_tests_final tbf JOIN temp_hiv_lab_index_asc tbia ON tbf.encounter_id = tbia.encounter_id AND tbf.test_type = tbia.test_type
 SET tbf.index_asc = tbia.index_asc;
 
