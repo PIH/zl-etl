@@ -61,6 +61,7 @@ CREATE TABLE mch_visit
     family_planning_use              BIT,
     family_planning_method           VARCHAR(255),
     fp_counseling_received           BIT,
+    condoms_provided                 TEXT,
     risk_factors                     TEXT,
     index_asc                        INT,
     index_desc                       INT
