@@ -75,9 +75,11 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     diagnosis_non_coded TEXT,
     procedures TEXT,
     procedures_other TEXT,
+    family_planning_group INT(11),
     family_planning_use VARCHAR(5), 
     family_planning_method VARCHAR(255), 
     fp_counseling_received VARCHAR(255),
+    condoms_provided VARCHAR(5),
     index_asc          INT,
     index_desc         INT
 );
@@ -85,8 +87,9 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
 CREATE INDEX temp_obgyn_visit_patient_id ON temp_obgyn_visit (patient_id);
 CREATE INDEX temp_obgyn_visit_encounter_id ON temp_obgyn_visit (encounter_id);
 
-INSERT INTO temp_obgyn_visit(patient_id, encounter_id, visit_date, visit_site, date_entered, user_entered)
-SELECT patient_id, encounter_id, DATE(encounter_datetime), LOCATION_NAME(location_id), date_created, username(creator) FROM encounter WHERE voided = 0 AND encounter_type = @obgyn_encounter;
+INSERT INTO temp_obgyn_visit(patient_id, encounter_id, visit_date, visit_site, date_entered)
+SELECT patient_id, encounter_id, DATE(encounter_datetime), LOCATION_NAME(location_id), date_created FROM encounter WHERE voided = 0 AND encounter_type = @obgyn_encounter;
+
 
 UPDATE temp_obgyn_visit t 
 SET 
@@ -103,16 +106,28 @@ WHERE
             AND a.value = 'true'
             AND t.name = 'Test Patient');
 
+DROP TEMPORARY TABLE IF EXISTS temp_mch_obs;
+create temporary table temp_mch_obs 
+select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.comments 
+from obs o
+inner join temp_obgyn_visit t on t.encounter_id = o.encounter_id
+where o.voided = 0;
+
+create index temp_mch_obs_concept_id on temp_mch_obs(concept_id);
+create index temp_mch_obs_ei on temp_mch_obs(encounter_id);
+
+           
+           
 UPDATE temp_obgyn_visit t 
 SET 
     previous_history = (SELECT 
             GROUP_CONCAT(CONCEPT_NAME(value_coded, 'en')
                     SEPARATOR ' | ')
         FROM
-            obs o
+            temp_mch_obs o
         WHERE
-            o.voided = 0
-                AND t.encounter_id = o.encounter_id
+           --  o.voided = 0
+                t.encounter_id = o.encounter_id
                 AND o.value_coded <> 1
                 AND obs_group_id IN (SELECT 
                     obs_id
@@ -121,10 +136,10 @@ SET
                 WHERE
                     concept_id = CONCEPT_FROM_MAPPING('CIEL', '1633')));
 
-UPDATE temp_obgyn_visit t JOIN obs o ON o.encounter_id = t.encounter_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH','Type of HUM visit')
+UPDATE temp_obgyn_visit t JOIN temp_mch_obs o ON o.encounter_id = t.encounter_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH','Type of HUM visit')
 SET consultation_type = CONCEPT_NAME(value_coded, 'en');
 
-UPDATE temp_obgyn_visit t JOIN obs o ON o.encounter_id = t.encounter_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH','REASON FOR VISIT')
+UPDATE temp_obgyn_visit t JOIN temp_mch_obs o ON o.encounter_id = t.encounter_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH','REASON FOR VISIT')
 SET consultation_type_fp = CONCEPT_NAME(value_coded, 'en');
 
 
@@ -146,7 +161,7 @@ SELECT encounter_id, patient_id FROM temp_obgyn_visit;
 
 UPDATE temp_obgyn_pregnacy te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', '8879')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'ANC VISIT')
         AND o.voided = 0 
@@ -155,7 +170,7 @@ SET
 
 UPDATE temp_obgyn_pregnacy te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'ESTIMATED DATE OF CONFINEMENT')
         AND o.voided = 0 
 SET 
@@ -169,7 +184,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
         AND value_coded = CONCEPT_FROM_MAPPING('CIEL', '136163')
         AND o.voided = 0 
@@ -178,7 +193,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'DATE OF LAST MENSTRUAL PERIOD') 
 SET 
@@ -186,7 +201,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'ESTIMATED DATE OF CONFINEMENT') 
 SET 
@@ -194,7 +209,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'RETURN VISIT DATE') 
 SET 
@@ -202,21 +217,31 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Triage color classification') 
 SET 
     triage_level = CONCEPT_NAME(o.value_coded, 'en');
 
+  /* 
 UPDATE temp_obgyn_visit te 
 SET 
     referral_type = OBS_VALUE_CODED_LIST(te.encounter_id,
             'PIH',
             'Type of referring service',
             'en');
+*/           
+update temp_obgyn_visit t 
+inner join 
+	(select o.encounter_id, GROUP_CONCAT(distinct  concept_name(o.value_coded,'en') separator ' | ') as ret
+	from temp_mch_obs o
+	where o.concept_id = concept_from_mapping('PIH','Type of referring service')
+	group by o.encounter_id) i on i.encounter_id = t.encounter_id
+set t.referral_type = i.ret;
+           
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Type of referring service')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'OTHER') 
@@ -225,7 +250,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
         AND value_coded = CONCEPT_FROM_MAPPING('CIEL', '1873')
         AND o.voided = 0 
@@ -234,7 +259,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'INTRAUTERINE DEVICE')
         AND o.voided = 0 
@@ -243,7 +268,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'TUBAL LIGATION')
         AND o.voided = 0 
@@ -275,7 +300,7 @@ CREATE INDEX temp_vaccinations_dose_number ON temp_vaccinations (dose_number);
 
 INSERT INTO temp_vaccinations (obs_group_id, person_id, encounter_id, concept_id, vaccine)
 SELECT o.obs_group_id, o.person_id, o.encounter_id, o.concept_id, a.uuid
-FROM obs o,
+FROM temp_mch_obs o,
      concept c,
      concept a
 WHERE o.concept_id = c.concept_id
@@ -285,7 +310,7 @@ WHERE o.concept_id = c.concept_id
 
 INSERT INTO temp_vaccinations (obs_group_id, dose_number)
 SELECT o.obs_group_id, o.value_numeric
-FROM obs o,
+FROM temp_mch_obs o,
      concept c
 WHERE o.concept_id = c.concept_id
   AND c.uuid = 'ef6b45b4-525e-4d74-bf81-a65a41f3feb9' # Vaccination Sequence Number
@@ -294,7 +319,7 @@ ON DUPLICATE KEY UPDATE dose_number = o.value_numeric;
 
 INSERT INTO temp_vaccinations (obs_group_id, vaccine_date)
 SELECT o.obs_group_id, DATE(o.value_datetime)
-FROM obs o,
+FROM temp_mch_obs o,
      concept c
 WHERE o.concept_id = c.concept_id
   AND c.uuid = '1410AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' # Vaccine Date
@@ -455,7 +480,7 @@ SET
 
 UPDATE temp_obgyn_visit e
         JOIN
-    obs o ON e.encounter_id = o.encounter_id
+    temp_mch_obs o ON e.encounter_id = o.encounter_id
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13229')
         AND o.voided = 0 
 SET 
@@ -463,7 +488,7 @@ SET
 
 UPDATE temp_obgyn_visit e
         JOIN
-    obs o ON e.encounter_id = o.encounter_id
+    temp_mch_obs o ON e.encounter_id = o.encounter_id
         AND o.concept_id IN (CONCEPT_FROM_MAPPING('CIEL', '1439') , CONCEPT_FROM_MAPPING('CIEL', '160090'),
         CONCEPT_FROM_MAPPING('CIEL', '163749'),
         CONCEPT_FROM_MAPPING('CIEL', '1440'),
@@ -476,7 +501,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '165429') 
 SET 
@@ -484,7 +509,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('CIEL', '163560')
         AND value_coded = CONCEPT_FROM_MAPPING('CIEL', '151185')
         AND o.voided = 0 
@@ -497,7 +522,7 @@ SET
             GROUP_CONCAT(CONCEPT_NAME(value_coded, 'en')
                     SEPARATOR ' | ')
         FROM
-            obs o
+            temp_mch_obs o
         WHERE
             o.voided = 0
                 AND t.encounter_id = o.encounter_id
@@ -505,7 +530,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '160079')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'OTHER') 
@@ -514,7 +539,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '164181') 
 SET 
@@ -584,16 +609,42 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'HIV test done') 
 SET 
     hiv_test_admin = value_coded;
 
-UPDATE temp_obgyn_visit SET hiv_test_date = obs_value_datetime(encounter_id, 'CIEL', '164400');
-UPDATE temp_obgyn_visit SET hiv_test_result = obs_value_coded_list(encounter_id, 'CIEL', '159427', 'en');
-UPDATE temp_obgyn_visit SET received_post_test_counseling = obs_value_coded_list(encounter_id, 'CIEL', '159382', 'en');
-UPDATE temp_obgyn_visit SET post_test_counseling_date = obs_value_datetime(encounter_id, 'PIH', '11525');
+-- UPDATE temp_obgyn_visit SET hiv_test_date = obs_value_datetime(encounter_id, 'CIEL', '164400');
+update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('CIEL', '164400')
+set t.hiv_test_date = o.value_datetime
+;
+
+
+-- UPDATE temp_obgyn_visit SET hiv_test_result = obs_value_coded_list(encounter_id, 'CIEL', '159427', 'en');
+update temp_obgyn_visit t 
+inner join 
+	(select o.encounter_id, GROUP_CONCAT(distinct  concept_name(o.value_coded,'en') separator ' | ') as ret
+	from temp_mch_obs o
+	where o.concept_id = concept_from_mapping('CIEL', '159427')
+	group by o.encounter_id) i on i.encounter_id = t.encounter_id
+set t.hiv_test_result = i.ret;
+
+-- UPDATE temp_obgyn_visit SET received_post_test_counseling = obs_value_coded_list(encounter_id, 'CIEL', '159382', 'en');
+update temp_obgyn_visit t 
+inner join 
+	(select o.encounter_id, GROUP_CONCAT(distinct  concept_name(o.value_coded,'en') separator ' | ') as ret
+	from temp_mch_obs o
+	where o.concept_id = concept_from_mapping('CIEL', '159382')
+	group by o.encounter_id) i on i.encounter_id = t.encounter_id
+set t.received_post_test_counseling = i.ret;
+
+-- UPDATE temp_obgyn_visit SET post_test_counseling_date = obs_value_datetime(encounter_id, 'PIH', '11525');
+update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('CIEL', '11525')
+set t.post_test_counseling_date = o.value_datetime
+;
 
 UPDATE temp_obgyn_visit te 
 SET 
@@ -622,7 +673,7 @@ INSERT INTO temp_diagnosis_obs_id(encounter_id, obs_id)
 SELECT
                         encounter_id, obs_id
                     FROM
-                        obs
+                        temp_mch_obs
                     WHERE
                         concept_id = @visit_diagnosis_concept_id
 AND voided = 0
@@ -645,7 +696,7 @@ INSERT INTO temp_primary_diagnosis_obs_group_id(encounter_id, obs_id, obs_group_
 SELECT
 encounter_id, obs_id, obs_group_id
                     FROM
-                        obs
+                        temp_mch_obs
                     WHERE
                         concept_id = @diagnosis_order
                             AND voided = 0
@@ -667,7 +718,7 @@ INSERT INTO temp_primary_diagnosis_stage (encounter_id, value_coded)
 SELECT
 encounter_id, value_coded
                     FROM
-                        obs
+                        temp_mch_obs
                     WHERE
                         concept_id = @diagnosis
                             AND voided = 0
@@ -706,7 +757,7 @@ INSERT INTO temp_secondary_diagnosis_obs_group_id(encounter_id, obs_id, obs_grou
 SELECT
 encounter_id, obs_id, obs_group_id
                     FROM
-                        obs
+                        temp_mch_obs
                     WHERE
                         concept_id = @diagnosis_order
                             AND voided = 0
@@ -728,7 +779,7 @@ INSERT INTO temp_secondary_diagnosis_stage (encounter_id, value_coded)
 SELECT
 encounter_id, value_coded
                     FROM
-                        obs
+                        temp_mch_obs
                     WHERE
                         concept_id = @diagnosis
                             AND voided = 0
@@ -753,43 +804,64 @@ SET t.secondary_diagnosis = tp.secondary_diagnosis;
 -- non coded diagnosis    
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Diagnosis or problem, non-coded') 
 SET 
     diagnosis_non_coded = value_text;
 
-UPDATE temp_obgyn_visit te 
-SET 
-    procedures = OBS_VALUE_CODED_LIST(te.encounter_id, 'CIEL', '1651', 'en');
+-- UPDATE temp_obgyn_visit te 
+-- SET 
+--    procedures = OBS_VALUE_CODED_LIST(te.encounter_id, 'CIEL', '1651', 'en');
+update temp_obgyn_visit t 
+inner join 
+	(select o.encounter_id, GROUP_CONCAT(distinct  concept_name(o.value_coded,'en') separator ' | ') as ret
+	from temp_mch_obs o
+	where o.concept_id = concept_from_mapping('CIEL', '1651')
+	group by o.encounter_id) i on i.encounter_id = t.encounter_id
+set t.procedures = i.ret;
 
-UPDATE temp_obgyn_visit te 
-SET 
-    procedures_other = OBS_VALUE_TEXT(te.encounter_id, 'CIEL', '165264');
+-- UPDATE temp_obgyn_visit te 
+-- SET 
+--    procedures_other = OBS_VALUE_TEXT(te.encounter_id, 'CIEL', '165264');
+update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('CIEL', '165264')
+set t.procedures_other = o.value_text
+;   
 
-UPDATE temp_obgyn_visit te 
-SET 
-    family_planning_use = OBS_VALUE_CODED_LIST(te.encounter_id, 'CIEL', '965', 'en');
+-- UPDATE temp_obgyn_visit te 
+-- SET 
+--     family_planning_use = OBS_VALUE_CODED_LIST(te.encounter_id, 'CIEL', '965', 'en');
+update temp_obgyn_visit t 
+inner join 
+	(select o.encounter_id, GROUP_CONCAT(distinct  concept_name(o.value_coded,'en') separator ' | ') as ret
+	from temp_mch_obs o
+	where o.concept_id = concept_from_mapping('CIEL', '965')
+	group by o.encounter_id) i on i.encounter_id = t.encounter_id
+set t.family_planning_use = i.ret;
     
+update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Family planning construct')
+set t.family_planning_group = o.obs_id;
+
+
 UPDATE temp_obgyn_visit te
         JOIN
-    obs o ON te.encounter_id = o.encounter_id
+    temp_mch_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
-        AND o.obs_group_id IN (SELECT 
-            obs_id
-        FROM
-            obs
-        WHERE
-            voided = 0
-                AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'Family planning construct')) 
+        AND o.obs_group_id = te.family_planning_group
 SET 
-    family_planning_method = CONCEPT_NAME(value_coded, 'en');
+    family_planning_method = CONCEPT_NAME(o.value_coded, 'en');
  
-UPDATE temp_obgyn_visit te 
-SET 
-    fp_counseling_received = OBS_VALUE_CODED_LIST(te.encounter_id, 'CIEL', '165309', 'en');
-   
+update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '165309')
+set t.fp_counseling_received = concept_name(o.value_coded,'en');
+
+update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13006')
+set t.condoms_provided = concept_name(o.value_coded,'en');
+
 SELECT 
     ZLEMR(patient_id),
     encounter_id,
@@ -852,6 +924,7 @@ SELECT
     IF(family_planning_use LIKE '%Yes%', 1, NULL),
     family_planning_method,
     IF(fp_counseling_received LIKE '%Family planning counseling%', 1, NULL),
+    condoms_provided,
     risk_factors,
     index_asc,
     index_desc
