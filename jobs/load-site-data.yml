@@ -16,6 +16,7 @@ configuration:
         iterations:
           - tableName: "all_lab_orders"
           - tableName: "all_lab_results"
+          - tableName: "all_vitals"
           - tableName: "covid_admission"
           - tableName: "covid_diagnoses"
           - tableName: "covid_discharge"
