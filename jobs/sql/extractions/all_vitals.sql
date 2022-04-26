@@ -2,28 +2,30 @@ SET sql_safe_updates = 0;
 
 SET @vitals_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '4fb47712-34a6-40d2-8ed3-e153abbd25b7');
 
-
 DROP TEMPORARY TABLE IF EXISTS temp_vitals;
 CREATE TEMPORARY TABLE temp_vitals
 (
-    patient_id			    int(11),
-	  emr_id          	  VARCHAR(25),
-    encounter_id		    int(11),
+    all_vitals_id		int(11) PRIMARY KEY AUTO_INCREMENT,
+	patient_id			int(11),
+	emr_id          	VARCHAR(25),
+    encounter_id		int(11),
     encounter_location	varchar(255),
     encounter_datetime	datetime,
     encounter_provider 	VARCHAR(255),
-    date_entered		    datetime,
-    user_entered		    varchar(255),
-    height				      double,
-    weight				      double,
-    temperature			    double,
-    heart_rate			    double,
-    respiratory_rate	  double,
-    bp_systolic			    double,
-    bp_diastolic		    double,
-    o2_saturation		    double,
-    muac_mm				      double,
-    chief_complaint		  text
+    date_entered		datetime,
+    user_entered		varchar(255),
+    height				double,
+    weight				double,
+    temperature			double,
+    heart_rate			double,
+    respiratory_rate	double,
+    bp_systolic			double,
+    bp_diastolic		double,
+    o2_saturation		double,
+    muac_mm				double,
+    chief_complaint		text,
+    index_asc			int,
+    index_desc			int
     );
 
 create index temp_vitals_ei on temp_vitals(encounter_id);
@@ -113,22 +115,84 @@ inner join temp_obs o ON t.encounter_id = o.encounter_id
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '10137') 
 SET chief_complaint = o.value_text;
 
+-- The indexes are calculated using the ecnounter_date
+### index ascending
+DROP TEMPORARY TABLE IF EXISTS temp_vitals_index_asc;
+CREATE TEMPORARY TABLE temp_vitals_index_asc
+(
+    SELECT
+            all_vitals_id,
+    		emr_id,
+            encounter_datetime,
+            date_entered,
+            index_asc
+FROM (SELECT
+            @r:= IF(@u = emr_id, @r + 1,1) index_asc,
+            encounter_datetime,
+            date_entered,
+            all_vitals_id,
+            emr_id,
+            @u:= emr_id
+      FROM temp_vitals,
+                    (SELECT @r:= 1) AS r,
+                    (SELECT @u:= 0) AS u
+            ORDER BY emr_id, encounter_datetime ASC, date_entered ASC
+        ) index_ascending );
+
+create index temp_vitals_index_asc_avi on temp_vitals_index_asc(all_vitals_id);
+
+update temp_vitals t
+inner join temp_vitals_index_asc tvia on tvia.all_vitals_id = t.all_vitals_id
+set t.index_asc = tvia.index_asc;
+
+### index descending
+DROP TEMPORARY TABLE IF EXISTS temp_vitals_index_desc;
+CREATE TEMPORARY TABLE temp_vitals_index_desc
+(
+    SELECT
+            all_vitals_id,
+    		emr_id,
+            encounter_datetime,
+            date_entered,
+            index_desc
+FROM (SELECT
+            @r:= IF(@u = emr_id, @r + 1,1) index_desc,
+            encounter_datetime,
+            date_entered,
+            all_vitals_id,
+            emr_id,
+            @u:= emr_id
+      FROM temp_vitals,
+                    (SELECT @r:= 1) AS r,
+                    (SELECT @u:= 0) AS u
+            ORDER BY emr_id, encounter_datetime desc, date_entered desc
+        ) index_descending );
+
+create index temp_vitals_index_desc_avi on temp_vitals_index_desc(all_vitals_id);
+
+update temp_vitals t
+inner join temp_vitals_index_desc tvid on tvid.all_vitals_id = t.all_vitals_id
+set t.index_desc = tvid.index_desc;
+
 select 
-emr_id ,
-encounter_id,
-encounter_location,
-encounter_datetime,
-encounter_provider ,
-date_entered,
-user_entered,
-height,
-weight,
-temperature,
-heart_rate,
-respiratory_rate,
-bp_systolic,
-bp_diastolic,
-o2_saturation,
-muac_mm,
-chief_complaint 
+	all_vitals_id,
+	emr_id ,
+	encounter_id,
+	encounter_location,
+	encounter_datetime,
+	encounter_provider,
+	date_entered,
+	user_entered,
+	height,
+	weight,
+	temperature,
+	heart_rate,
+	respiratory_rate,
+	bp_systolic,
+	bp_diastolic,
+	o2_saturation,
+	muac_mm,
+	chief_complaint,
+	index_asc,
+	index_desc
 from temp_vitals; 
