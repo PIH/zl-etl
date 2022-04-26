@@ -1,6 +1,6 @@
 create table tb_screening
 (
-    zlemr_id            varchar(50),
+    emr_id              varchar(50),
     dossier_id          varchar(50),
     encounter_id        int,
     screening_location  varchar(255),
