@@ -79,6 +79,9 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     family_planning_use VARCHAR(5), 
     family_planning_method VARCHAR(255), 
     fp_counseling_received VARCHAR(255),
+    fp_start_date	DATETIME,
+    fp_end_date		DATETIME,
+    implant_date	DATETIME,
     condoms_provided VARCHAR(5),
     index_asc          INT,
     index_desc         INT
@@ -862,6 +865,18 @@ update temp_obgyn_visit t
 inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13006')
 set t.condoms_provided = concept_name(o.value_coded,'en');
 
+update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11466')
+set t.fp_start_date = o.value_datetime;
+
+update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11465')
+set t.fp_end_date = o.value_datetime;
+
+update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id = CONCEPT_FROM_MAPPING('PIH', '3203')
+set t.implant_date = o.value_datetime;
+
 SELECT 
     ZLEMR(patient_id),
     encounter_id,
@@ -924,6 +939,9 @@ SELECT
     IF(family_planning_use LIKE '%Yes%', 1, NULL),
     family_planning_method,
     IF(fp_counseling_received LIKE '%Family planning counseling%', 1, NULL),
+    fp_start_date,
+    fp_end_date,
+    implant_date,
     condoms_provided,
     risk_factors,
     index_asc,
