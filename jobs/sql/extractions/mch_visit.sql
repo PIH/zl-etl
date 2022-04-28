@@ -91,7 +91,7 @@ CREATE INDEX temp_obgyn_visit_patient_id ON temp_obgyn_visit (patient_id);
 CREATE INDEX temp_obgyn_visit_encounter_id ON temp_obgyn_visit (encounter_id);
 
 INSERT INTO temp_obgyn_visit(patient_id, encounter_id, visit_date, visit_site, date_entered)
-SELECT patient_id, encounter_id, DATE(encounter_datetime), LOCATION_NAME(location_id), date_created FROM encounter WHERE voided = 0 AND encounter_type = @obgyn_encounter;
+SELECT patient_id, encounter_id, DATE(encounter_datetime), LOCATION_NAME(location_id), date_created FROM encounter WHERE voided = 0 AND encounter_type = @obgyn_encounter limit 100;
 
 
 UPDATE temp_obgyn_visit t 
@@ -145,6 +145,8 @@ SET consultation_type = CONCEPT_NAME(value_coded, 'en');
 UPDATE temp_obgyn_visit t JOIN temp_mch_obs o ON o.encounter_id = t.encounter_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH','REASON FOR VISIT')
 SET consultation_type_fp = CONCEPT_NAME(value_coded, 'en');
 
+update temp_obgyn_visit t 
+set user_entered = encounter_creator(t.encounter_id);
 
 # pregnancy
 DROP TEMPORARY TABLE IF EXISTS temp_obgyn_pregnacy;
