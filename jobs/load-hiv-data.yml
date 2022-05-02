@@ -11,7 +11,7 @@ configuration:
         iterations:
           - tableName: "all_lab_orders"
           - tableName: "all_lab_results"
-          - tableName: "allVitals"
+          - tableName: "all_vitals"
           - tableName: "hiv_dispensing"
           - tableName: "hiv_patient"
           - tableName: "hiv_patient_program"
