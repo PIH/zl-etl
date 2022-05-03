@@ -1,4 +1,3 @@
-
 DROP TABLE IF EXISTS #temp_export;
 CREATE TABLE #temp_export
 (
@@ -63,7 +62,7 @@ update t
 	gender = p.gender ,
 	birthdate = p.birthdate ,
 	age = p.age,
-	address = p.department + ', ' + p.commune + ', ' + section_communal  ,
+	address = CONCAT(p.address,' ', p.department,' ',p.commune,' ',section_communal) ,
 	locality = p.locality,
 	phone_number = p.telephone_number,
 	site = p.latest_enrollment_location 
@@ -72,19 +71,34 @@ inner join hiv_patient p on p.emr_id = t.emr_id
  ;
 
 update t 
-set initial_arv_regimen = hr.drug_short_name,
-	arv_start_date = hr.start_date 
+set arv_start_date = hr.start_date 
 from #temp_export t
 inner join hiv_regimens hr on hr.order_id  = 
 	(select top 1 order_id from hiv_regimens hr2 
 	where order_action = 'NEW'	
 	and drug_category = 'ART'
 	and hr2.emr_id = t.emr_id 
-	order by hr2.start_date desc, hr2.end_date desc );
+	order by hr2.start_date asc, hr2.end_date asc );
 
 -- updating current drugs patient is on
 -- all of the STUFF nonsense is what you have to do in this version of SQL Server to do the 
 -- equivalent of group_concat or string_agg
+update t
+set initial_arv_regimen = reg.drugs
+from #temp_export t
+inner join 
+	(SELECT emr_id, STUFF(
+	         (SELECT DISTINCT ',' + drug_short_name
+	          FROM hiv_regimens r
+   	          inner join #temp_export t on t.emr_id = r.emr_id and t.arv_start_date = r.start_date 
+	          WHERE r.emr_id = r2.emr_id
+	          and order_action = 'NEW'	
+			  and drug_category = 'ART'
+			  FOR XML PATH (''))
+	          , 1, 1, '')  AS drugs
+	FROM hiv_regimens AS r2
+	GROUP BY emr_id) reg on reg.emr_id = t.emr_id;
+
 update t
 set arv_regimen = reg.drugs
 from #temp_export t
@@ -92,6 +106,7 @@ inner join
 	(SELECT emr_id, STUFF(
 	         (SELECT DISTINCT ',' + drug_short_name
 	          FROM hiv_regimens r
+--   	          inner join #temp_export t on t.emr_id = r.emr_id and t.arv_start_date = r.start_date 
 	          WHERE r.emr_id = r2.emr_id
 	          and order_action = 'NEW'	
 			  and drug_category = 'ART'
@@ -99,8 +114,8 @@ inner join
 	          FOR XML PATH (''))
 	          , 1, 1, '')  AS drugs
 	FROM hiv_regimens AS r2
-	GROUP BY emr_id) reg on reg.emr_id = t.emr_id
-;
+	GROUP BY emr_id) reg on reg.emr_id = t.emr_id;
+
 
 update t 
 set last_visit_date = hv.visit_date,
@@ -273,4 +288,5 @@ last_height,
 last_height_date,
 combined_status "status",
 combined_status_date "status_date"
-from #temp_export;
+from #temp_export
+;
