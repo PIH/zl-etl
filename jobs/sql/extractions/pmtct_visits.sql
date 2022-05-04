@@ -24,7 +24,7 @@ CREATE TEMPORARY TABLE temp_pmtct_visit (
 );
 
 INSERT INTO temp_pmtct_visit (visit_id, encounter_id, patient_id, emr_id, date_entered, user_entered)
-SELECT visit_id, encounter_id, patient_id, zlemr(patient_id), date_created, username(creator) FROM encounter WHERE encounter_type IN (@initial_pmtct_encounter, @followup_pmtct_encounter) AND voided = 0;
+SELECT visit_id, encounter_id, patient_id, ZLEMR(patient_id), date_created, USERNAME(creator) FROM encounter WHERE encounter_type IN (@initial_pmtct_encounter, @followup_pmtct_encounter) AND voided = 0;
 
 -- visit date
 UPDATE temp_pmtct_visit t SET t.visit_date = VISIT_DATE(t.encounter_id);
@@ -40,14 +40,14 @@ SET @relationship = CONCEPT_FROM_MAPPING('PIH', '13265');
 SET @first_name = CONCEPT_FROM_MAPPING('PIH', 'FIRST NAME');
 SET @last_name = CONCEPT_FROM_MAPPING('PIH', 'LAST NAME');
 SET @phone = CONCEPT_FROM_MAPPING('PIH', 'TELEPHONE NUMBER OF CONTACT');
-UPDATE temp_pmtct_visit t SET has_provided_contact = (select 1 from obs o where voided = 0 and o.encounter_id = t.encounter_id and 
-o.concept_id in (@relationship, @first_name, @last_name, @phone) group by o.encounter_id); 
+UPDATE temp_pmtct_visit t SET has_provided_contact = (SELECT 1 FROM obs o WHERE voided = 0 AND o.encounter_id = t.encounter_id AND 
+o.concept_id IN (@relationship, @first_name, @last_name, @phone) GROUP BY o.encounter_id); 
 
 
 
 -- tb screening date
-drop table if exists temp_pmtct_tb_visits;
-create table temp_pmtct_tb_visits
+DROP TABLE IF EXISTS temp_pmtct_tb_visits;
+CREATE TABLE temp_pmtct_tb_visits
 (
 patient_id INT(11),
 encounter_id INT(11),
@@ -77,7 +77,7 @@ SET @dyspnea_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '5960');
 SET @chest_pain_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '136');
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o on t.encounter_id = o.encounter_id and value_coded in 
+INNER JOIN obs o ON t.encounter_id = o.encounter_id AND value_coded IN 
 (
 @fever_result_concept_id,
 @weight_loss_result_concept_id,
@@ -88,7 +88,7 @@ INNER JOIN obs o on t.encounter_id = o.encounter_id and value_coded in
 @dyspnea_result_concept_id,
 @chest_pain_result_concept_id
 )
-set t.obs_date = o.obs_datetime;
+SET t.obs_date = o.obs_datetime;
 
 UPDATE temp_pmtct_tb_visits t
 INNER JOIN obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @fever_result_concept_id
@@ -132,7 +132,7 @@ UPDATE temp_pmtct_tb_visits t SET tb_screening_date = IF(cough_result_concept = 
               IF(chest_pain_result_concept = @present, t.obs_date,
                 NULL)))))))); 
 
-UPDATE temp_pmtct_visit t SET tb_screening_date = (select tb_screening_date from temp_pmtct_tb_visits tp where tp.encounter_id = t.encounter_id);
+UPDATE temp_pmtct_visit t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id);
 
 -- index asc
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit_index_asc;
@@ -154,7 +154,7 @@ CREATE TEMPORARY TABLE temp_pmtct_visit_index_asc
       FROM temp_pmtct_visit,
             (SELECT @r:= 1) AS r,
             (SELECT @u:= 0) AS u
-      ORDER BY patient_id, visit_date ASC, visit_id ASC
+      ORDER BY patient_id, visit_date ASC, visit_id ASC, encounter_id ASC
         ) index_ascending );
 
 -- index desc
@@ -177,11 +177,11 @@ CREATE TEMPORARY TABLE temp_pmtct_visit_index_desc
       FROM temp_pmtct_visit,
             (SELECT @r:= 1) AS r,
             (SELECT @u:= 0) AS u
-      ORDER BY patient_id, visit_date DESC, visit_id DESC
+      ORDER BY patient_id, visit_date DESC, visit_id DESC, encounter_id DESC
         ) index_descending );
  
-UPDATE temp_pmtct_visit t SET t.index_asc = (SELECT index_asc FROM temp_pmtct_visit_index_asc a WHERE t.visit_id = a.visit_id);
-UPDATE temp_pmtct_visit t SET t.index_desc = (SELECT index_desc FROM temp_pmtct_visit_index_desc b WHERE t.visit_id = b.visit_id);
+UPDATE temp_pmtct_visit t SET t.index_asc = (SELECT index_asc FROM temp_pmtct_visit_index_asc a WHERE t.visit_id = a.visit_id AND t.encounter_id = a.encounter_id);
+UPDATE temp_pmtct_visit t SET t.index_desc = (SELECT index_desc FROM temp_pmtct_visit_index_desc b WHERE t.visit_id = b.visit_id AND t.encounter_id = b.encounter_id);
 
 SELECT 
 visit_id,

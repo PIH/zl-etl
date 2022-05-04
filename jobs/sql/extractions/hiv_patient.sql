@@ -13,8 +13,8 @@ SET @hiv_dispensing_encounter = ENCOUNTER_TYPE('HIV drug dispensing');
 SET @mothers_first_name = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'First Name of Mother');
 SET @telephone_number = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'Telephone Number');
 
-DROP TABLE IF EXISTS temp_patient;
-CREATE TABLE temp_patient
+DROP TEMPORARY TABLE IF EXISTS temp_patient;
+CREATE TEMPORARY TABLE temp_patient
 (
     patient_id                  INT(11),
     patient_program_id			INT(11),

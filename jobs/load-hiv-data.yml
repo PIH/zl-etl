@@ -4,7 +4,7 @@ configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
     - type: "iterating-job"
-      description: "Importing from ${siteName} to ${tableName} using partition ${partitionNum}"
+      description: "Importing from ${dataset} to ${siteName} using partition ${partitionNum}"
       configuration:
         jobTemplate:
           path: "import-to-table-partition.yml"
