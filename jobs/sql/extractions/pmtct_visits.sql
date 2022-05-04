@@ -46,8 +46,8 @@ o.concept_id IN (@relationship, @first_name, @last_name, @phone) GROUP BY o.enco
 
 
 -- tb screening date
-DROP TABLE IF EXISTS temp_pmtct_tb_visits;
-CREATE TABLE temp_pmtct_tb_visits
+DROP TEMPORARY TABLE IF EXISTS temp_pmtct_tb_visits;
+CREATE TEMPORARY TABLE temp_pmtct_tb_visits
 (
 patient_id INT(11),
 encounter_id INT(11),
