@@ -1,3 +1,4 @@
+
 DROP TABLE IF EXISTS #temp_export;
 CREATE TABLE #temp_export
 (
@@ -80,6 +81,10 @@ inner join hiv_regimens hr on hr.order_id  =
 	and hr2.emr_id = t.emr_id 
 	order by hr2.start_date asc, hr2.end_date asc );
 
+update t
+set months_on_art = DATEDIFF(month, arv_start_date, GETDATE())
+from #temp_export t;
+
 -- updating current drugs patient is on
 -- all of the STUFF nonsense is what you have to do in this version of SQL Server to do the 
 -- equivalent of group_concat or string_agg
@@ -133,10 +138,23 @@ inner join hiv_dispensing hd on hd.emr_id = t.emr_id and hd.dispense_date_descen
 ;
 
 update t
-set days_late_for_next_visit = DATEDIFF(day, next_visit_date, GETDATE()),
-	days_late_for_next_med_pickup = DATEDIFF(day, next_med_pickup_date, GETDATE())
+set days_late_for_next_visit = 
+	CASE
+		when DATEDIFF(day, next_visit_date, GETDATE())>0 then DATEDIFF(day, next_visit_date, GETDATE())
+		else 0
+	END
 from #temp_export t
-;
+;	
+
+update t
+set days_late_for_next_med_pickup = 
+	CASE
+		when DATEDIFF(day, next_med_pickup_date, GETDATE())>0 then DATEDIFF(day, next_med_pickup_date, GETDATE())
+		else 0
+	END
+from #temp_export t
+;	
+
 
 update t 
 set last_viral_load_date = hv.vl_sample_taken_date ,
@@ -147,7 +165,7 @@ inner join hiv_viral_load hv on hv.emr_id = t.emr_id and hv.order_desc  = 1
 ;
 
 update t 
-set months_since_last_viral_load = DATEDIFF(day, t.last_viral_load_date , GETDATE())
+set months_since_last_viral_load = DATEDIFF(month, t.last_viral_load_date , GETDATE())
 from #temp_export t
 
 -- last weight
@@ -220,11 +238,13 @@ set med_pickup_status =
 	END
 from #temp_export t;
 
+
+-- need to fix this:
 update t 
 set med_pickup_status_date = 
 	CASE
 		when DATEDIFF(day, COALESCE(t.latest_next_dispense_date,t.enrollment_date),GETDATE()) <= 28 
-			then  COALESCE(t.latest_next_dispense_date,t.enrollment_date)
+			then  COALESCE(t.last_med_pickup_date,t.enrollment_date)
 		else 
 			CASE 
 				when t.latest_next_dispense_date is not null then DATEADD(day,28,t.latest_next_dispense_date)
@@ -252,6 +272,7 @@ set combined_status_date =
 		else med_pickup_status_date
 	END	
 from #temp_export t;
+
 
 select 
 emr_id,
@@ -289,4 +310,45 @@ last_height_date,
 combined_status "status",
 combined_status_date "status_date"
 from #temp_export
+;
+
+DROP TABLE IF EXISTS hiv_patient_summary_status;
+
+SELECT
+emr_id,
+legacy_emr_id,
+first_name,
+last_name,
+gender,
+birthdate,
+age,
+accompagnateur,
+address ,
+locality,
+phone_number ,
+arv_start_date,
+initial_arv_regimen ,
+arv_regimen,
+months_on_art ,
+site,
+last_visit_date ,
+last_med_pickup_date ,
+last_med_pickup_months_dispensed ,
+last_med_pickup_treatment_line ,
+next_visit_date ,
+next_med_pickup_date ,
+days_late_for_next_visit ,
+days_late_for_next_med_pickup ,
+last_viral_load_date ,
+last_viral_load_numeric ,
+last_viral_load_undetected ,
+months_since_last_viral_load ,
+last_weight,
+last_weight_date,
+last_height,
+last_height_date,
+combined_status "status",
+combined_status_date "status_date"
+into hiv_patient_summary_status
+FROM #temp_export
 ;
