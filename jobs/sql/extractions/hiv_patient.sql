@@ -13,8 +13,8 @@ SET @hiv_dispensing_encounter = ENCOUNTER_TYPE('HIV drug dispensing');
 SET @mothers_first_name = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'First Name of Mother');
 SET @telephone_number = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'Telephone Number');
 
-DROP TEMPORARY TABLE IF EXISTS temp_patient;
-CREATE TEMPORARY TABLE temp_patient
+DROP TABLE IF EXISTS temp_patient;
+CREATE TABLE temp_patient
 (
     patient_id                  INT(11),
     patient_program_id			INT(11),
@@ -111,14 +111,16 @@ SET gender = GENDER(patient_id),
     given_name = PERSON_GIVEN_NAME(patient_id),
     family_name = PERSON_FAMILY_NAME(patient_id);
 
-UPDATE temp_patient t JOIN current_name_address c ON c.person_id = t.patient_id
-SET 
-t.department = c.department,
-t.commune = c.commune,
-t.section_communal = c.section_communal,
-t.locality = c.locality,
-t.street_landmark = c.street_landmark,
-t.age = ROUND(DATEDIFF(NOW(),c.birthdate) / 365.25 , 1);
+
+UPDATE temp_patient t set department = person_address_state_province(patient_id);
+UPDATE temp_patient t set commune = person_address_city_village(patient_id);
+UPDATE temp_patient t set section_communal = person_address_three(patient_id);
+UPDATE temp_patient t set locality = person_address_one(patient_id);
+-- note that "street landmark" and "address" are the same data.  Note sure what downstream processes use it, so I left it like that
+UPDATE temp_patient t set street_landmark = person_address_two(patient_id);
+UPDATE temp_patient t set address = person_address_two(patient_id);
+
+update temp_patient t set age =  ROUND(DATEDIFF(NOW(),t.birthdate) / 365.25 , 1);
 
 ## locations
 -- initial_enrollment_location : The registration location for the patient
@@ -139,6 +141,7 @@ SET birthplace_locality = o.value_text;
 UPDATE temp_patient t JOIN obs o ON t.patient_id = o.person_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'State Province')
 SET birthplace_province = o.value_text;
 
+
 UPDATE temp_patient t JOIN obs m ON t.patient_id = m.person_id AND 
 m.voided = 0 AND concept_id = CONCEPT_FROM_MAPPING('PIH','CIVIL STATUS')
 SET marital_status = CONCEPT_NAME(value_coded, 'en');
@@ -154,10 +157,6 @@ SET mothers_first_name = m.value;
 UPDATE temp_patient t JOIN person_attribute m ON t.patient_id = m.person_id AND 
 m.voided = 0 AND  m.person_attribute_type_id = @telephone_number
 SET telephone_number = m.value;
-
-UPDATE temp_patient t JOIN person_address m ON t.patient_id = m.person_id AND 
-m.voided = 0
-SET address = address2;
 
 # key populations
 DROP TEMPORARY TABLE IF EXISTS temp_key_popn_encounter;
@@ -426,6 +425,7 @@ INSERT INTO temp_socio_hiv_intake (patient_id, encounter_id)
 SELECT patient_id, MAX(encounter_id) FROM encounter WHERE encounter_id IN (SELECT encounter_id FROM encounter WHERE voided = 0 AND encounter_type 
 = @hiv_initial_encounter_type) AND voided = 0 GROUP BY patient_id;
 
+-- these are slow:
 UPDATE temp_socio_economics t SET emr_id = PATIENT_IDENTIFIER(patient_id, METADATA_UUID('org.openmrs.module.emrapi', 'emr.primaryIdentifierType'));
 UPDATE temp_socio_hiv_intake t SET socio_smoker  = OBS_VALUE_CODED_LIST(t.encounter_id, 'PIH', 'HISTORY OF TOBACCO USE', 'en');
 UPDATE temp_socio_hiv_intake t SET socio_smoker_years = OBS_VALUE_NUMERIC(t.encounter_id, 'CIEL', '159931');
