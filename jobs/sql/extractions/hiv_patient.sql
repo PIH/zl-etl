@@ -425,15 +425,69 @@ INSERT INTO temp_socio_hiv_intake (patient_id, encounter_id)
 SELECT patient_id, MAX(encounter_id) FROM encounter WHERE encounter_id IN (SELECT encounter_id FROM encounter WHERE voided = 0 AND encounter_type 
 = @hiv_initial_encounter_type) AND voided = 0 GROUP BY patient_id;
 
--- these are slow:
 UPDATE temp_socio_economics t SET emr_id = PATIENT_IDENTIFIER(patient_id, METADATA_UUID('org.openmrs.module.emrapi', 'emr.primaryIdentifierType'));
-UPDATE temp_socio_hiv_intake t SET socio_smoker  = OBS_VALUE_CODED_LIST(t.encounter_id, 'PIH', 'HISTORY OF TOBACCO USE', 'en');
+
+-- note that I noticed that the following statements for socio indicators in the intake form were very slow.
+-- to alleviate this, I loaded all of the obs for the encounters in the "unhealthy habits" set into a smaller temp table.
+-- all of the columns are populated from that table 
+DROP TEMPORARY TABLE IF EXISTS temp_hiv_intake_obs;
+create temporary table temp_hiv_intake_obs 
+select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.comments 
+from obs o
+inner join temp_socio_hiv_intake t on t.encounter_id = o.encounter_id
+where o.voided = 0
+and o.concept_id in
+	(select concept_id from concept_set cs where cs.concept_set =  concept_from_mapping('PIH','11950'))
+;
+
+CREATE INDEX temp_hiv_intake_obs_ei ON temp_hiv_intake_obs (encounter_id);
+
+update temp_socio_hiv_intake t
+inner join temp_hiv_intake_obs o on o.encounter_id = t.encounter_id
+	and o.concept_id = concept_from_mapping('PIH', 'HISTORY OF TOBACCO USE')
+set socio_smoker = concept_name(o.value_coded, 'en');
+
+update temp_socio_hiv_intake t
+inner join temp_hiv_intake_obs o on o.encounter_id = t.encounter_id
+	and o.concept_id = concept_from_mapping('CIEL', '159931')
+set socio_smoker_years = o.value_numeric;
+
+update temp_socio_hiv_intake t
+inner join temp_hiv_intake_obs o on o.encounter_id = t.encounter_id
+	and o.concept_id = concept_from_mapping('PIH', '11949')
+set socio_smoker_cigarette_per_day = o.value_numeric;
+
+update temp_socio_hiv_intake t
+inner join temp_hiv_intake_obs o on o.encounter_id = t.encounter_id
+	and o.concept_id = concept_from_mapping('PIH', 'HISTORY OF ALCOHOL USE')
+set socio_alcohol = concept_name(o.value_coded, 'en');
+
+update temp_socio_hiv_intake t
+inner join temp_hiv_intake_obs o on o.encounter_id = t.encounter_id
+	and o.concept_id = concept_from_mapping( 'PIH', '3342')
+	and o.value_coded = concept_from_mapping('PIH', 'OTHER')
+set socio_alcohol_type = o.comments;
+
+update temp_socio_hiv_intake t
+inner join temp_hiv_intake_obs o on o.encounter_id = t.encounter_id
+	and o.concept_id = concept_from_mapping('PIH', 'ALCOHOLIC DRINKS PER DAY')
+set socio_alcohol_drinks_per_day = o.value_numeric;
+
+update temp_socio_hiv_intake t
+inner join temp_hiv_intake_obs o on o.encounter_id = t.encounter_id
+	and o.concept_id = concept_from_mapping('PIH', 'NUMBER OF DAYS PER WEEK ALCOHOL IS USED')
+set socio_alcohol_days_per_week = o.value_numeric;
+
+/*
+-- UPDATE temp_socio_hiv_intake t SET socio_smoker  = OBS_VALUE_CODED_LIST(t.encounter_id, 'PIH', 'HISTORY OF TOBACCO USE', 'en');
 UPDATE temp_socio_hiv_intake t SET socio_smoker_years = OBS_VALUE_NUMERIC(t.encounter_id, 'CIEL', '159931');
 UPDATE temp_socio_hiv_intake t SET socio_smoker_cigarette_per_day = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH', '11949');
 UPDATE temp_socio_hiv_intake t SET socio_alcohol = OBS_VALUE_CODED_LIST(t.encounter_id, 'PIH', 'HISTORY OF ALCOHOL USE', 'en');
 UPDATE temp_socio_hiv_intake t SET socio_alcohol_type = OBS_COMMENTS(t.encounter_id, 'PIH', '3342', 'PIH', 'OTHER');
+
 UPDATE temp_socio_hiv_intake t SET socio_alcohol_drinks_per_day = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH', 'ALCOHOLIC DRINKS PER DAY');
 UPDATE temp_socio_hiv_intake t SET socio_alcohol_days_per_week = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH','NUMBER OF DAYS PER WEEK ALCOHOL IS USED');
+*/
 
 DROP TEMPORARY TABLE IF EXISTS temp_hiv_vitals_weight;
 CREATE TEMPORARY TABLE temp_hiv_vitals_weight (
