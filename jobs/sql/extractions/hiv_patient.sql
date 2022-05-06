@@ -126,8 +126,7 @@ update temp_patient t set age =  ROUND(DATEDIFF(NOW(),t.birthdate) / 365.25 , 1)
 -- initial_enrollment_location : The registration location for the patient
 -- latest_enrollment_location:  The current location of the hiv program
 UPDATE temp_patient t SET initial_enrollment_location = initialProgramLocation(t.patient_id, @hiv_program_id);
-UPDATE temp_patient t SET patient_program_id = (SELECT patient_program_id FROM patient_program p WHERE t.patient_id = p.patient_id AND 
-voided = 0 AND date_completed IS NULL AND program_id = @hiv_program_id);
+UPDATE temp_patient t set patient_program_id = mostRecentPatientProgramId(t.patient_id, @hiv_program_id);
 UPDATE temp_patient t SET program_location_id = PROGRAMLOCATIONID(t.patient_program_id);
 UPDATE temp_patient t SET latest_enrollment_location = currentProgramLocation(t.patient_id, @hiv_program_id);
 
@@ -484,7 +483,6 @@ UPDATE temp_socio_hiv_intake t SET socio_smoker_years = OBS_VALUE_NUMERIC(t.enco
 UPDATE temp_socio_hiv_intake t SET socio_smoker_cigarette_per_day = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH', '11949');
 UPDATE temp_socio_hiv_intake t SET socio_alcohol = OBS_VALUE_CODED_LIST(t.encounter_id, 'PIH', 'HISTORY OF ALCOHOL USE', 'en');
 UPDATE temp_socio_hiv_intake t SET socio_alcohol_type = OBS_COMMENTS(t.encounter_id, 'PIH', '3342', 'PIH', 'OTHER');
-
 UPDATE temp_socio_hiv_intake t SET socio_alcohol_drinks_per_day = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH', 'ALCOHOLIC DRINKS PER DAY');
 UPDATE temp_socio_hiv_intake t SET socio_alcohol_days_per_week = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH','NUMBER OF DAYS PER WEEK ALCOHOL IS USED');
 */
