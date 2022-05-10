@@ -246,7 +246,6 @@ SET transfer_internal_sitename = LOCATION_NAME(th.location_id);
 SELECT 
     status_id,
     zlemr(patient_id),
-    ZLEMR(patient_id) "zl_emr_id",
     LOCATION_NAME(location_id) "patient_location",
     transfer_internal_sitename,
     CONCEPT_NAME(status_concept_id, 'en') "status_outcome",
