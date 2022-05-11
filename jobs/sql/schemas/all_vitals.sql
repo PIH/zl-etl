@@ -2,7 +2,7 @@ CREATE TABLE all_vitals
 (
 all_vitals_id		int,	
 emr_id			varchar(25),
-encounter_id		int,
+encounter_id		varchar(25),
 encounter_location	varchar(255),
 encounter_datetime	datetime,
 encounter_provider 	VARCHAR(255),
