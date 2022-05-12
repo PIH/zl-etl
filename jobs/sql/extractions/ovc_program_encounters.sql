@@ -3,6 +3,7 @@
 ### If there is an ovc encounter (ovc followup with no ovc initial enocunter) but no program, this will show up too.
 
 SET sql_safe_updates = 0;
+set @partition = '${partitionNum}';
 SET @ovc_followup_encounter_type = ENCOUNTER_TYPE('OVC Follow-up');
 SET @ovc_initial_encounter_type = ENCOUNTER_TYPE('OVC Intake');
 
@@ -528,7 +529,7 @@ SELECT
 	ZLEMR(person_id),
 	patient_program_id,
 	LOCATION_NAME(location_id),
-	encounter_id,
+	concat(@partition,'-',encounter_id),
 	encounter_date,
     date_entered,
     user_entered,
