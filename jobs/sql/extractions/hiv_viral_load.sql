@@ -3,6 +3,7 @@
 SET sql_safe_updates = 0;
 
 SET @detected_viral_load = CONCEPT_FROM_MAPPING("CIEL", "1301");
+set @partition = '${partitionNum}';
 
 DROP TEMPORARY TABLE IF EXISTS temp_hiv_construct_encounters;
 DROP TEMPORARY TABLE IF EXISTS temp_vl_index_asc;
@@ -119,7 +120,7 @@ FROM (SELECT
             @r:= IF(@u = patient_id, @r + 1,1) index_desc,
             vl_sample_taken_date,
             date_entered,
-            encounter_id,
+            concat(@partition,'-',encounter_id),
             patient_id,
             @u:= patient_id
       FROM temp_hiv_construct_encounters,

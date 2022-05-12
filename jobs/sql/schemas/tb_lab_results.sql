@@ -2,7 +2,7 @@ CREATE TABLE tb_lab_results
 (
     emr_id                      VARCHAR(50),
     dossier_id                  VARCHAR(50),
-    encounter_id                INT,
+    encounter_id                VARCHAR(25),
     test_location               VARCHAR(255),
     specimen_collection_date    DATE,
     sample_taken_date_estimated VARCHAR(11),

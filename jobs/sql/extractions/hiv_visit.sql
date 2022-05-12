@@ -1,4 +1,6 @@
 	SET sql_safe_updates = 0;
+	set @partition = '${partitionNum}';
+	
 	SET @hiv_intake = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
 	SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
 	
@@ -102,7 +104,7 @@ inner join temp_visit_index_desc tvid on tvid.encounter_id = t.encounter_id
 set t.index_desc = tvid.index_desc;
 
 SELECT 
-encounter_id,
+concat(@partition,'-',encounter_id),
 emr_id,
 hivemr_v1,	
 encounter_type,

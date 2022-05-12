@@ -1,7 +1,7 @@
 CREATE TABLE covid_disposition
 (
     emr_id              VARCHAR(25),
-    encounter_id        INT,
+    encounter_id        VARCHAR(25),
     encounter_type      VARCHAR(255),
     location            TEXT,
     encounter_date      DATE,

@@ -1,4 +1,5 @@
 SET sql_safe_updates = 0;
+set @partition = '${partitionNum}';
 
 SET @obgyn_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'd83e98fd-dc7b-420f-aa3f-36f648b4483d');
 SET @visit_diagnosis_concept_id = CONCEPT_FROM_MAPPING('PIH', 'Visit Diagnoses');
@@ -881,7 +882,7 @@ set t.implant_date = o.value_datetime;
 
 SELECT 
     ZLEMR(patient_id),
-    encounter_id,
+    concat(@partition,'-',encounter_id),
     visit_date,
     visit_site,
     visit_type,

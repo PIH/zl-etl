@@ -1,3 +1,4 @@
+set @partition = '${partitionNum}';
 SELECT encounter_type_id into @HIV_dispensing from encounter_type where uuid = 'cc1720c9-3e4c-4fa8-a7ec-40eeaad1958c';
 
 drop temporary table if exists temp_HIV_dispensing;
@@ -314,7 +315,7 @@ where t.dispense_date_descending = 1;
 # final query
 Select
 zlemr(t.patient_id),
-t.encounter_id,
+concat(@partition,'-',t.encounter_id),
 t.dispense_date,
 t.dispense_site,
 t.date_entered,

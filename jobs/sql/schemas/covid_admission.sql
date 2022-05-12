@@ -1,6 +1,6 @@
 CREATE TABLE covid_admission
 (
-    encounter_id                 INT,
+    encounter_id                 VARCHAR(25),
     emr_id                       VARCHAR(25),
     encounter_datetime           DATETIME,
     date_entered                 DATETIME,

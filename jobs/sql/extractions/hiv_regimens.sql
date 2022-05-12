@@ -1,4 +1,5 @@
 SET sql_safe_updates = 0;
+set @partition = '${partitionNum}';
 
 select concept_from_mapping('CIEL',138405) into @HIV;
 select concept_from_mapping('CIEL',160538) into @pmtct;
@@ -295,7 +296,7 @@ order_id,
 previous_order_id,
 zlemr(patient_id),
 order_action,
-encounter_id,
+concat(@partition,'-',encounter_id),
 encounter_datetime,
 visit_location,
 date_entered,

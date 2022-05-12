@@ -9,7 +9,7 @@ CREATE TABLE echocardiogram_encounters
     date_echocardiogram                  DATETIME,
     encounter_location                   VARCHAR(255),
     provider                             VARCHAR(255),
-    encounter_id                         INT,
+    encounter_id                         VARCHAR(25),
     visit_id                             INT,
     systolic_bp                          FLOAT,
     diastolic_bp                         FLOAT,

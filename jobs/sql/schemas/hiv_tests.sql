@@ -1,7 +1,7 @@
 CREATE TABLE hiv_tests (
     emr_id                      VARCHAR(25),
     hivemr_v1_id                VARCHAR(25),
-    encounter_id                INT,
+    encounter_id                VARCHAR(25),
     specimen_collection_date    DATE,
     result_date                 DATE,
     test_type                   VARCHAR(100),

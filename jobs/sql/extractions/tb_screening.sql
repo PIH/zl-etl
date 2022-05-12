@@ -1,4 +1,5 @@
 SET sql_safe_updates = 0;
+set @partition = '${partitionNum}';
 
 SELECT encounter_type_id INTO @HIV_adult_intake FROM encounter_type WHERE uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33';
 SELECT encounter_type_id INTO @HIV_adult_followup FROM encounter_type WHERE uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33';
@@ -152,7 +153,7 @@ SET t.index_descending = tsid.index_desc;
 SELECT
 ZLEMR(patient_id) emr_id,
 DOSID(patient_id) dossier_id,
-encounter_id,
+concat(@partition,'-',encounter_id),
 screening_location, 
 IF(cough_result_concept = @present,'yes',IF(cough_result_concept = @absent,'no',NULL)) "cough_result",
 IF(fever_result_concept = @present,'yes',IF(fever_result_concept = @absent,'no',NULL)) "fever_result",

@@ -1,4 +1,5 @@
 SET sqL_safe_updates = 0;
+set @partition = '${partitionNum}';
 
 SET @initial_pmtct_encounter = ENCOUNTER_TYPE('584124b9-1f10-4757-ba09-91fc9075af92');
 SET @followup_pmtct_encounter =  ENCOUNTER_TYPE('95e03e7d-9aeb-4a99-bd7a-94e8591ec2c5');
@@ -185,7 +186,7 @@ UPDATE temp_pmtct_visit t SET t.index_desc = (SELECT index_desc FROM temp_pmtct_
 
 SELECT 
 visit_id,
-encounter_id,
+concat(@partition,'-',encounter_id),
 emr_id,
 visit_date,
 health_facility,

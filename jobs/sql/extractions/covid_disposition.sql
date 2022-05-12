@@ -1,6 +1,8 @@
 ### This report is a row per encounter report.
 ### It returns dispositions recorded per encounter
 
+set @partition = '${partitionNum}';
+
 -- Delete temporary admission encounter table if exists
 DROP TEMPORARY TABLE IF EXISTS temp_covid_dispositon;
 
@@ -107,7 +109,7 @@ FROM (SELECT
 
 SELECT
 	zlemr(tcd.patient_id) emr_id,
-	tcd.encounter_id encounter_id,
+	concat(@partition,'-',tcd.encounter_id),
 	encounter_type,
 	location,
 	encounter_date,

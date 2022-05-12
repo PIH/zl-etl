@@ -1,7 +1,7 @@
 CREATE TABLE covid_lab_test
 (
     emr_id             VARCHAR(25),
-    encounter_id       INT,
+    encounter_id       VARCHAR(25),
     obs_id             INT,
     encounter_date     DATE,
     location           TEXT,

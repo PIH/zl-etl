@@ -1,4 +1,5 @@
 SET sql_safe_updates = 0;
+set @partition = '${partitionNum}';
 SET @delivery_encounter_type = (SELECT encounter_type_id FROM encounter_type WHERE uuid = "00e5ebb2-90ec-11e8-9eb6-529269fb1459");
 
 DROP TEMPORARY TABLE IF EXISTS temp_mch_birth;
@@ -137,7 +138,7 @@ UPDATE temp_mch_birth_final tf SET multiples = (SELECT COUNT(patient_id) FROM te
 
 SELECT
 zlemr(patient_id),
-mother_emr_id,
+concat(@partition,'-',encounter_id),
 encounter_date,
 date_entered,
 user_entered,

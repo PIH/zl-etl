@@ -1,7 +1,7 @@
 CREATE TABLE mch_visit
 (
     emr_id                           VARCHAR(25),
-    encounter_id                     INT,
+    encounter_id                     VARCHAR(25),
     visit_date                       DATE,
     visit_site                       VARCHAR(100),
     visit_type                       VARCHAR(100),
