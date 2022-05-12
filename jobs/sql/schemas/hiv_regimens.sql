@@ -4,7 +4,7 @@ create table hiv_regimens
     previous_order_id         int,
     emr_id                    varchar(255),
     order_action              varchar(50),
-    encounter_id              int,
+    encounter_id              varchar(25),
     encounter_datetime        datetime,
     visit_location            varchar(255),
     date_entered              DATETIME,
