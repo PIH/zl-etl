@@ -139,7 +139,6 @@ UPDATE temp_mch_birth_final tf SET multiples = (SELECT COUNT(patient_id) FROM te
 SELECT
 zlemr(patient_id),
 concat(@partition,'-',encounter_id),
-mother_emr_id,
 encounter_date,
 date_entered,
 user_entered,
