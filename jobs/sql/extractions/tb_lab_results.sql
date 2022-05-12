@@ -5,6 +5,7 @@
 ### for culture, smear and genexpert all at once (but if they are in same encounter it will duplicate)
 
 SET sql_safe_updates = 0;
+set @partition = '${partitionNum}';
 
 DROP TEMPORARY TABLE IF EXISTS temp_tb_smear_results;
 DROP TEMPORARY TABLE IF EXISTS temp_tb_culture_results;
@@ -380,7 +381,7 @@ UPDATE temp_tb_final_query tbf
 SELECT
     zlemr(patient_id),
     dosId(patient_id),
-    encounter_id,
+    concat(@partition,'-',encounter_id),
     test_location, 
     specimen_collection_date,
     sample_taken_date_estimated,
