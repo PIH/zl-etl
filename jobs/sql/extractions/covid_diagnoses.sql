@@ -17,8 +17,8 @@ CREATE TEMPORARY TABLE temp_covid_encounters
 	encounter_date        DATE,
 	encounter_type        VARCHAR(255),
 	location              TEXT,
-    date_entered          DATETIME,
-    user_entered          VARCHAR(50),
+    	date_entered          DATETIME,
+    	user_entered          VARCHAR(50),
 	covid19_diagnosis     VARCHAR(255)
 );
 
