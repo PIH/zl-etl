@@ -126,7 +126,7 @@ set t.dispensed_to = concept_name(o.value_coded,'en');
 
 update temp_HIV_dispensing t
 inner join obs o on o.encounter_id = t.encounter_id and o.voided =0
-and o.concept_id =concept_from_mapping('CIEL',164141)
+and o.concept_id =concept_from_mapping('PIH','13276')
 set t.dispensed_accompagnateur = value_text;
 
 update temp_HIV_dispensing t
