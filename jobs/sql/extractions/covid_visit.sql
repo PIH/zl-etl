@@ -4,6 +4,7 @@
 ## sql updates
 SET sql_safe_updates = 0;
 SET SESSION group_concat_max_len = 100000;
+set @partition = '${partitionNum}';
 
 -- Delete temporary covid encounter table if exists
 DROP TEMPORARY TABLE IF EXISTS temp_covid_visit;
@@ -1067,7 +1068,7 @@ create index temp_index_desc_ei on temp_index_desc(encounter_id);
 #### Final query
 SELECT
         zlemr(tcv.patient_id) emr_id,
-        tcv.encounter_id encounter_id,
+	concat(@partition,'-',tcv.encounter_id),
         encounter_date,
         location,
         encounter_type,
