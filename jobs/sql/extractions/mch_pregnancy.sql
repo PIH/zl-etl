@@ -1,4 +1,5 @@
 SET sql_safe_updates = 0;
+set @partition = '${partitionNum}';
 SET @mch_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'd83e98fd-dc7b-420f-aa3f-36f648b4483d');
 SET @pregnancy_id:=0;
 
@@ -116,7 +117,7 @@ UPDATE temp_mch_pregnancy t SET  delivery_location_plan = OBS_VALUE_CODED_LIST(t
 
 SELECT
 pregnancy_id,
-encounter_id,
+concat(@partition,'-',encounter_id),
 emr_id,
 encounter_date,
 date_entered,
