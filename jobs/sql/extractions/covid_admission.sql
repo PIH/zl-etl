@@ -4,6 +4,7 @@
 ## sql updates
 SET sql_safe_updates = 0;
 SET SESSION group_concat_max_len = 100000;
+set @partition = '${partitionNum}';
 
 -- Delete temporary admission encounter table if exists
 DROP TEMPORARY TABLE IF EXISTS temp_covid_admission_encounter;
@@ -171,7 +172,7 @@ UPDATE temp_covid_admission_encounter SET contact_case_14d = OBS_VALUE_CODED_LIS
 
 ## EXECUTE FINAL SELECTION
 SELECT
-	encounter_id,
+	concat(@partition,'-',encounter_id),
 	zlemr(patient_id),
 	encounter_datetime,
     date_entered,
