@@ -3,6 +3,7 @@
 ## sql updates
 SET sql_safe_updates = 0;
 SET SESSION group_concat_max_len = 100000;
+SET @partition = '${partitionNum}';
 
 -- Delete temporary covid encounter table if exists
 DROP TEMPORARY TABLE IF EXISTS temp_covid_encounters;
@@ -212,7 +213,7 @@ ORDER BY person_id;
 ##### FINAL QUERY EXECUTION
 SELECT
   zlemr(ce.patient_id),
-  ce.encounter_id,
+  concat(@partition,'-',ce.encounter_id),
   ce.encounter_type,
   ce.location,
   ce.encounter_date,
