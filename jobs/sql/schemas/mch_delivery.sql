@@ -7,7 +7,7 @@ create table mch_delivery
     encounter_location                   varchar(255),
     encounter_type                       varchar(255),
     provider                             varchar(255),
-    encounter_id                         int,
+    encounter_id                         varchar(25),
     delivery_datetime                    datetime,
     dystocia                             varchar(255),
     prolapsed_cord                       varchar(255),
