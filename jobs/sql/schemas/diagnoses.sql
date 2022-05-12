@@ -12,7 +12,7 @@ CREATE TABLE diagnoses
     section                  varchar(255),
     locality                 varchar(255),
     street_landmark          varchar(255),
-    encounter_id             int,
+    encounter_id             varchar(25),
     encounter_location       varchar(255),
     obs_id                   int,
     obs_datetime             datetime,
