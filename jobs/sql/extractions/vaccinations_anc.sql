@@ -4,6 +4,7 @@
 ## FOR EFFICIENCY, THIS USES TEMPORARY TABLES TO LOAD DATA IN FROM OBS GROUPS AS APPROPRIATE
 
 ## START BUILDING PATIENT TABLE.  LIMIT TO NON-TEST PATIENTS EVER ENROLLED IN THE MCH PROGRAM
+set @partition = '${partitionNum}';
 
 drop temporary table if exists temp_patient;
 create temporary table temp_patient
@@ -277,6 +278,7 @@ set e.tetanus_booster_2 = v.vaccine_date;
 SELECT p.dossier_num       as dossierId,
        p.zlemr_id          as zlemr,
        p.loc_registered    as loc_registered,
+       concat(@partition,'-',e.encounter_id),
        e.encounter_datetime,
        e.encounter_location,
        e.encounter_type,
