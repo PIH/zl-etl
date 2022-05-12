@@ -1,5 +1,5 @@
 SET sql_safe_updates = 0;
-set @site = '${siteName}';
+set @partition = '${partitionNum}';
 
 SET @vitals_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '4fb47712-34a6-40d2-8ed3-e153abbd25b7');
 
@@ -178,7 +178,7 @@ set t.index_desc = tvid.index_desc;
 select 
 	all_vitals_id,
 	emr_id ,
-	concat(@site,'-',encounter_id),
+	concat(@partition,'-',encounter_id),
 	encounter_location,
 	encounter_datetime,
 	encounter_provider,
