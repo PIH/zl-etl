@@ -4,6 +4,7 @@
 ## sql updates
 SET sql_safe_updates = 0;
 SET SESSION group_concat_max_len = 100000;
+set @partition = '${partitionNum}';
 
 -- Delete temporary covid lab table if exists
 DROP TEMPORARY TABLE IF EXISTS temp_covid_lab_encounters;
@@ -331,7 +332,7 @@ DROP TEMPORARY TABLE IF EXISTS temp_final_query;
 CREATE TEMPORARY TABLE temp_final_query AS
 SELECT
     zlemr(ls.person_id) emr_id,
-    ls.encounter_id encounter_id,
+    concat(@partition,'-',ls.encounter_id),
     ls.obs_id,
     e.encounter_date,
     e.location,
