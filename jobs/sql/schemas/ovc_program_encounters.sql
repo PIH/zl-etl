@@ -3,7 +3,7 @@ CREATE TABLE ovc_program_encounters
     emr_id                      VARCHAR(50),
     patient_program_id          INT,
     location                    VARCHAR(255),
-    encounter_id                INT,
+    encounter_id                VARCHAR(25),
     encounter_date              DATE,
     date_entered                DATETIME,
     user_entered                VARCHAR(50),
