@@ -1,6 +1,6 @@
 CREATE TABLE covid_discharge
 (
-    encounter_id                INT,
+    encounter_id                VARCHAR(25),
     emr_id                      VARCHAR(25),
     encounter_date              DATE,
     encounter_type              VARCHAR(255),
