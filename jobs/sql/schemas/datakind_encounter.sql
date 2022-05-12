@@ -1,7 +1,7 @@
 CREATE TABLE datakind_encounter
 (
     patient_id         INT,
-    encounter_id       INT,
+    encounter_id       VARCHAR(25),
     encounter_datetime DATETIME,
     encounter_type     VARCHAR(255),
     encounter_location TEXT,
