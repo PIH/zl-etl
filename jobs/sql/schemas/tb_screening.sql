@@ -2,7 +2,7 @@ create table tb_screening
 (
     emr_id              varchar(50),
     dossier_id          varchar(50),
-    encounter_id        int,
+    encounter_id        varchar(25),
     screening_location  varchar(255),
     cough_result        varchar(3),
     fever_result        varchar(3),
