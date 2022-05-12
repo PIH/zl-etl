@@ -1,3 +1,5 @@
+set @partition = '${partitionNum}';
+
 DROP TEMPORARY TABLE IF EXISTS temp_hiv_lab_tests;
 CREATE TEMPORARY TABLE temp_hiv_lab_tests
 (
@@ -175,7 +177,7 @@ SET tbf.index_desc = tbia.index_desc;
 SELECT
     emr_id,
     patient_identifier(person_id, '139766e8-15f5-102d-96e4-000c29c2a5d7') hivemr_v1_id,
-    encounter_id,
+    concat(@partition,'-',encounter_id),
     DATE(specimen_collection_date),
     DATE(result_date),
     test_type,
