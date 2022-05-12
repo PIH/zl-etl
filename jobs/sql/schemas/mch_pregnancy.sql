@@ -1,7 +1,7 @@
 CREATE TABLE mch_pregnancy
 (
     pregnancy_id               INT,
-    encounter_id               INT,
+    encounter_id               VARCHAR(25),
     emr_id                     VARCHAR(25),
     encounter_date             DATE,
     date_entered               DATETIME,
