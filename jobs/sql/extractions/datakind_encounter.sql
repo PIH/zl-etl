@@ -1,3 +1,5 @@
+set @partition = '${partitionNum}';
+
 DROP TEMPORARY TABLE IF EXISTS temp_obs_count;
 CREATE TEMPORARY TABLE temp_obs_count AS
 SELECT encounter_id, COUNT(obs_id) obs_count FROM obs o WHERE o.voided = 0 GROUP BY o.encounter_id;
@@ -76,8 +78,8 @@ CREATE INDEX temp_datakind_index_desc_encounterid ON temp_datakind_index_desc(en
 CREATE INDEX temp_datakind_index_desc_indexasc ON temp_datakind_index_desc(index_desc);
 
 SELECT 
-	t.patient_id,
-    t.encounter_id,
+concat(@partition,'-',t.patient_id),
+    concat(@partition,'-',t.encounter_id),
     t.encounter_datetime,
     t.encounter_type,
     t.encounter_location,
