@@ -3,6 +3,7 @@ create table vaccinations_anc
     dossier_num        VARCHAR(50),
     zlemr_id           VARCHAR(50),
     loc_registered     VARCHAR(50),
+    encounter_id       VARCHAR(25),
     encounter_datetime DATETIME,
     encounter_location VARCHAR(50),
     encounter_type     VARCHAR(50),
