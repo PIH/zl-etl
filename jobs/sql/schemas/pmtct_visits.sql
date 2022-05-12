@@ -1,7 +1,7 @@
 CREATE TABLE pmtct_visits
 (
     visit_id             INT,
-    encounter_id         INT,
+    encounter_id         VARCHAR(25),
     emr_id               VARCHAR(25),
     visit_date           DATE,
     health_facility      VARCHAR(100),
