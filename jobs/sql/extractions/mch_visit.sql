@@ -92,7 +92,7 @@ CREATE INDEX temp_obgyn_visit_patient_id ON temp_obgyn_visit (patient_id);
 CREATE INDEX temp_obgyn_visit_encounter_id ON temp_obgyn_visit (encounter_id);
 
 INSERT INTO temp_obgyn_visit(patient_id, encounter_id, visit_date, visit_site, date_entered)
-SELECT patient_id, encounter_id, DATE(encounter_datetime), LOCATION_NAME(location_id), date_created FROM encounter WHERE voided = 0 AND encounter_type = @obgyn_encounter limit 100;
+SELECT patient_id, encounter_id, DATE(encounter_datetime), LOCATION_NAME(location_id), date_created FROM encounter WHERE voided = 0 AND encounter_type = @obgyn_encounter;
 
 
 UPDATE temp_obgyn_visit t 
