@@ -120,7 +120,7 @@ FROM (SELECT
             @r:= IF(@u = patient_id, @r + 1,1) index_desc,
             vl_sample_taken_date,
             date_entered,
-            concat(@partition,'-',encounter_id),
+           	encounter_id,
             patient_id,
             @u:= patient_id
       FROM temp_hiv_construct_encounters,
@@ -132,7 +132,7 @@ FROM (SELECT
 ### Final query
 SELECT
         zlemr(tvl.patient_id),
-        tvl.encounter_id,
+        concat(@partition,'-',tvl.encounter_id),
         tvl.visit_location,
         tvl.date_entered,
         tvl.user_entered,
