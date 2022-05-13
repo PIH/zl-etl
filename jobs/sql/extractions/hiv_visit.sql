@@ -14,6 +14,7 @@
 	encounter_type 	varchar(255),
     date_entered    DATETIME,
     user_entered    VARCHAR(50),
+    chw				VARCHAR(255),
 	pregnant		BIT,
 	visit_date		DATE,
 	next_visit_date	DATE,
@@ -43,6 +44,8 @@ CREATE INDEX temp_hiv_visit_eid ON temp_hiv_visit (encounter_id);
 	
 	update temp_hiv_visit t set visit_location = location_name(hivEncounterLocationId(encounter_id));           
 	
+	update temp_hiv_visit t set chw = obs_value_text(t.encounter_id, 'PIH','11631');	
+
 	UPDATE temp_hiv_visit t SET pregnant = (SELECT value_coded FROM obs o WHERE voided = 0 AND concept_id = CONCEPT_FROM_MAPPING("PIH", "PREGNANCY STATUS") AND o.encounter_id = t.encounter_id);
 	
 	UPDATE temp_hiv_visit t SET next_visit_date = obs_value_datetime(t.encounter_id,'PIH','RETURN VISIT DATE');
@@ -110,6 +113,7 @@ hivemr_v1,
 encounter_type,
 date_entered,
 user_entered,
+chw,
 pregnant,
 visit_date,
 next_visit_date,
