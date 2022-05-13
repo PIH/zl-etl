@@ -6,6 +6,7 @@ CREATE TABLE hiv_visit
     encounter_type  varchar(255),
     date_entered    DATETIME,
     user_entered    VARCHAR(50),
+    chw             VARCHAR(255),
     pregnant        BIT,
     visit_date      DATE,
     next_visit_date DATE,
