@@ -632,12 +632,13 @@ SELECT person_id FROM
 obs WHERE voided = 0 AND
 concept_id = CONCEPT_FROM_MAPPING('PIH', '1535') AND encounter_id IN (SELECT encounter_id FROM encounter
 WHERE voided = 0 AND encounter_type = @hiv_dispensing_encounter)
-AND value_coded IN (CONCEPT_FROM_MAPPING('PIH', '3013') , CONCEPT_FROM_MAPPING('PIH', '2848')) GROUP BY person_id;
+-- AND value_coded IN (CONCEPT_FROM_MAPPING('PIH', '3013') , CONCEPT_FROM_MAPPING('PIH', '2848'))
+GROUP BY person_id;
 
-UPDATE temp_hiv_dispensing t SET latest_encounter = (SELECT MAX(encounter_id) FROM encounter WHERE encounter_type = @hiv_dispensing_encounter
-AND voided = 0 AND t.person_id = patient_id GROUP BY patient_id);
+UPDATE temp_hiv_dispensing t SET last_pickup_date = (SELECT max(encounter_datetime) FROM encounter e WHERE voided = 0 AND t.person_id = e.patient_id GROUP BY e.patient_id);
 
-UPDATE temp_hiv_dispensing t SET last_pickup_date = (SELECT DATE(encounter_datetime) FROM encounter e WHERE voided = 0 AND e.encounter_id = t.latest_encounter);
+UPDATE temp_hiv_dispensing t SET latest_encounter = (SELECT encounter_id FROM encounter e WHERE encounter_type = @hiv_dispensing_encounter
+AND voided = 0 AND t.person_id = patient_id and e.encounter_datetime = last_pickup_date limit 1);
 
 UPDATE temp_hiv_dispensing t SET last_pickup_months_dispensed =  OBS_VALUE_NUMERIC(t.latest_encounter, 'PIH', '3102');
 
