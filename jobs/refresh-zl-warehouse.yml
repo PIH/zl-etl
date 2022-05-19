@@ -1,30 +1,8 @@
-type: "iterating-job"
-description: "Refreshing OpenMRS Data for all sites"
+type: "job-pipeline"
+description: "Refreshing Data for HUM-CI"
 schedule:
   cron: "${executeCron.refreshZlWarehouse}"
 configuration:
-  maxConcurrentJobs: 5  # Import into up to 5 sites concurrently
-  iterations:
-    - siteName: "cange"
-      partitionNum: "1"
-      dataset: "site-data"
-    - siteName: "hinche"
-      partitionNum: "2"
-      dataset: "site-data"
-    - siteName: "saint_marc_hsn"
-      partitionNum: "3"
-      dataset: "site-data"
-    - siteName: "lacolline"
-      partitionNum: "4"
-      dataset: "site-data"
-    - siteName: "thomonde"
-      partitionNum: "5"
-      dataset: "site-data"
-    - siteName: "mirebalais"
-      partitionNum: "6"
-      dataset: "site-data"
-    - siteName: "hiv"
-      partitionNum: "8"
-      dataset: "hiv-data"
-  jobTemplate:
-    path: "load-${dataset}.yml"
+  jobs:
+    - path: "load-from-openmrs-all-sites.yml"
+    - path: "load-warehouse-analysis-tables.yml"
