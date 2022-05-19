@@ -1,3 +1,6 @@
+-- use openmrs_haiti_warehouse;
+-- use openmrs_humci;
+ use zl_omrs_dw;
 
 DROP TABLE IF EXISTS #temp_export;
 CREATE TABLE #temp_export
@@ -9,8 +12,9 @@ last_name							varchar(255),
 gender								varchar(255),
 birthdate							date,
 age									int,
-accompagnateur						varchar(255),
-address 							varchar(255),
+last_pickup_accompagnateur			varchar(255),
+hiv_note_accompagnateur				varchar(255),
+address 							varchar(1000),
 locality							varchar(255),
 phone_number 						varchar(255),
 arv_start_date						date,
@@ -65,7 +69,7 @@ update t
 	age = p.age,
 	address = CONCAT(p.address,' ', p.department,' ',p.commune,' ',section_communal) ,
 	locality = p.locality,
-	phone_number = p.telephone_number,
+  	phone_number = p.telephone_number,
 	site = p.latest_enrollment_location 
 from #temp_export t
 inner join hiv_patient p on p.emr_id = t.emr_id 
@@ -136,6 +140,7 @@ set last_med_pickup_date = hd.dispense_date,
 from #temp_export t
 inner join hiv_dispensing hd on hd.emr_id = t.emr_id and hd.dispense_date_descending = 1
 ;
+
 
 update t
 set days_late_for_next_visit = 
@@ -273,6 +278,26 @@ set combined_status_date =
 	END	
 from #temp_export t;
 
+update t
+set last_pickup_accompagnateur = d.dispensed_accompagnateur
+from #temp_export t
+inner join hiv_dispensing d on d.encounter_id =
+	(select top 1 encounter_id from hiv_dispensing d2
+	where d2.emr_id = t.emr_id
+	and d2.dispensed_accompagnateur is not NULL 
+	order by d2.dispense_date desc)
+;
+/*
+update t
+set hiv_note_accompagnateur = v.chw
+from #temp_export t
+inner join hiv_visit v on v.encounter_id =
+	(select top 1 encounter_id from hiv_visit v2
+	where v2.emr_id = t.emr_id
+	and v2.chw is not NULL 
+	order by v2.visit_date desc)
+;
+*/
 
 select 
 emr_id,
@@ -282,7 +307,8 @@ last_name,
 gender,
 birthdate,
 age,
-accompagnateur,
+last_pickup_accompagnateur,
+hiv_note_accompagnateur,
 address ,
 locality,
 phone_number ,
@@ -310,45 +336,4 @@ last_height_date,
 combined_status "status",
 combined_status_date "status_date"
 from #temp_export
-;
-
-DROP TABLE IF EXISTS hiv_patient_summary_status;
-
-SELECT
-emr_id,
-legacy_emr_id,
-first_name,
-last_name,
-gender,
-birthdate,
-age,
-accompagnateur,
-address ,
-locality,
-phone_number ,
-arv_start_date,
-initial_arv_regimen ,
-arv_regimen,
-months_on_art ,
-site,
-last_visit_date ,
-last_med_pickup_date ,
-last_med_pickup_months_dispensed ,
-last_med_pickup_treatment_line ,
-next_visit_date ,
-next_med_pickup_date ,
-days_late_for_next_visit ,
-days_late_for_next_med_pickup ,
-last_viral_load_date ,
-last_viral_load_numeric ,
-last_viral_load_undetected ,
-months_since_last_viral_load ,
-last_weight,
-last_weight_date,
-last_height,
-last_height_date,
-combined_status "status",
-combined_status_date "status_date"
-into hiv_patient_summary_status
-FROM #temp_export
 ;
