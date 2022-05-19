@@ -1,0 +1,16 @@
+# Template that takes in the following parameters
+
+# ${tableName}
+
+# The purpose of this job is to batch load the result of the given query into a specific target table
+
+type: "sqlserver-bulk-import"
+description: "Loading ${tableName}"
+configuration:
+  extract:
+    datasource: "warehouse.yml"  
+    query: "sql/extractions/${tableName}.sql"
+  load:
+    datasource: "warehouse.yml"
+    table: "${tableName}"
+    schema: "sql/schemas/${tableName}.sql"
