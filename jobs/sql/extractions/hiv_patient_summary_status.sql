@@ -1,7 +1,3 @@
--- use openmrs_haiti_warehouse;
--- use openmrs_humci;
- use zl_omrs_dw;
-
 DROP TABLE IF EXISTS #temp_export;
 CREATE TABLE #temp_export
 (
