@@ -1,0 +1,8 @@
+type: "job-pipeline"
+description: "Refreshing Data for HUM-CI"
+schedule:
+  cron: "${executeCron.refreshHumciWarehouse}"
+configuration:
+  jobs:
+    - path: "load-from-openmrs-HUMCI.yml"
+    - path: "load-warehouse-analysis-tables.yml"
