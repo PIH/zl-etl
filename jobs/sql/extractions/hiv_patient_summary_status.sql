@@ -283,7 +283,7 @@ inner join hiv_dispensing d on d.encounter_id =
 	and d2.dispensed_accompagnateur is not NULL 
 	order by d2.dispense_date desc)
 ;
-/*
+
 update t
 set hiv_note_accompagnateur = v.chw
 from #temp_export t
@@ -293,7 +293,6 @@ inner join hiv_visit v on v.encounter_id =
 	and v2.chw is not NULL 
 	order by v2.visit_date desc)
 ;
-*/
 
 select 
 emr_id,
