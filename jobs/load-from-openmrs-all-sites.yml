@@ -25,4 +25,4 @@ configuration:
       partitionNum: "8"
       dataset: "hiv-data"
   jobTemplate:
-    path: "load-${dataset}.yml"
+    path: "load-${dataset}-from-openmrs.yml"
