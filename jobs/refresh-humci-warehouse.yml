@@ -4,5 +4,5 @@ schedule:
   cron: "${executeCron.refreshHumciWarehouse}"
 configuration:
   jobs:
-    - path: "load-from-openmrs-HUMCI.yml"
+    - path: "load-from-openmrs-humci.yml"
     - path: "load-warehouse-analysis-tables.yml"
