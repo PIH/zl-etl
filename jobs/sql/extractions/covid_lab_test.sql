@@ -305,6 +305,7 @@ CREATE TEMPORARY TABLE temp_covid_lab_app_result
 INSERT INTO temp_covid_lab_app_result(encounter_id, encounter_date, encounter_type, location, date_entered, user_entered)
 SELECT DISTINCT(encounter_id), encounter_date, encounter_type, location, date_entered, user_entered FROM temp_final_covid_lab_encounters WHERE encounter_type_id = ENCOUNTER_TYPE('Laboratory Results');
 
+
 UPDATE temp_covid_lab_app_result tcl INNER JOIN temp_final_covid_lab_encounters tfcl ON tcl.encounter_id = tfcl.encounter_id
     SET tcl.patient_id = tfcl.patient_id,
         tcl.specimen_date = tfcl.encounter_date,
@@ -332,7 +333,7 @@ DROP TEMPORARY TABLE IF EXISTS temp_final_query;
 CREATE TEMPORARY TABLE temp_final_query AS
 SELECT
     zlemr(ls.person_id) emr_id,
-    concat(@partition,'-',ls.encounter_id),
+    ls.encounter_id,
     ls.obs_id,
     e.encounter_date,
     e.location,
@@ -363,4 +364,45 @@ FROM
 ORDER BY ls.person_id, ls.encounter_id, lspd.value_datetime;
 
 SELECT * FROM
-    (SELECT * FROM temp_final_query q UNION ALL SELECT * FROM temp_covid_lab_app_result r) a;
+    (SELECT 
+    emr_id,
+    concat(@partition,'-',encounter_id),
+    obs_id,
+    encounter_date,
+    location,
+    encounter_type,
+    date_entered,
+    user_entered,
+    specimen_date,
+    date_for_reporting,
+    specimen_source,
+    antibody,
+    antibody_results,
+    antigen,
+    antigen_results,
+    pcr,
+    pcr_results,
+    genexpert,
+    genexpert_results
+ FROM temp_final_query q 
+ UNION ALL SELECT 
+    patient_id,
+    concat(@partition,'-',encounter_id),
+    obs_id,
+    encounter_date,
+    location,
+    encounter_type,
+    date_entered,
+    user_entered,
+    specimen_date,
+    date_for_reporting,
+    specimen_source,
+    antibody,
+    antibody_results,
+    antigen,
+    antigen_results,
+    pcr,
+    pcr_results,
+    genexpert,
+    genexpert_results
+    FROM temp_covid_lab_app_result r) a;
