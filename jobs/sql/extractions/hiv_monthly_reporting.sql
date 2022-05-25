@@ -1,5 +1,5 @@
-DROP TEMPORARY TABLE IF EXISTS temp_eom_appts;
-CREATE TEMPORARY TABLE temp_eom_appts
+DROP TABLE IF EXISTS #temp_eom_appts;
+CREATE TABLE #temp_eom_appts
 (
 emr_id				varchar(20),
 date_enrolled				DATETIME,
