@@ -1,5 +1,5 @@
 type: "job-pipeline"
-description: "Refreshing Data for HUM-CI"
+description: "Refreshing data from all sites"
 schedule:
   cron: "${executeCron.refreshZlWarehouse}"
 configuration:
