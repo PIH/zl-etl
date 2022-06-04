@@ -8,7 +8,7 @@ CREATE TABLE pmtct_visits
     date_entered            DATETIME,
     user_entered            VARCHAR(50),
     hiv_test_date           DATE,
-    expected_delivery_date  DATE
+    expected_delivery_date  DATE,
     tb_screening_date       DATE,
     has_provided_contact    BIT,
     index_asc               INT,
