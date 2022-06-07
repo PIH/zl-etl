@@ -1,45 +1,46 @@
-	SET sql_safe_updates = 0;
-	set @partition = '${partitionNum}';
+SET sql_safe_updates = 0;
+set @partition = '${partitionNum}';
 	
-	SET @hiv_intake = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
-	SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
+SET @hiv_intake = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
+SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
 	
-	DROP TEMPORARY TABLE IF EXISTS temp_hiv_visit;
-	CREATE TEMPORARY TABLE temp_hiv_visit
-	(
-	encounter_id		INT,
-	patient_id		INT,
-	emr_id			VARCHAR(25),
-	hivemr_v1		VARCHAR(25),	
-	encounter_type 		VARCHAR(255),
-    	date_entered    	DATETIME,
-    	user_entered    	VARCHAR(50),
-    	chw			VARCHAR(255),
-    	pregnant_obs_id		INT(11),
-	pregnant		BIT,
-	visit_date		DATE,
-	referral_transfer	VARCHAR(255),
-	internal_external	VARCHAR(255),
-	rt_location_id		TEXT,
-	referral_transfer_location		VARCHAR(255),
-	referred_by_womens_health_obs_id	INT(11),
-	referred_by_womens_health 		BIT,
-	referral_transfer_pepfar_partner_obs_id	INT(11),
-	referral_transfer_pepfar_partner 	BIT,
-	reason_not_on_ARV	VARCHAR(255),
-	next_visit_date		DATE,
-	visit_location		VARCHAR(255),
-	index_asc		INT,
-	index_desc		INT
-	);
+DROP TEMPORARY TABLE IF EXISTS temp_hiv_visit;
+CREATE TEMPORARY TABLE temp_hiv_visit
+(
+encounter_id		INT,
+patient_id		INT,
+emr_id			VARCHAR(25),
+hivemr_v1		VARCHAR(25),	
+encounter_type 		VARCHAR(255),
+date_entered    	DATETIME,
+user_entered    	VARCHAR(50),
+chw			VARCHAR(255),
+pregnant_obs_id		INT(11),
+pregnant		BIT,
+visit_date		DATE,
+referral_transfer	VARCHAR(255),
+internal_external	VARCHAR(255),
+rt_location_id		TEXT,
+referral_transfer_location		VARCHAR(255),
+referred_by_womens_health_obs_id	INT(11),
+referred_by_womens_health 		BIT,
+referral_transfer_pepfar_partner_obs_id	INT(11),
+referral_transfer_pepfar_partner 	BIT,
+reason_not_on_ARV	VARCHAR(255),
+next_visit_date		DATE,
+encounter_location_id	INT(11),
+visit_location		VARCHAR(255),
+index_asc		INT,
+index_desc		INT
+);
+
+
+INSERT INTO temp_hiv_visit(patient_id, encounter_id, emr_id, visit_date,encounter_type, date_entered, user_entered, encounter_location_id)
+SELECT patient_id, encounter_id, ZLEMR(patient_id),  DATE(encounter_datetime), encounter_type_name(encounter_id), date_created, username(creator), location_id  FROM encounter  WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup)
+;
 
 CREATE INDEX temp_hiv_visit_pid ON temp_hiv_visit (patient_id);
 CREATE INDEX temp_hiv_visit_eid ON temp_hiv_visit (encounter_id);
-	
-INSERT INTO temp_hiv_visit(patient_id, encounter_id, emr_id, visit_date,encounter_type, date_entered, user_entered)
-SELECT patient_id, encounter_id, ZLEMR(patient_id),  DATE(encounter_datetime), encounter_type_name(encounter_id), date_created, username(creator) FROM encounter WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup)
--- limit 10000
-;
 	
 DELETE FROM temp_hiv_visit
 WHERE
@@ -54,7 +55,7 @@ WHERE
 	  	
 update temp_hiv_visit t set hivemr_v1  = patient_identifier(patient_id, '139766e8-15f5-102d-96e4-000c29c2a5d7');          
 	
-update temp_hiv_visit t set visit_location = location_name(hivEncounterLocationId(encounter_id));   
+update temp_hiv_visit t set visit_location = location_name(encounter_location_id);   
 
 DROP TEMPORARY TABLE IF EXISTS temp_obs;
 create temporary table temp_obs 
@@ -66,13 +67,6 @@ where o.voided = 0;
 create index temp_obs_ci1 on temp_obs(encounter_id,concept_id);
 create index temp_obs_ci2 on temp_obs(date_created, obs_id);
 create index temp_obs_oi on temp_obs(obs_id);
-/*
-
-create index temp_obs_concept_id on temp_obs(concept_id);
-create index temp_obs_ei on temp_obs(encounter_id);
-
-create index temp_obs_dc on temp_obs(date_created);
-*/
 
 update temp_hiv_visit t set chw = obs_value_text_from_temp(t.encounter_id, 'PIH','11631');	
 
