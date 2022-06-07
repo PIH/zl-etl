@@ -3,6 +3,10 @@ description: "Refreshing Data for HUM-CI"
 schedule:
   cron: "${executeCron.refreshHumciWarehouse}"
 configuration:
+  errorHandling:
+    maxAttempts: 3
+    retryInterval: 60
+    retryIntervalUnit: "MINUTES"
   jobs:
     - path: "load-from-openmrs-humci.yml"
     - path: "load-warehouse-analysis-tables.yml"

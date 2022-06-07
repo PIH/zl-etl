@@ -3,6 +3,10 @@ description: "Refreshing data from all sites"
 schedule:
   cron: "${executeCron.refreshZlWarehouse}"
 configuration:
+  errorHandling:
+    maxAttempts: 3
+    retryInterval: 60
+    retryIntervalUnit: "MINUTES"
   jobs:
     - path: "load-from-openmrs-all-sites.yml"
     - path: "load-warehouse-analysis-tables.yml"
