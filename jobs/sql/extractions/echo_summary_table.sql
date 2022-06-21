@@ -412,7 +412,8 @@ SET t.ncd_comorbidity = CASE WHEN ( dm1 IS TRUE OR
                                                                asthma  IS TRUE OR
                                                                sickle_cell  IS TRUE OR
                                                                copd  IS TRUE) THEN TRUE ELSE FALSE  END;
-                                                              
+DROP TABLE patient_echo_encounters;
+
 SELECT 
 patient_id , 
 emrid , 
