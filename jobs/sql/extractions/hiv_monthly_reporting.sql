@@ -1,3 +1,5 @@
+use openmrs_haiti_warehouse;
+
 DROP TABLE IF EXISTS #temp_eom_appts;
 CREATE TABLE #temp_eom_appts
 (
@@ -113,7 +115,10 @@ ON t1.emr_id =  x.emr_id AND t1.reporting_date=x.reporting_date;
 UPDATE t1
 SET 
 t1.latest_expected_hiv_visit_date =av.next_visit_date,
-t1.hiv_visit_days_late=DATEDIFF(DAY,isnull(av.next_visit_date,isnull(t1.latest_hiv_visit_date,t1.date_enrolled)),t1.reporting_date)
+t1.hiv_visit_days_late=IIF(
+	DATEDIFF(DAY,isnull(av.next_visit_date,isnull(t1.latest_hiv_visit_date,t1.date_enrolled)),t1.reporting_date) > 0,
+	DATEDIFF(DAY,isnull(av.next_visit_date,isnull(t1.latest_hiv_visit_date,t1.date_enrolled)),t1.reporting_date),
+	0)
 FROM  #temp_eom_appts t1 
 LEFT OUTER JOIN all_reporting_visits av
 ON t1.emr_id =  av.emr_id 
@@ -169,7 +174,10 @@ ON t1.emr_id =  x.emr_id AND t1.reporting_date=x.reporting_date;
 UPDATE t1
 SET 
 t1.latest_expected_dispensing_date=ad.next_dispense_date,
-t1.dispensing_days_late=DATEDIFF(DAY,isnull(ad.next_dispense_date,isnull(t1.latest_dispensing_date,t1.date_enrolled)),t1.reporting_date),
+t1.dispensing_days_late=IIF(
+	DATEDIFF(DAY,isnull(ad.next_dispense_date,isnull(t1.latest_dispensing_date,t1.date_enrolled)),t1.reporting_date) >0,
+	DATEDIFF(DAY,isnull(ad.next_dispense_date,isnull(t1.latest_dispensing_date,t1.date_enrolled)),t1.reporting_date),
+	0),
 t1.latest_months_dispensed = ad.months_dispensed,
 t1.days_late_at_latest_pickup = ad.days_late_to_pickup
 FROM  #temp_eom_appts t1 
