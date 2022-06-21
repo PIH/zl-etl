@@ -32,7 +32,8 @@ latest_tb_screening_date		DATE,
 latest_tb_screening_result		BIT,
 latest_tb_test_date				DATE,
 latest_tb_test_type				VARCHAR(255),
-latest_tb_test_result			VARCHAR(255)
+latest_tb_test_result			VARCHAR(255),
+latest_status					VARCHAR(255)
 );
 
 CREATE OR ALTER VIEW all_reporting_visits AS
@@ -282,6 +283,16 @@ INNER JOIN hiv_status h on h.status_id  =
 	and h2.start_date  <= t1.reporting_date 	
 	order by h2.start_date desc);
 
+-- ################################## combined status #########################################################################
+update t
+set latest_status =
+	CASE 
+		when lastest_program_status_outcome is not null then lastest_program_status_outcome
+		when dispensing_days_late <= 28  then 'active - on arvs'
+		else 'Lost to followup'
+	END	
+from #temp_eom_appts t; 
+
 -- ###########################################################################################################
 
 SELECT 
@@ -316,5 +327,6 @@ latest_tb_screening_date,
 latest_tb_screening_result,
 latest_tb_test_date,
 latest_tb_test_type,
-latest_tb_test_result
+latest_tb_test_result,
+latest_status
 FROM #temp_eom_appts;
