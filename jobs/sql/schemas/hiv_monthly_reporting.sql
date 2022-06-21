@@ -31,5 +31,6 @@ latest_tb_screening_date        DATE,
 latest_tb_screening_result      BIT,
 latest_tb_test_date             DATE,
 latest_tb_test_type             VARCHAR(255),
-latest_tb_test_result           VARCHAR(255)
+latest_tb_test_result           VARCHAR(255),
+latest_status                   VARCHAR(255)
 ); 
