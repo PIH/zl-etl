@@ -26,32 +26,6 @@ SELECT t.*,(
 FROM patient_echo_encounters t
 ORDER BY t.patient_id, erank;
 
--- ####################### Functions ################################
--- 
--- DROP FUNCTION IF EXISTS answerEverExistsForEncounter;
--- 
--- CREATE FUNCTION answerEverExists(_patient_id int(11), _encounter_type_id  int(11),  _source_question , _term_question varchar(255), _source_answer , _term_answer varchar(255), _begin_datetime datetime)
---     RETURNS boolean
---     DETERMINISTIC
--- 
--- BEGIN
--- 
---   DECLARE ret boolean;
--- 
--- 
--- select if(obs_id is null,0,1) into ret
--- from obs o where o.voided =0 
--- 	and o.person_id = _patient_id
--- 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =_encounter_type_id AND patient_id=_patient_id)
--- 	and o.concept_id = concept_from_mapping(_source_question,_term_question)
--- 	and o.value_coded  = concept_from_mapping(_source_answer,_term_answer)
--- 	and (o.obs_datetime >= _begin_datetime or _begin_datetime is null)
--- 	limit 1;
--- 
---     RETURN ret;
--- 
--- END
-
 -- ################# Insert Patients List ##################################################
 INSERT INTO echo_summary_table (patient_id, emrid, age, sex, department, commune, locality, section_communal,heart_failure)
 SELECT p.patient_id,emr_id ,

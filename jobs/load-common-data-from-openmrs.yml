@@ -10,7 +10,7 @@ configuration:
     - type: "iterating-job"
       description: "Importing from ${siteName} using partition ${partitionNum}"
       configuration:
-        maxConcurrentJobs: 1  # Import into up to 1 tables concurrently
+        maxConcurrentJobs: 1 # Import into up to 1 tables concurrently
         jobTemplate:
           path: "import-to-table-partition.yml"
         iterations:
@@ -35,3 +35,4 @@ configuration:
           - tableName: "vaccinations_anc"
           - tableName: "tb_lab_results"
           - tableName: "tb_screening"
+          - tableName: "echo_summary_table"
