@@ -292,14 +292,17 @@ INNER JOIN hiv_status h on h.status_id  =
 	order by h2.start_date desc);
 
 -- ################################## combined status #########################################################################
+-- note that "pregnant" statuses are ignored with this combined status
 update t
 set latest_status =
 	CASE 
-		when lastest_program_status_outcome is not null then lastest_program_status_outcome
+		when lastest_program_status_outcome is not null 
+			and lastest_program_status_outcome  not like '%pregnant%' then lastest_program_status_outcome
 		when dispensing_days_late <= 28  then 'active - on arvs'
 		else 'Lost to followup'
 	END	
 from #temp_eom_appts t; 
+
 
 -- ###########################################################################################################
 
