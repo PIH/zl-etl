@@ -127,13 +127,13 @@ AND t1.latest_hiv_visit_date=av.visit_date;
 
 update t1
 SET t1.latest_transfer_in_date = v.visit_date ,
-t1.latest_transfer_in_location = v.referral_transfer_location 
+t1.latest_transfer_in_location = v.referral_transfer_location_in 
 FROM #temp_eom_appts t1 
 INNER JOIN hiv_visit v on v.encounter_id =
 	(select top 1 v2.encounter_id
 	from hiv_visit v2 
 	where v2.emr_id = t1.emr_id 
-	and v2.referral_transfer = 'Transfer'
+	and v2.referral_transfer_in = 'Transfer'
 	and v2.visit_date <= t1.reporting_date 
 	order by v2.visit_date desc);
 
