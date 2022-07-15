@@ -98,7 +98,7 @@ FROM hiv_patient_modified hpp
 inner join Dim_Date dd  
 	on dd.LastDateofMonth  >= EOMONTH(hpp.date_enrolled)  
 	and (EOMONTH(hpp.date_completed) >=dd.LastDateofMonth or hpp.date_completed is null)
-    AND dd.LastDateofMonth <= EOMONTH(CAST(GETDATE() AS date));
+    	and dd.LastDateofMonth <= CAST(GETDATE() AS date);  -- include end of month dates for all prior months only
 
 
 -- ############################### HIV Visit Data ##################################################################
