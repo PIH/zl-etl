@@ -19,6 +19,8 @@ CREATE TABLE hiv_visit
 	referral_transfer_location_out			VARCHAR(255),
 	referral_transfer_pepfar_partner_out	        BIT,
         reason_not_on_ARV           			VARCHAR(255),
+	breastfeeding_status				VARCHAR(255),
+	last_breastfeeding_date				DATETIME,
         visit_date                  			DATE,
         next_visit_date             			DATE,
         visit_location              			VARCHAR(255),
