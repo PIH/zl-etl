@@ -1,5 +1,5 @@
 -- use openmrs_haiti_warehouse;
-use openmrs_humci;
+-- use openmrs_humci;
 
 DROP TABLE IF EXISTS #temp_eom_appts;
 CREATE TABLE #temp_eom_appts
