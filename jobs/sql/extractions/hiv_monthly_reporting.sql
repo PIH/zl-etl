@@ -1,4 +1,5 @@
 -- use openmrs_haiti_warehouse;
+use openmrs_humci;
 
 DROP TABLE IF EXISTS #temp_eom_appts;
 CREATE TABLE #temp_eom_appts
@@ -35,6 +36,9 @@ latest_tb_screening_result		BIT,
 latest_tb_test_date				DATE,
 latest_tb_test_type				VARCHAR(255),
 latest_tb_test_result			VARCHAR(255),
+date_of_last_breastfeeding_status	DATETIME,
+latest_breastfeeding_status		VARCHAR(255),
+latest_breastfeeding_date		DATETIME,
 latest_status					VARCHAR(255)
 );
 
@@ -98,7 +102,7 @@ FROM hiv_patient_modified hpp
 inner join Dim_Date dd  
 	on dd.LastDateofMonth  >= EOMONTH(hpp.date_enrolled)  
 	and (EOMONTH(hpp.date_completed) >=dd.LastDateofMonth or hpp.date_completed is null)
-    	and dd.LastDateofMonth <= CAST(GETDATE() AS date);  -- include end of month dates for all prior months only
+    	and dd.LastDateofMonth <=  CAST(GETDATE() AS date);  -- include end of month dates for all prior months only
 
 
 -- ############################### HIV Visit Data ##################################################################
@@ -278,6 +282,34 @@ INNER JOIN tb_lab_results tb on tb.encounter_id =
 	and tb2.specimen_collection_date <= t1.reporting_date 	
 	order by tb2.specimen_collection_date desc);
 
+-- ############################### Breastfeeding data ##################################################################
+update t1
+SET t1.date_of_last_breastfeeding_status = hv.visit_date, 
+t1.latest_breastfeeding_status = hv.breastfeeding_status,
+t1.latest_breastfeeding_date = hv.last_breastfeeding_date
+FROM #temp_eom_appts t1 
+INNER JOIN hiv_visit hv on hv.encounter_id =
+	(select top 1 hv2.encounter_id
+	from hiv_visit hv2 
+	where hv2.emr_id = t1.emr_id 
+	and hv2.visit_date <= t1.reporting_date
+	and hv2.breastfeeding_status is not null
+	order by hv2.visit_date desc);
+
+update t1
+SET t1.date_of_last_breastfeeding_status = pv.visit_date, 
+t1.latest_breastfeeding_status = pv.breastfeeding_status,
+t1.latest_breastfeeding_date = pv.last_breastfeeding_date
+FROM #temp_eom_appts t1 
+INNER JOIN pmtct_visits pv on pv.encounter_id =
+	(select top 1 hv2.encounter_id
+	from hiv_visit hv2 
+	where hv2.emr_id = t1.emr_id 
+	and hv2.visit_date <= t1.reporting_date
+	and hv2.breastfeeding_status is not null
+	order by hv2.visit_date desc)
+where pv.visit_date < t1.date_of_last_breastfeeding_status
+;
 -- ############################### hiv status data ##################################################################
 update t1
 SET t1.lastest_program_status_outcome_date = h.start_date, 
@@ -339,5 +371,8 @@ latest_tb_screening_result,
 latest_tb_test_date,
 latest_tb_test_type,
 latest_tb_test_result,
+date_of_last_breastfeeding_status,
+latest_breastfeeding_status,
+latest_breastfeeding_date,
 latest_status
 FROM #temp_eom_appts;
