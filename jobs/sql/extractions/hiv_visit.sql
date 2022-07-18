@@ -30,6 +30,8 @@ internal_external_out					VARCHAR(255),
 referral_transfer_location_out				VARCHAR(255),
 referral_transfer_pepfar_partner_out			BIT,
 reason_not_on_ARV					VARCHAR(255),
+breastfeeding_status					VARCHAR(255),
+last_breastfeeding_date					DATETIME,
 next_visit_date						DATE,
 encounter_location_id					INT(11),
 visit_location						VARCHAR(255),
@@ -164,6 +166,14 @@ UPDATE temp_hiv_visit t
 		concept_from_mapping('PIH','2222'))
 set reason_not_on_ARV = concept_name(tobs.value_coded,@locale);
 
+-- breastfeeding data
+UPDATE 	temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','13642') and o.voided = 0
+set breastfeeding_status = concept_name(o.value_coded, @locale);
+
+UPDATE 	temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','6889') and o.voided = 0
+set last_breastfeeding_date = o.value_datetime;
 
 -- The ascending/descending indexes are calculated ordering on the dispense date
 -- new temp tables are used to build them and then joined into the main temp table.
@@ -239,6 +249,8 @@ SELECT
 	referral_transfer_location_out,
 	referral_transfer_pepfar_partner_out,
 	reason_not_on_ARV,
+	breastfeeding_status,
+	last_breastfeeding_date,
 	visit_date,
 	next_visit_date,
 	visit_location,
