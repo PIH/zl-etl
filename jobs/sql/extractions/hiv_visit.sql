@@ -1,260 +1,228 @@
-SET sql_safe_updates = 0;
+SET sqL_safe_updates = 0;
 set @partition = '${partitionNum}';
-	
-SET @hiv_intake = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
-SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
-	
-DROP TEMPORARY TABLE IF EXISTS temp_hiv_visit;
 
-CREATE TEMPORARY TABLE temp_hiv_visit
-(
-encounter_id						INT,
-patient_id						INT,
-emr_id							VARCHAR(25),
-hivemr_v1						VARCHAR(25),	
-encounter_type						VARCHAR(255),
-date_entered						DATETIME,
-user_entered						VARCHAR(50),
-chw							VARCHAR(255),
-pregnant						BIT,
-visit_date						DATE,
-rt_in_obs_group_id					INT(11),
-referral_transfer_in					VARCHAR(255),
-internal_external_in					VARCHAR(255),
-referral_transfer_location_in				VARCHAR(255),
-referred_by_womens_health_in				BIT,
-referral_transfer_pepfar_partner_in			BIT,
-rt_out_obs_group_id					INT(11),
-referral_transfer_out					VARCHAR(255),
-internal_external_out					VARCHAR(255),
-referral_transfer_location_out				VARCHAR(255),
-referral_transfer_pepfar_partner_out			BIT,
-reason_not_on_ARV					VARCHAR(255),
-breastfeeding_status					VARCHAR(255),
-last_breastfeeding_date					DATETIME,
-next_visit_date						DATE,
-encounter_location_id					INT(11),
-visit_location						VARCHAR(255),
-index_asc						INT,
-index_desc						INT
+SET @initial_pmtct_encounter = ENCOUNTER_TYPE('584124b9-1f10-4757-ba09-91fc9075af92');
+SET @followup_pmtct_encounter =  ENCOUNTER_TYPE('95e03e7d-9aeb-4a99-bd7a-94e8591ec2c5');
+
+-- drop and create temp pmct visit table
+DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit;
+CREATE TEMPORARY TABLE temp_pmtct_visit (
+visit_id                	INT,
+encounter_id            	INT,
+patient_id              	INT,
+emr_id 				VARCHAR(25),
+visit_date              	DATE,
+health_facility         	VARCHAR(100),
+date_entered            	DATETIME,
+user_entered            	VARCHAR(50),
+hiv_test_date           	DATE,
+expected_delivery_date		DATE,
+tb_screening_date 		DATE,
+has_provided_contact 		BIT,
+breastfeeding_status		VARCHAR(255),
+last_breastfeeding_date		DATETIME,
+-- hiv_test_result varchar(255),
+-- maternity_clinic_type varchar(100),
+index_asc               	INT,
+index_desc              	INT
 );
 
-INSERT INTO temp_hiv_visit(patient_id, encounter_id, emr_id, visit_date,encounter_type, date_entered, user_entered, encounter_location_id)
-SELECT patient_id, encounter_id, ZLEMR(patient_id),  DATE(encounter_datetime), encounter_type_name(encounter_id), date_created, username(creator), location_id  FROM encounter  WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup)
-;
-
-CREATE INDEX temp_hiv_visit_pid ON temp_hiv_visit (patient_id);
-CREATE INDEX temp_hiv_visit_eid ON temp_hiv_visit (encounter_id);
-	
-DELETE FROM temp_hiv_visit 
-WHERE patient_id IN (SELECT
-        a.person_id
-    FROM
-        person_attribute a
-            INNER JOIN
-	        person_attribute_type t ON a.person_attribute_type_id = t.person_attribute_type_id
-	            AND a.value = 'true'
-	            AND t.name = 'Test Patient');
-	  	
-update temp_hiv_visit t set hivemr_v1  = patient_identifier(patient_id, '139766e8-15f5-102d-96e4-000c29c2a5d7');          
-	
-update temp_hiv_visit t set visit_location = location_name(encounter_location_id);   
+INSERT INTO temp_pmtct_visit (visit_id, encounter_id, patient_id, emr_id, date_entered, user_entered)
+SELECT visit_id, encounter_id, patient_id, ZLEMR(patient_id), date_created, USERNAME(creator) FROM encounter WHERE encounter_type IN (@initial_pmtct_encounter, @followup_pmtct_encounter) AND voided = 0;
 
 DROP TEMPORARY TABLE IF EXISTS temp_obs;
 create temporary table temp_obs 
-select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.comments, o.date_created  
+select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.comments,o.date_created, o.obs_datetime  
 from obs o
-inner join temp_hiv_visit t on t.encounter_id = o.encounter_id
+inner join temp_pmtct_visit t on t.encounter_id = o.encounter_id
 where o.voided = 0;
 
-create index temp_obs_ci1 on temp_obs(encounter_id,concept_id);
-create index temp_obs_ci3 on temp_obs(obs_group_id,concept_id);
+create index temp_obs_concept_id on temp_obs(concept_id);
+create index temp_obs_ei on temp_obs(encounter_id);
 
-update temp_hiv_visit t
-inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','11631') and o.voided = 0
-set	chw = o.value_text;
+-- visit date
+UPDATE temp_pmtct_visit t SET t.visit_date = VISIT_DATE(t.encounter_id);
 
-update temp_hiv_visit t
-inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','PREGNANCY STATUS') and o.voided = 0
-set	pregnant =	
-	 CASE o.value_coded
-		WHEN concept_from_mapping('PIH','YES') then 1
-		WHEN concept_from_mapping('PIH','NO') then 0
-	END;
+-- facility where healthcare is received
+ UPDATE temp_pmtct_visit t SET t.health_facility = ENCOUNTER_LOCATION_NAME(t.encounter_id);
+ 
+-- expected delivery date
+UPDATE  temp_pmtct_visit t SET expected_delivery_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', '5596');
 
-UPDATE temp_hiv_visit t
-inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','RETURN VISIT DATE')	and o.voided = 0
-set	next_visit_date = o.value_datetime;
+-- Hiv test date
+UPDATE  temp_pmtct_visit t SET hiv_test_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', 'HIV TEST DATE');
 
--- transfers, referrals IN:
-UPDATE 	temp_hiv_visit t
-inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','13169') and o.voided = 0
-set	rt_in_obs_group_id = o.obs_id;
+-- contacts
+SET @relationship = CONCEPT_FROM_MAPPING('PIH', '13265');
+SET @first_name = CONCEPT_FROM_MAPPING('PIH', 'FIRST NAME');
+SET @last_name = CONCEPT_FROM_MAPPING('PIH', 'LAST NAME');
+SET @phone = CONCEPT_FROM_MAPPING('PIH', 'TELEPHONE NUMBER OF CONTACT');
+UPDATE temp_pmtct_visit t SET has_provided_contact = (SELECT 1 FROM temp_obs o WHERE voided = 0 AND o.encounter_id = t.encounter_id AND 
+o.concept_id IN (@relationship, @first_name, @last_name, @phone) GROUP BY o.encounter_id); 
 
-UPDATE temp_hiv_visit t
-inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id = concept_from_mapping('PIH','13712') and o.voided = 0
-set	referral_transfer_in = concept_name(o.value_coded,@locale);
 
-UPDATE temp_hiv_visit t
-inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id = concept_from_mapping('PIH','6401') and o.voided = 0
-set	internal_external_in = concept_name(o.value_coded, @locale);
 
-UPDATE temp_hiv_visit t
-inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id = concept_from_mapping('PIH','8621') and o.voided = 0
-set referral_transfer_location_in = location_name(o.value_text)
-where internal_external_in = concept_name(concept_from_mapping('PIH','8855'),@locale);
+-- tb screening date
+DROP TEMPORARY TABLE IF EXISTS temp_pmtct_tb_visits;
+CREATE TEMPORARY TABLE temp_pmtct_tb_visits
+(
+patient_id INT(11),
+encounter_id INT(11),
+obs_date DATETIME,
+cough_result_concept INT(11),
+fever_result_concept INT(11),
+weight_loss_result_concept INT(11),
+tb_contact_result_concept INT(11),
+lymph_pain_result_concept INT(11),
+bloody_cough_result_concept INT(11),
+dyspnea_result_concept INT(11),
+chest_pain_result_concept INT(11),
+tb_screening_date DATETIME
+);
 
-UPDATE temp_hiv_visit t
-inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id = concept_from_mapping('PIH','11483') and o.voided = 0
-set referral_transfer_location_in = o.value_text
-where internal_external_in <> concept_name(concept_from_mapping('PIH','8855'),@locale);
+INSERT INTO temp_pmtct_tb_visits (patient_id, encounter_id)
+SELECT patient_id, encounter_id FROM temp_pmtct_visit;
 
-update temp_hiv_visit t
-inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','13679')	and o.voided = 0
-set	referred_by_womens_health_in =	
-	 CASE o.value_coded
-		WHEN concept_from_mapping('PIH','YES') then 1
-		WHEN concept_from_mapping('PIH','NO') then 0
-	END;
+SET @present = CONCEPT_FROM_MAPPING('PIH','11563');
+SET @fever_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '11565');
+SET @weight_loss_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '11566');
+SET @cough_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '11567');
+SET @tb_contact_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '11568');
+SET @lymph_pain_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '11569');
+SET @bloody_cough_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '970');
+SET @dyspnea_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '5960');
+SET @chest_pain_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '136');
 
-update temp_hiv_visit t
-inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','13168')	and o.voided = 0
-set referral_transfer_pepfar_partner_in =	
-	 CASE o.value_coded
-		WHEN concept_from_mapping('PIH','YES') then 1
-		WHEN concept_from_mapping('PIH','NO') then 0
-	END;
+UPDATE temp_pmtct_tb_visits t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND value_coded IN 
+(
+@fever_result_concept_id,
+@weight_loss_result_concept_id,
+@cough_result_concept_id,
+@tb_contact_result_concept_id,
+@lymph_pain_result_concept_id,
+@bloody_cough_result_concept_id,
+@dyspnea_result_concept_id,
+@chest_pain_result_concept_id
+)
+SET t.obs_date = o.obs_datetime;
 
--- transfers, referrals OUT:
-UPDATE 	temp_hiv_visit t
-inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','13170') and o.voided = 0
-set rt_out_obs_group_id = o.obs_id;
+UPDATE temp_pmtct_tb_visits t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @fever_result_concept_id
+SET fever_result_concept = o.concept_id;
 
-UPDATE temp_hiv_visit t
-inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id and o.concept_id = concept_from_mapping('PIH','13712') and o.voided = 0
-set	referral_transfer_out = concept_name(o.value_coded,	@locale);
+UPDATE temp_pmtct_tb_visits t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @weight_loss_result_concept_id
+SET weight_loss_result_concept =o.concept_id;
 
-UPDATE temp_hiv_visit t
-inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id and o.concept_id = concept_from_mapping('PIH','8854') and o.voided = 0
-set	internal_external_out = concept_name(o.value_coded,	@locale);
+UPDATE temp_pmtct_tb_visits t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @cough_result_concept_id
+SET cough_result_concept =o.concept_id;
 
-UPDATE temp_hiv_visit t
-inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id	and o.concept_id = concept_from_mapping('PIH','8621') and o.voided = 0
-set referral_transfer_location_out = location_name(o.value_text)
-where
-	internal_external_out = concept_name(concept_from_mapping('PIH','8855'),@locale);
+UPDATE temp_pmtct_tb_visits t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @tb_contact_result_concept_id
+SET tb_contact_result_concept =o.concept_id;
 
-UPDATE temp_hiv_visit t
-inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id and o.concept_id = concept_from_mapping('PIH','11483') and o.voided = 0
-set	referral_transfer_location_out = o.value_text
-where
-	internal_external_out <> concept_name(concept_from_mapping('PIH','8855'),@locale);
+UPDATE temp_pmtct_tb_visits t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @lymph_pain_result_concept_id
+SET lymph_pain_result_concept =o.concept_id;
 
-update temp_hiv_visit t
-inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH',	'13168') and o.voided = 0
-set	referral_transfer_pepfar_partner_out =	
-	 CASE o.value_coded
-		WHEN concept_from_mapping('PIH','YES') then 1
-		WHEN concept_from_mapping('PIH','NO') then 0
-	END;
+UPDATE temp_pmtct_tb_visits t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @bloody_cough_result_concept_id
+SET bloody_cough_result_concept =o.concept_id;
 
-UPDATE temp_hiv_visit t 
-	inner join temp_obs tobs on tobs.encounter_id = t.encounter_id and concept_id = concept_from_mapping('PIH','11337') 
-	and tobs.value_coded in 
-		(concept_from_mapping('PIH','3580'),
-		concept_from_mapping('PIH','7262'),
-		concept_from_mapping('PIH','2222'))
-set reason_not_on_ARV = concept_name(tobs.value_coded,@locale);
+UPDATE temp_pmtct_tb_visits t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @dyspnea_result_concept_id
+SET dyspnea_result_concept =o.concept_id;
+
+UPDATE temp_pmtct_tb_visits t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @chest_pain_result_concept_id
+SET chest_pain_result_concept = o.concept_id;
+
+UPDATE temp_pmtct_tb_visits t SET tb_screening_date = IF(cough_result_concept = @present, t.obs_date,
+  IF(fever_result_concept = @present, t.obs_date,
+    IF(weight_loss_result_concept = @present, t.obs_date,
+      IF(tb_contact_result_concept = @present, t.obs_date,
+        IF(lymph_pain_result_concept = @present, t.obs_date,
+          IF(bloody_cough_result_concept = @present, t.obs_date,
+            IF(dyspnea_result_concept = @present, t.obs_date,
+              IF(chest_pain_result_concept = @present, t.obs_date,
+                NULL)))))))); 
+
+UPDATE temp_pmtct_visit t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id);
 
 -- breastfeeding data
-UPDATE 	temp_hiv_visit t
+UPDATE 	temp_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','13642') and o.voided = 0
 set breastfeeding_status = concept_name(o.value_coded, @locale);
 
-UPDATE 	temp_hiv_visit t
+UPDATE 	temp_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','6889') and o.voided = 0
 set last_breastfeeding_date = o.value_datetime;
 
--- The ascending/descending indexes are calculated ordering on the dispense date
--- new temp tables are used to build them and then joined into the main temp table.
-### index ascending
-drop temporary table if exists temp_visit_index_asc;
-CREATE TEMPORARY TABLE temp_visit_index_asc
+-- index asc
+DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit_index_asc;
+CREATE TEMPORARY TABLE temp_pmtct_visit_index_asc
 (
     SELECT
-            patient_id,
             visit_date,
+            visit_id,
             encounter_id,
-            index_asc
-FROM (SELECT
+            patient_id,
+			index_asc
+    FROM (SELECT
             @r:= IF(@u = patient_id, @r + 1,1) index_asc,
             visit_date,
+            visit_id,
             encounter_id,
             patient_id,
             @u:= patient_id
-      FROM temp_hiv_visit,
-                    (SELECT @r:= 1) AS r,
-                    (SELECT @u:= 0) AS u
-            ORDER BY patient_id, visit_date ASC, encounter_id ASC
+      FROM temp_pmtct_visit,
+            (SELECT @r:= 1) AS r,
+            (SELECT @u:= 0) AS u
+      ORDER BY patient_id, visit_date ASC, visit_id ASC, encounter_id ASC
         ) index_ascending );
 
-CREATE INDEX tvia_e ON temp_visit_index_asc(encounter_id);
-
-update temp_hiv_visit t
-inner join temp_visit_index_asc tvia on tvia.encounter_id = t.encounter_id
-set t.index_asc = tvia.index_asc;
-
-drop temporary table if exists temp_visit_index_desc;
-CREATE TEMPORARY TABLE temp_visit_index_desc
+-- index desc
+DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit_index_desc;
+CREATE TEMPORARY TABLE temp_pmtct_visit_index_desc
 (
     SELECT
-            patient_id,
             visit_date,
+            visit_id,
             encounter_id,
-            index_desc
-FROM (SELECT
+            patient_id,
+			index_desc
+    FROM (SELECT
             @r:= IF(@u = patient_id, @r + 1,1) index_desc,
             visit_date,
+            visit_id,
             encounter_id,
             patient_id,
             @u:= patient_id
-      FROM temp_hiv_visit,
-                    (SELECT @r:= 1) AS r,
-                    (SELECT @u:= 0) AS u
-            ORDER BY patient_id, visit_date DESC, encounter_id DESC
+      FROM temp_pmtct_visit,
+            (SELECT @r:= 1) AS r,
+            (SELECT @u:= 0) AS u
+      ORDER BY patient_id, visit_date DESC, visit_id DESC, encounter_id DESC
         ) index_descending );
-       
- CREATE INDEX tvid_e ON temp_visit_index_desc(encounter_id);      
+ 
+UPDATE temp_pmtct_visit t SET t.index_asc = (SELECT index_asc FROM temp_pmtct_visit_index_asc a WHERE t.visit_id = a.visit_id AND t.encounter_id = a.encounter_id);
+UPDATE temp_pmtct_visit t SET t.index_desc = (SELECT index_desc FROM temp_pmtct_visit_index_desc b WHERE t.visit_id = b.visit_id AND t.encounter_id = b.encounter_id);
 
-update temp_hiv_visit t
-inner join temp_visit_index_desc tvid on tvid.encounter_id = t.encounter_id
-set t.index_desc = tvid.index_desc;
-
-SELECT
-	concat(@partition, '-', encounter_id),
-	emr_id,
-	hivemr_v1,
-	encounter_type,
-	date_entered,
-	user_entered,
-	chw,
-	pregnant,
-	referral_transfer_in,
-	internal_external_in,
-	referral_transfer_location_in,
-	referred_by_womens_health_in,
-	referral_transfer_pepfar_partner_in,
-	referral_transfer_out,
-	internal_external_out,
-	referral_transfer_location_out,
-	referral_transfer_pepfar_partner_out,
-	reason_not_on_ARV,
-	breastfeeding_status,
-	last_breastfeeding_date,
-	visit_date,
-	next_visit_date,
-	visit_location,
-	index_asc,
-	index_desc
-FROM
-	temp_hiv_visit t;
+SELECT 
+visit_id,
+concat(@partition,'-',encounter_id),
+emr_id,
+visit_date,
+health_facility,
+date_entered,
+user_entered,
+hiv_test_date,
+expected_delivery_date,
+tb_screening_date,
+has_provided_contact,
+breastfeeding_status,
+last_breastfeeding_date,
+index_asc,
+index_desc
+FROM temp_pmtct_visit ORDER BY patient_id, visit_date, visit_id;
