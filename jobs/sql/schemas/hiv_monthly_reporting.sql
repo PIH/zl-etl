@@ -32,5 +32,8 @@ latest_tb_screening_result      BIT,
 latest_tb_test_date             DATE,
 latest_tb_test_type             VARCHAR(255),
 latest_tb_test_result           VARCHAR(255),
+date_of_last_breastfeeding_status	DATETIME,
+latest_breastfeeding_status		  VARCHAR(255),
+latest_breastfeeding_date		    DATETIME,
 latest_status                   VARCHAR(255)
 ); 
