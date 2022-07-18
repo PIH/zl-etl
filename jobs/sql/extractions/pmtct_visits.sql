@@ -10,15 +10,17 @@ CREATE TEMPORARY TABLE temp_pmtct_visit (
     visit_id                	INT,
     encounter_id            	INT,
     patient_id              	INT,
-    emr_id 			VARCHAR(25),
+    emr_id 						VARCHAR(25),
     visit_date              	DATE,
     health_facility         	VARCHAR(100),
     date_entered            	DATETIME,
     user_entered            	VARCHAR(50),
     hiv_test_date           	DATE,
-    expected_delivery_date	DATE,
-    tb_screening_date 		DATE,
-    has_provided_contact 	BIT,
+    expected_delivery_date		DATE,
+    tb_screening_date 			DATE,
+    has_provided_contact 		BIT,
+    breastfeeding_status		VARCHAR(255),
+	last_breastfeeding_date		DATETIME,
     -- hiv_test_result varchar(255),
     -- maternity_clinic_type varchar(100),
     index_asc               	INT,
@@ -57,8 +59,6 @@ SET @last_name = CONCEPT_FROM_MAPPING('PIH', 'LAST NAME');
 SET @phone = CONCEPT_FROM_MAPPING('PIH', 'TELEPHONE NUMBER OF CONTACT');
 UPDATE temp_pmtct_visit t SET has_provided_contact = (SELECT 1 FROM temp_obs o WHERE voided = 0 AND o.encounter_id = t.encounter_id AND 
 o.concept_id IN (@relationship, @first_name, @last_name, @phone) GROUP BY o.encounter_id); 
-
-
 
 -- tb screening date
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_tb_visits;
@@ -149,6 +149,15 @@ UPDATE temp_pmtct_tb_visits t SET tb_screening_date = IF(cough_result_concept = 
 
 UPDATE temp_pmtct_visit t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id);
 
+-- breastfeeding data
+UPDATE 	temp_pmtct_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','13642') and o.voided = 0
+set breastfeeding_status = concept_name(o.value_coded, @locale);
+
+UPDATE 	temp_pmtct_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','6889') and o.voided = 0
+set last_breastfeeding_date = o.value_datetime;
+
 -- index asc
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit_index_asc;
 CREATE TEMPORARY TABLE temp_pmtct_visit_index_asc
@@ -210,6 +219,8 @@ hiv_test_date,
 expected_delivery_date,
 tb_screening_date,
 has_provided_contact,
+breastfeeding_status,
+last_breastfeeding_date,
 index_asc,
 index_desc
 FROM temp_pmtct_visit ORDER BY patient_id, visit_date, visit_id;
