@@ -11,6 +11,8 @@ CREATE TABLE pmtct_visits
     expected_delivery_date  DATE,
     tb_screening_date       DATE,
     has_provided_contact    BIT,
+   	breastfeeding_status	VARCHAR(255),
+	last_breastfeeding_date	DATETIME,
     index_asc               INT,
     index_desc              INT
 );
