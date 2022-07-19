@@ -30,6 +30,7 @@ last_viral_load_date 				date,
 last_viral_load_numeric 			int,
 last_viral_load_undetected 			varchar(255),
 months_since_last_viral_load 		int,
+last_tb_coinfection_date			date,
 last_weight							float,
 last_weight_date					date,
 last_height							float,
@@ -169,6 +170,16 @@ update t
 set months_since_last_viral_load = DATEDIFF(month, t.last_viral_load_date , GETDATE())
 from #temp_export t
 
+update t
+set last_tb_coinfection_date = l.specimen_collection_date 
+from #temp_export t
+inner join tb_lab_results l on l.encounter_id = 
+	(select top 1 l2.encounter_id from tb_lab_results l2 
+	where l2.emr_id = t.emr_id
+	and ((l2.test_type = 'genxpert' and l2.test_result_text = ('Detected')) OR 
+		 (l2.test_type = 'smear' and l2.test_result_text in ('1+','++','+++')))
+	order by l2.specimen_collection_date  desc, l2.date_entered desc );
+
 -- last weight
 update t 
 set last_weight = v.weight ,
@@ -180,7 +191,7 @@ inner join all_vitals v on v.all_vitals_id =
 	and av2.weight is not null
 	order by av2.encounter_datetime desc, av2.date_entered desc );
 
--- last weight
+-- last height
 update t 
 set last_height = v.height ,
 	last_height_date = v.encounter_datetime  
@@ -324,6 +335,7 @@ last_viral_load_date ,
 last_viral_load_numeric ,
 last_viral_load_undetected ,
 months_since_last_viral_load ,
+last_tb_coinfection_date,
 last_weight,
 last_weight_date,
 last_height,
