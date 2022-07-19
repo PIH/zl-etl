@@ -36,3 +36,4 @@ configuration:
           - tableName: "tb_lab_results"
           - tableName: "tb_screening"
           - tableName: "echo_summary_table"
+          - tableName: "pathology_encounters"
