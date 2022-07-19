@@ -302,13 +302,13 @@ t1.latest_breastfeeding_status = pv.breastfeeding_status,
 t1.latest_breastfeeding_date = pv.last_breastfeeding_date
 FROM #temp_eom_appts t1 
 INNER JOIN pmtct_visits pv on pv.encounter_id =
-	(select top 1 hv2.encounter_id
-	from hiv_visit hv2 
-	where hv2.emr_id = t1.emr_id 
-	and hv2.visit_date <= t1.reporting_date
-	and hv2.breastfeeding_status is not null
-	order by hv2.visit_date desc)
-where pv.visit_date < t1.date_of_last_breastfeeding_status
+	(select top 1 pv2.encounter_id
+	from pmtct_visits pv2 
+	where pv2.emr_id = t1.emr_id 
+	and pv2.visit_date <= t1.reporting_date
+	and pv2.breastfeeding_status is not null
+	order by pv2.visit_date desc)
+where pv.visit_date < t1.date_of_last_breastfeeding_status or t1.date_of_last_breastfeeding_status is null
 ;
 -- ############################### hiv status data ##################################################################
 update t1
