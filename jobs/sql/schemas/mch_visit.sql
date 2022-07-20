@@ -44,6 +44,7 @@ CREATE TABLE mch_visit
     tetanus_booster_2                DATE,
     gyno_exam                        BIT,
     wh_exam                          BIT,
+    pap_test_performed               BIT,                
     previous_history                 TEXT,
     hiv_test_admin                   BIT,
     hiv_test_date                    DATE,

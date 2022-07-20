@@ -1,175 +1,393 @@
-SET sql_safe_updates = 0;
+-- use openmrs_haiti_warehouse;
+-- use openmrs_humci;
 
-SET @hiv_program_id = (SELECT program_id FROM program WHERE retired = 0 AND uuid = 'b1cb1fc1-5190-4f7a-af08-48870975dafc');
-select name into @hiv_Intake_Name from encounter_type where uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33' ;
-select name into @hiv_Followup_Name from encounter_type where uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33' ;
-select name into @hiv_Dispensing_Name from encounter_type where uuid = 'cc1720c9-3e4c-4fa8-a7ec-40eeaad1958c' ;
-select encounter_type_id into @hiv_Dispensing_id from encounter_type where uuid = 'cc1720c9-3e4c-4fa8-a7ec-40eeaad1958c' ;
-
-DROP TEMPORARY TABLE IF EXISTS temp_hiv_patient_programs;
-CREATE TEMPORARY TABLE temp_hiv_patient_programs
-SELECT patient_id, patient_program_id, date_enrolled, date_completed
-FROM patient_program WHERE voided=0 AND program_id = @hiv_program_id;
-
-
-DROP TEMPORARY TABLE IF EXISTS temp_eom_appts;
-CREATE TEMPORARY TABLE temp_eom_appts
+DROP TABLE IF EXISTS #temp_eom_appts;
+CREATE TABLE #temp_eom_appts
 (
-monthly_reporting_id			INT(11) AUTO_INCREMENT,
-patient_id				INT(11),
-patient_program_id			INT(11),
-date_enrolled				DATETIME,
-date_completed				DATETIME,
-reporting_date				DATE,
-latest_hiv_note_encounter_id		INT(11),
+emr_id							varchar(20),
+date_enrolled					DATETIME,
+date_completed					DATETIME,
+reporting_date					DATE,
 latest_hiv_visit_date			DATETIME,
-latest_expected_hiv_visit_date		DATETIME,
-hiv_visit_days_late			INT,
-latest_dispensing_encounter_id		INT(11),
+latest_expected_hiv_visit_date	DATETIME,
+latest_transfer_in_date			DATE,
+latest_transfer_in_location		VARCHAR(255),
+hiv_visit_days_late				INT,
+second_to_latest_hiv_visit_date	DATE,
+latest_program_status_outcome	VARCHAR(255),
+latest_program_status_outcome_date DATE,
 latest_dispensing_date			DATETIME,
-latest_expected_dispensing_date		DATETIME,
+latest_expected_dispensing_date	DATETIME,
 dispensing_days_late			INT,
-latest_hiv_viral_load_obs_group		INT(11),
 latest_hiv_viral_load_date		DATETIME,
 latest_hiv_viral_load_coded		VARCHAR(255),
 latest_hiv_viral_load			INT,
-latest_arv_regimen_encounter_id		INT(11),
 latest_arv_regimen_date			DATETIME,
 latest_arv_regimen_line			VARCHAR(255),
-latest_arv_dispensed_id			INT(11),
+latest_arv_dispensed_id			INT,
 latest_arv_dispensed_date		DATETIME,
 latest_arv_dispensed_line		VARCHAR(255),
-PRIMARY KEY (monthly_reporting_id)
+latest_months_dispensed			INT,
+days_late_at_latest_pickup		INT,
+latest_reason_not_on_ARV		VARCHAR(255),
+latest_reason_not_on_ARV_date	DATE,
+latest_tb_screening_date		DATE,
+latest_tb_screening_result		BIT,
+latest_tb_test_date				DATE,
+latest_tb_test_type				VARCHAR(255),
+latest_tb_test_result			VARCHAR(255),
+latest_tb_coinfection_date		DATE,
+date_of_last_breastfeeding_status	DATETIME,
+latest_breastfeeding_status		VARCHAR(255),
+latest_breastfeeding_date		DATETIME,
+latest_status					VARCHAR(255)
 );
 
-create index eom_patient on temp_eom_appts(patient_id);
+CREATE OR ALTER VIEW all_reporting_visits AS
+	SELECT hv.encounter_id ,hv.emr_id ,x.reporting_date ,hv.visit_date, hv.next_visit_date 
+	FROM hiv_visit hv INNER JOIN (
+	SELECT DISTINCT dd.LastDateofMonth reporting_date  FROM Dim_Date dd
+	WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+	on EOMONTH(hv.visit_date) <= x.reporting_date 
+	AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date));
 
-call load_end_of_month_dates('2020-01-01',CURRENT_DATE()) ;
+CREATE OR ALTER VIEW all_reporting_dispense AS
+	SELECT hd.encounter_id ,hd.emr_id ,x.reporting_date ,hd.dispense_date,hd.next_dispense_date, hd.months_dispensed, hd.days_late_to_pickup  
+	FROM hiv_dispensing hd INNER JOIN (
+	SELECT DISTINCT dd.LastDateofMonth reporting_date  FROM Dim_Date dd
+	WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+	on EOMONTH(hd.dispense_date) <= x.reporting_date 
+	AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date));
 
--- insert end of month date rows for each patient for when they are active 
-insert into temp_eom_appts (patient_id,patient_program_id,date_enrolled, date_completed, reporting_date)
-select * from temp_hiv_patient_programs t
-inner join END_OF_MONTH_DATES e 
-	on e.reporting_date >= last_day(t.date_enrolled)  
-	and (last_day(t.date_completed) >= e.reporting_date or t.date_completed is null)
-	order by patient_program_id asc, e.reporting_date
+CREATE OR ALTER VIEW all_reporting_dispense_arv AS
+	SELECT hd.encounter_id ,hd.emr_id ,x.reporting_date ,hd.dispense_date,hd.next_dispense_date,hd.current_art_treatment_line, hd.arv_1_med , hd.arv_2_med ,hd.arv_3_med 
+	FROM hiv_dispensing hd INNER JOIN (
+	SELECT DISTINCT dd.LastDateofMonth reporting_date  FROM Dim_Date dd
+	WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+	on EOMONTH(hd.dispense_date) <= x.reporting_date 
+	AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date))
+	WHERE  ( arv_1_med IS NOT NULL 
+	OR  arv_2_med IS NOT NULL 
+	OR arv_3_med IS NOT NULL)
 	;
 
--- HIV notes dates/info
-update temp_eom_appts t
-set latest_hiv_note_encounter_id =
- latestEncBetweenDates(t.patient_id, CONCAT(@hiv_intake_name,',',@hiv_followup_name), null,t.reporting_date);
+CREATE OR ALTER VIEW all_reporting_viral AS
+	SELECT  hvl.encounter_id ,hvl.emr_id ,x.reporting_date ,hvl.vl_coded_results,hvl.viral_load,hvl.vl_sample_taken_date
+	FROM hiv_viral_load hvl INNER JOIN (
+	SELECT DISTINCT dd.LastDateofMonth reporting_date  FROM Dim_Date dd
+	WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+	on EOMONTH(hvl.vl_sample_taken_date) <= x.reporting_date 
+	AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date));
 
-update temp_eom_appts t
-set latest_hiv_visit_date = encounter_date(t.latest_hiv_note_encounter_id);
+CREATE OR ALTER VIEW all_reporting_reg AS
+	SELECT hr.encounter_id ,hr.emr_id ,x.reporting_date ,hr.encounter_datetime ,hr.art_treatment_line 
+	FROM hiv_regimens hr  INNER JOIN (
+	SELECT DISTINCT dd.LastDateofMonth reporting_date  FROM Dim_Date dd
+	WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+	on EOMONTH(hr.encounter_datetime) <= x.reporting_date 
+	AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date))
+	AND upper(hr.order_action) ='NEW' AND upper(hr.drug_category)='ART';
 
-update temp_eom_appts t
-set latest_expected_hiv_visit_date = obs_value_datetime(t.latest_hiv_note_encounter_id,'PIH','5096');
+-- ############## Load Initial Data ##############################################################
+CREATE OR ALTER VIEW hiv_patient_modified AS 
+SELECT x.*
+FROM (
+SELECT hpp.*, lead(date_enrolled) over(PARTITION BY emr_id ORDER BY date_enrolled) next_date_enrolled
+FROM hiv_patient_program hpp
+) x
+WHERE CASE WHEN next_date_enrolled=date_completed THEN 0 ELSE 1 END=1;
 
-update temp_eom_appts t
-set hiv_visit_days_late = DATEDIFF(t.reporting_date ,ifnull(latest_expected_hiv_visit_date,ifnull(latest_hiv_visit_date,date_enrolled)  )); 
+INSERT INTO #temp_eom_appts (emr_id, date_enrolled, date_completed,reporting_date )
+SELECT DISTINCT emr_id AS patient_id, date_enrolled ,date_completed, dd.LastDateofMonth reporting_date
+FROM hiv_patient_modified hpp
+inner join Dim_Date dd  
+	on dd.LastDateofMonth  >= EOMONTH(hpp.date_enrolled)  
+	and (EOMONTH(hpp.date_completed) >=dd.LastDateofMonth or hpp.date_completed is null)
+    	and dd.LastDateofMonth <=  CAST(GETDATE() AS date);  -- include end of month dates for all prior months only
 
--- HIV Dispensing dates/info
-update temp_eom_appts t
-set latest_dispensing_encounter_id =
- latestEncBetweenDates(t.patient_id, @hiv_Dispensing_Name, null,t.reporting_date);
 
-update temp_eom_appts t
-set latest_dispensing_date = encounter_date(t.latest_dispensing_encounter_id);
+-- ############################### HIV Visit Data ##################################################################
+UPDATE t1
+SET t1.latest_hiv_visit_date = x.visit_date
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN 
+(
+	SELECT emr_id,reporting_date,max(visit_date) visit_date FROM all_reporting_visits
+	GROUP BY emr_id,reporting_date
+) x
+ON t1.emr_id =  x.emr_id AND t1.reporting_date=x.reporting_date;
 
-update temp_eom_appts t
-set latest_expected_dispensing_date = obs_value_datetime(t.latest_dispensing_encounter_id,'PIH','5096');
+UPDATE t1
+SET 
+t1.latest_expected_hiv_visit_date =av.next_visit_date,
+t1.hiv_visit_days_late=IIF(
+	DATEDIFF(DAY,isnull(av.next_visit_date,isnull(t1.latest_hiv_visit_date,t1.date_enrolled)),t1.reporting_date) > 0,
+	DATEDIFF(DAY,isnull(av.next_visit_date,isnull(t1.latest_hiv_visit_date,t1.date_enrolled)),t1.reporting_date),
+	0)
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN all_reporting_visits av
+ON t1.emr_id =  av.emr_id 
+AND t1.reporting_date=av.reporting_date
+AND t1.latest_hiv_visit_date=av.visit_date;
 
-update temp_eom_appts t
-set dispensing_days_late = DATEDIFF(t.reporting_date ,ifnull(latest_expected_dispensing_date,ifnull(latest_dispensing_date,date_enrolled)  )); 
+update t1
+SET t1.latest_transfer_in_date = v.visit_date ,
+t1.latest_transfer_in_location = v.referral_transfer_location_in 
+FROM #temp_eom_appts t1 
+INNER JOIN hiv_visit v on v.encounter_id =
+	(select top 1 v2.encounter_id
+	from hiv_visit v2 
+	where v2.emr_id = t1.emr_id 
+	and v2.referral_transfer_in = 'Transfer'
+	and v2.visit_date <= t1.reporting_date 
+	order by v2.visit_date desc);
 
--- last viral load info
-update temp_eom_appts t
-inner join obs o on obs_id = 
-	(select obs_id from obs o2
-	where o2.voided = 0 
-	and o2.person_id = t.patient_id 
-	and o2.concept_id = CONCEPT_FROM_MAPPING("PIH", "HIV viral load construct")
-	and o2.obs_datetime >= t.date_enrolled 
-	and o2.obs_datetime <= t.reporting_date 
-	order by obs_datetime desc, obs_id desc limit 1)
-set latest_hiv_viral_load_obs_group = o.obs_id ;
+update t1
+SET t1.latest_reason_not_on_ARV = v.reason_not_on_ARV, 
+t1.latest_reason_not_on_ARV_date = v.visit_date 
+FROM #temp_eom_appts t1 
+INNER JOIN hiv_visit v on v.encounter_id =
+	(select top 1 v2.encounter_id
+	from hiv_visit v2 
+	where v2.emr_id = t1.emr_id 
+	and v2.reason_not_on_ARV is not null
+	and v2.visit_date <= t1.reporting_date 	
+	order by v2.visit_date desc);
 
-update temp_eom_appts t
-set latest_hiv_viral_load_date = obs_date(latest_hiv_viral_load_obs_group);
+update t1
+SET t1.second_to_latest_hiv_visit_date = v.visit_date 
+FROM #temp_eom_appts t1 
+INNER JOIN hiv_visit v on v.encounter_id =
+	(select top 1 v2.encounter_id
+	from hiv_visit v2 
+	where v2.emr_id = t1.emr_id 
+	and v2.visit_date < t1.latest_hiv_visit_date 	
+	order by v2.visit_date desc);
 
-update temp_eom_appts t
-set latest_hiv_viral_load_coded	= obs_from_group_id_value_coded_list(latest_hiv_viral_load_obs_group,'CIEL','1305',@locale);
+-- ############################### HIV Dispensing Data ##################################################################
 
-update temp_eom_appts t
-set latest_hiv_viral_load	= obs_from_group_id_value_numeric(latest_hiv_viral_load_obs_group,'CIEL','856');
+UPDATE t1
+SET t1.latest_dispensing_date = x.dispense_date
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN 
+(
+	SELECT emr_id,reporting_date,max(dispense_date)  dispense_date FROM all_reporting_dispense
+	GROUP BY emr_id,reporting_date
+) x
+ON t1.emr_id =  x.emr_id AND t1.reporting_date=x.reporting_date;
 
--- latest arv treatment line 
--- a temp table is loaded with the most recent HIV order information for each row
--- this is used to update the main temp table
-drop temporary table if exists temp_last_arv_order_id;
-create temporary table temp_last_arv_order_id 
-	select t.monthly_reporting_id, o.date_activated, o.encounter_id  
-	from temp_eom_appts t 
-	inner join 
-		(select o2.patient_id ,  o2.date_activated, o2.encounter_id  
-		from orders o2 
-		where o2.voided = 0
-		and o2.order_reason = concept_from_mapping('CIEL','138405') -- HIV order reason
-		order by if(o2.date_stopped is null,0,1) asc, ifnull(o2.scheduled_date, o2.date_activated) desc) o on o.patient_id = t.patient_id and o.date_activated < t.reporting_date  
-	group by t.monthly_reporting_id 
+UPDATE t1
+SET 
+t1.latest_expected_dispensing_date=ad.next_dispense_date,
+t1.dispensing_days_late=IIF(
+	DATEDIFF(DAY,isnull(ad.next_dispense_date,isnull(t1.latest_dispensing_date,t1.date_enrolled)),t1.reporting_date) >0,
+	DATEDIFF(DAY,isnull(ad.next_dispense_date,isnull(t1.latest_dispensing_date,t1.date_enrolled)),t1.reporting_date),
+	0),
+t1.latest_months_dispensed = ad.months_dispensed,
+t1.days_late_at_latest_pickup = ad.days_late_to_pickup
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN all_reporting_dispense ad
+ON t1.emr_id =  ad.emr_id 
+AND t1.reporting_date=ad.reporting_date
+AND t1.latest_dispensing_date=ad.dispense_date;
+
+-- ############################### HIV Viral Data ##################################################################
+
+UPDATE t1
+SET t1.latest_hiv_viral_load_date = x.vl_sample_taken_date
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN 
+(
+	SELECT emr_id,reporting_date,max(vl_sample_taken_date)  vl_sample_taken_date FROM all_reporting_viral
+	GROUP BY emr_id,reporting_date
+) x
+ON t1.emr_id =  x.emr_id AND t1.reporting_date=x.reporting_date;
+
+
+UPDATE t1
+SET t1.latest_hiv_viral_load_coded = avl.vl_coded_results,
+t1.latest_hiv_viral_load=avl.viral_load
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN all_reporting_viral avl
+ON t1.emr_id =  avl.emr_id 
+AND t1.reporting_date=avl.reporting_date
+AND t1.latest_hiv_viral_load_date=avl.vl_sample_taken_date;
+
+-- ############################### HIV Regimens ##################################################################
+
+UPDATE t1
+SET t1.latest_arv_regimen_date = x.encounter_datetime
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN 
+(
+	SELECT emr_id,reporting_date,max(encounter_datetime)  encounter_datetime 
+	FROM all_reporting_reg
+	GROUP BY emr_id ,reporting_date
+) x
+ON t1.emr_id =  x.emr_id AND t1.reporting_date=x.reporting_date;
+
+
+UPDATE t1
+SET t1.latest_arv_regimen_line = r.art_treatment_line
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN all_reporting_reg r
+ON t1.emr_id =  r.emr_id 
+AND t1.reporting_date=r.reporting_date
+AND t1.latest_arv_regimen_date=r.encounter_datetime;
+
+
+-- ############################### HIV Dispense ARV ##################################################################
+
+UPDATE t1
+SET t1.latest_arv_dispensed_date = x.dispense_date
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN 
+(
+	SELECT emr_id,reporting_date,max(dispense_date)  dispense_date 
+	FROM all_reporting_dispense_arv
+	GROUP BY emr_id,reporting_date
+) x
+ON t1.emr_id =  x.emr_id AND t1.reporting_date=x.reporting_date;
+
+UPDATE t1
+SET t1.latest_arv_dispensed_line = ad.current_art_treatment_line
+FROM  #temp_eom_appts t1 
+LEFT OUTER JOIN all_reporting_dispense_arv ad
+ON t1.emr_id =  ad.emr_id 
+AND t1.reporting_date=ad.reporting_date
+AND t1.latest_arv_dispensed_date=ad.dispense_date;
+
+-- ############################### TB screening data ##################################################################
+update t1
+SET t1.latest_tb_screening_result = tb.tb_screening_result, 
+t1.latest_tb_screening_date = tb.tb_screening_date 
+FROM #temp_eom_appts t1 
+INNER JOIN tb_screening tb on tb.encounter_id =
+	(select top 1 tb2.encounter_id
+	from tb_screening tb2 
+	where tb2.emr_id = t1.emr_id 
+	and tb2.tb_screening_date <= t1.reporting_date 	
+	order by tb2.tb_screening_date desc);
+
+
+-- ############################### TB testing data ##################################################################
+update t1
+SET t1.latest_tb_test_date = tb.specimen_collection_date, 
+t1.latest_tb_test_type = tb.test_type,
+t1.latest_tb_test_result = tb.test_result_text 
+FROM #temp_eom_appts t1 
+INNER JOIN tb_lab_results tb on tb.encounter_id =
+	(select top 1 tb2.encounter_id
+	from tb_lab_results tb2 
+	where tb2.emr_id = t1.emr_id 
+	and tb2.specimen_collection_date <= t1.reporting_date 	
+	order by tb2.specimen_collection_date desc);
+
+
+update t
+set latest_tb_coinfection_date = l.specimen_collection_date 
+from #temp_eom_appts t
+inner join tb_lab_results l on l.encounter_id = 
+	(select top 1 l2.encounter_id from tb_lab_results l2 
+	where l2.emr_id = t.emr_id
+	and ((l2.test_type = 'genxpert' and l2.test_result_text = ('Detected')) OR 
+		 (l2.test_type = 'smear' and l2.test_result_text in ('1+','++','+++')))
+	and l2.specimen_collection_date	<= t.reporting_date 
+	order by l2.specimen_collection_date  desc, l2.date_entered desc );
+
+
+-- ############################### Breastfeeding data ##################################################################
+update t1
+SET t1.date_of_last_breastfeeding_status = hv.visit_date, 
+t1.latest_breastfeeding_status = hv.breastfeeding_status,
+t1.latest_breastfeeding_date = hv.last_breastfeeding_date
+FROM #temp_eom_appts t1 
+INNER JOIN hiv_visit hv on hv.encounter_id =
+	(select top 1 hv2.encounter_id
+	from hiv_visit hv2 
+	where hv2.emr_id = t1.emr_id 
+	and hv2.visit_date <= t1.reporting_date
+	and hv2.breastfeeding_status is not null
+	order by hv2.visit_date desc);
+
+update t1
+SET t1.date_of_last_breastfeeding_status = pv.visit_date, 
+t1.latest_breastfeeding_status = pv.breastfeeding_status,
+t1.latest_breastfeeding_date = pv.last_breastfeeding_date
+FROM #temp_eom_appts t1 
+INNER JOIN pmtct_visits pv on pv.encounter_id =
+	(select top 1 pv2.encounter_id
+	from pmtct_visits pv2 
+	where pv2.emr_id = t1.emr_id 
+	and pv2.visit_date <= t1.reporting_date
+	and pv2.breastfeeding_status is not null
+	order by pv2.visit_date desc)
+where pv.visit_date < t1.date_of_last_breastfeeding_status or t1.date_of_last_breastfeeding_status is null
 ;
+-- ############################### hiv status data ##################################################################
+update t1
+SET t1.latest_program_status_outcome_date = h.start_date, 
+t1.latest_program_status_outcome = h.status_outcome 
+FROM #temp_eom_appts t1 
+INNER JOIN hiv_status h on h.status_id  =
+	(select top 1 h2.status_id
+	from hiv_status h2
+	where h2.emr_id = t1.emr_id 
+	and h2.status_outcome is not null
+	and h2.start_date  <= t1.reporting_date 	
+	order by h2.start_date desc);
 
-update temp_eom_appts t 
-inner join temp_last_arv_order_id tlao on tlao.monthly_reporting_id = t.monthly_reporting_id 
-set latest_arv_regimen_date = tlao.date_activated,
-	latest_arv_regimen_encounter_id = tlao.encounter_id ;
+-- ################################## combined status #########################################################################
+-- note that "pregnant" statuses are ignored with this combined status
+update t
+set latest_status =
+	CASE 
+		when latest_program_status_outcome is not null 
+			and latest_program_status_outcome  not like '%pregnant%' then latest_program_status_outcome
+		when dispensing_days_late <= 28  then 'active - on arvs'
+		else 'Lost to followup'
+	END	
+from #temp_eom_appts t; 
 
-update temp_eom_appts t 
-set latest_arv_regimen_line = obs_value_coded_list(t.latest_arv_regimen_encounter_id, 'PIH','13115',@locale );
 
--- latest arv dispensing
--- a temp table is loaded with the most recent HIV dispensing encounter information for each row
--- this is used to update the main temp table
-drop temporary table if exists temp_last_arv_dispensing_id;
-create temporary table temp_last_arv_dispensing_id 
-	select t.monthly_reporting_id, e.encounter_id, e.encounter_datetime  
-	from temp_eom_appts t 
-	inner join 
-		(select e2.patient_id, e2.encounter_id, e2.encounter_datetime 
-		from encounter e2
-		inner join obs o on o.voided = 0 and o.encounter_id = e2.encounter_id and concept_id = concept_from_mapping('PIH','13115') 
-		where e2.voided = 0
-		and e2.encounter_type = @hiv_Dispensing_id 
-		order by e2.encounter_datetime desc, e2.encounter_id desc) e on e.patient_id  = t.patient_id and e.encounter_datetime <= t.reporting_date 
-	group by t.monthly_reporting_id;		
-		
-update temp_eom_appts t 
-inner join temp_last_arv_dispensing_id tlad on tlad.monthly_reporting_id = t.monthly_reporting_id 
-set latest_arv_dispensed_id = tlad.encounter_id, 
-	latest_arv_dispensed_date = tlad.encounter_datetime;
+-- ###########################################################################################################
 
-update temp_eom_appts t 
-set latest_arv_dispensed_line = obs_value_coded_list(t.latest_arv_dispensed_id, 'PIH','13115',@locale );
-
-SELECT
-	zlemr(patient_id),
-	date_enrolled ,
-	date_completed ,
-	reporting_date,
-	latest_hiv_note_encounter_id,
-	latest_hiv_visit_date,
-	latest_expected_hiv_visit_date,
-	hiv_visit_days_late,
-	latest_dispensing_encounter_id,
-	latest_dispensing_date,
-	latest_expected_dispensing_date,
-	dispensing_days_late,
-	latest_hiv_viral_load_date,
-	latest_hiv_viral_load_coded,
-	latest_hiv_viral_load,
-	latest_arv_regimen_date,
-	latest_arv_regimen_line,
-	latest_arv_dispensed_date,
-	latest_arv_dispensed_line
-from temp_eom_appts;
+SELECT 
+emr_id,
+date_enrolled,
+date_completed,
+reporting_date,
+latest_program_status_outcome,
+latest_program_status_outcome_date,
+latest_hiv_visit_date,
+latest_expected_hiv_visit_date,
+hiv_visit_days_late,
+second_to_latest_hiv_visit_date,
+latest_transfer_in_date,
+latest_transfer_in_location,
+latest_dispensing_date,
+latest_expected_dispensing_date,
+dispensing_days_late,
+latest_months_dispensed,
+latest_hiv_viral_load_date,
+latest_hiv_viral_load_coded,
+latest_hiv_viral_load,
+latest_arv_regimen_date,
+latest_arv_regimen_line,
+latest_arv_dispensed_id,
+latest_arv_dispensed_date,
+latest_arv_dispensed_line,
+days_late_at_latest_pickup,
+latest_reason_not_on_ARV_date,
+latest_reason_not_on_ARV,
+latest_tb_screening_date,
+latest_tb_screening_result,
+latest_tb_test_date,
+latest_tb_test_type,
+latest_tb_test_result,
+latest_tb_coinfection_date,
+date_of_last_breastfeeding_status,
+latest_breastfeeding_status,
+latest_breastfeeding_date,
+latest_status
+FROM #temp_eom_appts;

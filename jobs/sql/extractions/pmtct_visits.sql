@@ -7,25 +7,38 @@ SET @followup_pmtct_encounter =  ENCOUNTER_TYPE('95e03e7d-9aeb-4a99-bd7a-94e8591
 -- drop and create temp pmct visit table
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit;
 CREATE TEMPORARY TABLE temp_pmtct_visit (
-    visit_id                INT,
-    encounter_id            INT,
-    patient_id              INT,
-    emr_id 					VARCHAR(25),
-    visit_date              DATE,
-    health_facility         VARCHAR(100),
-    date_entered            DATETIME,
-    user_entered            VARCHAR(50),
-    hiv_test_date           DATE,
+    visit_id                	INT,
+    encounter_id            	INT,
+    patient_id              	INT,
+    emr_id 			VARCHAR(25),
+    visit_date              	DATE,
+    health_facility         	VARCHAR(100),
+    date_entered            	DATETIME,
+    user_entered            	VARCHAR(50),
+    hiv_test_date           	DATE,
+    expected_delivery_date	DATE,
     tb_screening_date 		DATE,
     has_provided_contact 	BIT,
+    breastfeeding_status	VARCHAR(255),
+   last_breastfeeding_date	DATETIME,
     -- hiv_test_result varchar(255),
     -- maternity_clinic_type varchar(100),
-    index_asc               INT,
-    index_desc              INT
+    index_asc               	INT,
+    index_desc              	INT
 );
 
 INSERT INTO temp_pmtct_visit (visit_id, encounter_id, patient_id, emr_id, date_entered, user_entered)
 SELECT visit_id, encounter_id, patient_id, ZLEMR(patient_id), date_created, USERNAME(creator) FROM encounter WHERE encounter_type IN (@initial_pmtct_encounter, @followup_pmtct_encounter) AND voided = 0;
+
+DROP TEMPORARY TABLE IF EXISTS temp_obs;
+create temporary table temp_obs 
+select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.comments,o.date_created, o.obs_datetime  
+from obs o
+inner join temp_pmtct_visit t on t.encounter_id = o.encounter_id
+where o.voided = 0;
+
+create index temp_obs_concept_id on temp_obs(concept_id);
+create index temp_obs_ei on temp_obs(encounter_id);
 
 -- visit date
 UPDATE temp_pmtct_visit t SET t.visit_date = VISIT_DATE(t.encounter_id);
@@ -33,18 +46,19 @@ UPDATE temp_pmtct_visit t SET t.visit_date = VISIT_DATE(t.encounter_id);
 -- facility where healthcare is received
  UPDATE temp_pmtct_visit t SET t.health_facility = ENCOUNTER_LOCATION_NAME(t.encounter_id);
  
+-- expected delivery date
+UPDATE  temp_pmtct_visit t SET expected_delivery_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', '5596');
+
 -- Hiv test date
-UPDATE  temp_pmtct_visit t SET hiv_test_date = OBS_VALUE_DATETIME(t.encounter_id, 'PIH', 'HIV TEST DATE');
+UPDATE  temp_pmtct_visit t SET hiv_test_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', 'HIV TEST DATE');
 
 -- contacts
 SET @relationship = CONCEPT_FROM_MAPPING('PIH', '13265');
 SET @first_name = CONCEPT_FROM_MAPPING('PIH', 'FIRST NAME');
 SET @last_name = CONCEPT_FROM_MAPPING('PIH', 'LAST NAME');
 SET @phone = CONCEPT_FROM_MAPPING('PIH', 'TELEPHONE NUMBER OF CONTACT');
-UPDATE temp_pmtct_visit t SET has_provided_contact = (SELECT 1 FROM obs o WHERE voided = 0 AND o.encounter_id = t.encounter_id AND 
+UPDATE temp_pmtct_visit t SET has_provided_contact = (SELECT 1 FROM temp_obs o WHERE voided = 0 AND o.encounter_id = t.encounter_id AND 
 o.concept_id IN (@relationship, @first_name, @last_name, @phone) GROUP BY o.encounter_id); 
-
-
 
 -- tb screening date
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_tb_visits;
@@ -78,7 +92,7 @@ SET @dyspnea_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '5960');
 SET @chest_pain_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '136');
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o ON t.encounter_id = o.encounter_id AND value_coded IN 
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND value_coded IN 
 (
 @fever_result_concept_id,
 @weight_loss_result_concept_id,
@@ -92,35 +106,35 @@ INNER JOIN obs o ON t.encounter_id = o.encounter_id AND value_coded IN
 SET t.obs_date = o.obs_datetime;
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @fever_result_concept_id
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @fever_result_concept_id
 SET fever_result_concept = o.concept_id;
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @weight_loss_result_concept_id
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @weight_loss_result_concept_id
 SET weight_loss_result_concept =o.concept_id;
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @cough_result_concept_id
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @cough_result_concept_id
 SET cough_result_concept =o.concept_id;
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @tb_contact_result_concept_id
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @tb_contact_result_concept_id
 SET tb_contact_result_concept =o.concept_id;
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @lymph_pain_result_concept_id
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @lymph_pain_result_concept_id
 SET lymph_pain_result_concept =o.concept_id;
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @bloody_cough_result_concept_id
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @bloody_cough_result_concept_id
 SET bloody_cough_result_concept =o.concept_id;
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @dyspnea_result_concept_id
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @dyspnea_result_concept_id
 SET dyspnea_result_concept =o.concept_id;
 
 UPDATE temp_pmtct_tb_visits t
-INNER JOIN obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @chest_pain_result_concept_id
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @chest_pain_result_concept_id
 SET chest_pain_result_concept = o.concept_id;
 
 UPDATE temp_pmtct_tb_visits t SET tb_screening_date = IF(cough_result_concept = @present, t.obs_date,
@@ -134,6 +148,15 @@ UPDATE temp_pmtct_tb_visits t SET tb_screening_date = IF(cough_result_concept = 
                 NULL)))))))); 
 
 UPDATE temp_pmtct_visit t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id);
+
+-- breastfeeding data
+UPDATE 	temp_pmtct_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','13642') and o.voided = 0
+set breastfeeding_status = concept_name(o.value_coded, @locale);
+
+UPDATE 	temp_pmtct_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','6889') and o.voided = 0
+set last_breastfeeding_date = o.value_datetime;
 
 -- index asc
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit_index_asc;
@@ -193,8 +216,11 @@ health_facility,
 date_entered,
 user_entered,
 hiv_test_date,
+expected_delivery_date,
 tb_screening_date,
 has_provided_contact,
+breastfeeding_status,
+last_breastfeeding_date,
 index_asc,
 index_desc
 FROM temp_pmtct_visit ORDER BY patient_id, visit_date, visit_id;

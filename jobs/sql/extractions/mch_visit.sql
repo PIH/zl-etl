@@ -59,6 +59,7 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     tetanus_booster_2  DATE,
     gyno_exam          BIT,
     wh_exam            BIT,
+    pap_test_performed BIT,
     previous_history   TEXT,
     cervical_cancer_screening_date DATE,
     cervical_cancer_screening_result BIT,
@@ -505,6 +506,16 @@ UPDATE temp_obgyn_visit e
 SET 
     wh_exam = 1;
 
+
+UPDATE temp_obgyn_visit te
+        JOIN temp_mch_obs o ON te.encounter_id = o.encounter_id
+        AND concept_id = CONCEPT_FROM_MAPPING('PIH', '11319')
+        AND value_coded = CONCEPT_FROM_MAPPING('PIH', '1267')
+        AND o.voided = 0 
+SET 
+    pap_test_performed = 1;
+   
+   
 UPDATE temp_obgyn_visit te
         JOIN
     temp_mch_obs o ON te.encounter_id = o.encounter_id
@@ -925,6 +936,7 @@ SELECT
     tetanus_booster_2,
     gyno_exam,
     wh_exam,
+    pap_test_performed,
     previous_history,
     hiv_test_admin,
     hiv_test_date,
