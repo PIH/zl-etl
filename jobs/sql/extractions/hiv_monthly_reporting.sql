@@ -14,8 +14,8 @@ latest_transfer_in_date			DATE,
 latest_transfer_in_location		VARCHAR(255),
 hiv_visit_days_late				INT,
 second_to_latest_hiv_visit_date	DATE,
-lastest_program_status_outcome	VARCHAR(255),
-lastest_program_status_outcome_date DATE,
+latest_program_status_outcome	VARCHAR(255),
+latest_program_status_outcome_date DATE,
 latest_dispensing_date			DATETIME,
 latest_expected_dispensing_date	DATETIME,
 dispensing_days_late			INT,
@@ -36,6 +36,7 @@ latest_tb_screening_result		BIT,
 latest_tb_test_date				DATE,
 latest_tb_test_type				VARCHAR(255),
 latest_tb_test_result			VARCHAR(255),
+latest_tb_coinfection_date		DATE,
 date_of_last_breastfeeding_status	DATETIME,
 latest_breastfeeding_status		VARCHAR(255),
 latest_breastfeeding_date		DATETIME,
@@ -282,6 +283,19 @@ INNER JOIN tb_lab_results tb on tb.encounter_id =
 	and tb2.specimen_collection_date <= t1.reporting_date 	
 	order by tb2.specimen_collection_date desc);
 
+
+update t
+set latest_tb_coinfection_date = l.specimen_collection_date 
+from #temp_eom_appts t
+inner join tb_lab_results l on l.encounter_id = 
+	(select top 1 l2.encounter_id from tb_lab_results l2 
+	where l2.emr_id = t.emr_id
+	and ((l2.test_type = 'genxpert' and l2.test_result_text = ('Detected')) OR 
+		 (l2.test_type = 'smear' and l2.test_result_text in ('1+','++','+++')))
+	and l2.specimen_collection_date	<= t.reporting_date 
+	order by l2.specimen_collection_date  desc, l2.date_entered desc );
+
+
 -- ############################### Breastfeeding data ##################################################################
 update t1
 SET t1.date_of_last_breastfeeding_status = hv.visit_date, 
@@ -312,8 +326,8 @@ where pv.visit_date < t1.date_of_last_breastfeeding_status or t1.date_of_last_br
 ;
 -- ############################### hiv status data ##################################################################
 update t1
-SET t1.lastest_program_status_outcome_date = h.start_date, 
-t1.lastest_program_status_outcome = h.status_outcome 
+SET t1.latest_program_status_outcome_date = h.start_date, 
+t1.latest_program_status_outcome = h.status_outcome 
 FROM #temp_eom_appts t1 
 INNER JOIN hiv_status h on h.status_id  =
 	(select top 1 h2.status_id
@@ -328,8 +342,8 @@ INNER JOIN hiv_status h on h.status_id  =
 update t
 set latest_status =
 	CASE 
-		when lastest_program_status_outcome is not null 
-			and lastest_program_status_outcome  not like '%pregnant%' then lastest_program_status_outcome
+		when latest_program_status_outcome is not null 
+			and latest_program_status_outcome  not like '%pregnant%' then latest_program_status_outcome
 		when dispensing_days_late <= 28  then 'active - on arvs'
 		else 'Lost to followup'
 	END	
@@ -343,8 +357,8 @@ emr_id,
 date_enrolled,
 date_completed,
 reporting_date,
-lastest_program_status_outcome,
-lastest_program_status_outcome_date,
+latest_program_status_outcome,
+latest_program_status_outcome_date,
 latest_hiv_visit_date,
 latest_expected_hiv_visit_date,
 hiv_visit_days_late,
@@ -371,6 +385,7 @@ latest_tb_screening_result,
 latest_tb_test_date,
 latest_tb_test_type,
 latest_tb_test_result,
+latest_tb_coinfection_date,
 date_of_last_breastfeeding_status,
 latest_breastfeeding_status,
 latest_breastfeeding_date,
