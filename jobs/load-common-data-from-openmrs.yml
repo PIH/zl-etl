@@ -35,6 +35,6 @@ configuration:
           - tableName: "vaccinations_anc"
           - tableName: "tb_lab_results"
           - tableName: "tb_screening"
+          - tableName: "ncd_patient_table"
           - tableName: "pathology_encounters"          
-#         - tableName: "echo_summary_table" -- commented out temporarily while debugging
-
+          - tableName: "echo_summary_table" -- commented out temporarily while debugging
