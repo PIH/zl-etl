@@ -1,10 +1,10 @@
-## ------------------------ Variables ---------------------------------------------------
+-- ---------------------- Variables ---------------------------------------------------
 SELECT 'en' INTO @locale;
 SET @ncd_init_enc = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'ae06d311-1866-455b-8a64-126a9bd74171');
 SET @ncd_follow_enc = (SELECT encounter_type_id FROM encounter_type e WHERE uuid = '5cbfd6a2-92d9-4ad0-b526-9d29bfe1d10c');
 select program_id into @ncd_program_id from program where uuid = '515796ec-bf3a-11e7-abc4-cec278b6b50a';
 
----------------------- INSERT patients IN SCOPE OF NCD -----------------------------------------------------
+-- -------------------- INSERT patients IN SCOPE OF NCD -----------------------------------------------------
 insert into ncd_patient_table (patient_id)
 SELECT patient_id  FROM (
 	SELECT e2.patient_id , max(e2.encounter_id) encounter_id
@@ -19,7 +19,7 @@ SELECT patient_id  FROM (
 ) x
 ;
 
----------------------------------------------------------- birth date, gender, state, city-----------------------
+-- -------------------------------------------------------- birth date, gender, state, city-----------------------
 
 UPDATE ncd_patient_table tt
 SET tt.birthdate= birthdate(tt.patient_id),
@@ -27,7 +27,7 @@ tt.sex=gender(tt.patient_id),
 tt.department = person_address_state_province(tt.patient_id),
 tt.commune =person_address_city_village(tt.patient_id) ;
 
----------------------------------------------------------- Enrolled date, location of enrollment -----------------------
+-- -------------------------------------------------------- Enrolled date, location of enrollment -----------------------
 
 CREATE OR REPLACE VIEW first_enc AS
 		SELECT patient_id , min(encounter_datetime) encounter_datetime
@@ -55,17 +55,17 @@ ncd_patient_table tt INNER JOIN (
 SET tt.ncd_enrollment_location=fe.name,
 	   tt.ncd_enrollment_date=fe.date_enrolled;
 
----------------------------------------------------------- death flag, death date -----------------------
+-- -------------------------------------------------------- death flag, death date -----------------------
 UPDATE ncd_patient_table tt INNER JOIN (
 SELECT person_id, dead , death_date FROM person p) st on  st.person_id =tt.patient_id 
 SET tt.deceased = dead,
 	tt.date_of_death = CAST(st.death_date AS date);
 
----------------------------------------------------------- program state, last status date -----------------------
+-- -------------------------------------------------------- program state, last status date -----------------------
 
 UPDATE ncd_patient_table tt 
 SET tt.ncd_status = (
-	SELECT concept_name(pws.concept_id , 'en') AS ncd_status,  ps.start_date
+	SELECT concept_name(pws.concept_id , 'en') AS ncd_status
 	from patient_state ps
 	INNER JOIN patient_program pp ON pp.patient_program_id =ps.patient_program_id 
 	inner join program_workflow_state pws on pws.program_workflow_state_id = ps.state 
@@ -88,14 +88,14 @@ SET tt.ncd_status_date = (
 	LIMIT 1
 ) 
 ;
----------------------- Views Preparation ---------------------------------------------------------------------
+-- -------------------- Views Preparation ---------------------------------------------------------------------
 DROP TABLE IF EXISTS ncd_encounters;
 CREATE TEMPORARY TABLE ncd_encounters AS 
 SELECT encounter_id FROM encounter e WHERE patient_id  IN (
 SELECT DISTINCT patient_id FROM ncd_patient_table npt)
 AND  encounter_type IN (@ncd_init_enc,@ncd_follow_enc)
 ;
----------------- NCD Flags ----------------------------------------------
+-- -------------- NCD Flags ----------------------------------------------
 
 DROP TABLE IF EXISTS ncd_obs;
 CREATE TEMPORARY TABLE ncd_obs  AS
@@ -145,7 +145,7 @@ tt.sickle_cell=st.Sickle_cell ,
 tt.other_ncd=st.Other
 ;
 
-------------------------------------------------------- Diabetes TYPE  ----------------------------------------------------------------------------------------------------
+-- ----------------------------------------------------- Diabetes TYPE  ----------------------------------------------------------------------------------------------------
 UPDATE ncd_patient_table tt 
 SET  tt.dm_type =( 
 		SELECT 
@@ -167,7 +167,7 @@ SET  tt.dm_type =(
 		                and concept_in_set(o2.value_coded, concept_from_mapping('PIH','11501'))=1 -- answer in diabetes set 
 		order by o2.obs_datetime desc limit 1);
 
-----------------------------------------------------  Heart Failure TYPE ------------------------------------------------------------------------------------------------------------------
+-- --------------------------------------------------  Heart Failure TYPE ------------------------------------------------------------------------------------------------------------------
 UPDATE ncd_patient_table tt 
 SET  tt.heart_failure_category =( 
 select CASE WHEN value_coded=concept_from_mapping('PIH','5016')  THEN 'cardiomyopathy' 
@@ -187,7 +187,7 @@ select CASE WHEN value_coded=concept_from_mapping('PIH','5016')  THEN 'cardiomyo
             and concept_in_set(o2.value_coded, concept_from_mapping('PIH','11499'))=1 -- answer in heart failure diagnosis set 
 order by o2.obs_datetime desc limit 1);
 
-------------------------------------------------------------- NYHA ----------------------------------------------------------
+-- ----------------------------------------------------------- NYHA ----------------------------------------------------------
 UPDATE ncd_patient_table tt 
 SET  tt.nyha_class =( 
 select 
