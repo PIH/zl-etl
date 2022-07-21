@@ -291,7 +291,8 @@ inner join tb_lab_results l on l.encounter_id =
 	(select top 1 l2.encounter_id from tb_lab_results l2 
 	where l2.emr_id = t.emr_id
 	and ((l2.test_type = 'genxpert' and l2.test_result_text = ('Detected')) OR 
-		 (l2.test_type = 'smear' and l2.test_result_text in ('1+','++','+++')))
+		 (l2.test_type = 'smear' and l2.test_result_text in ('1+','++','+++')) OR
+		 (l2.test_type = 'culture' and l2.test_result_text in ('Scanty','++','+++')))
 	and l2.specimen_collection_date	<= t.reporting_date 
 	order by l2.specimen_collection_date  desc, l2.date_entered desc );
 
