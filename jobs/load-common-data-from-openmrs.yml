@@ -37,4 +37,4 @@ configuration:
           - tableName: "tb_screening"
           - tableName: "ncd_patient_table"
           - tableName: "pathology_encounters"          
-          - tableName: "echo_summary_table"
+#         - tableName: "echo_summary_table" #### commenting this out temporarily to debug
