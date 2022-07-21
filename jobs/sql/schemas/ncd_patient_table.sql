@@ -1,6 +1,6 @@
 create table ncd_patient_table
 (
-patient_id int,
+emr_id varchar(50),
 birthdate date,
 sex char(1),
 department varchar(50),
