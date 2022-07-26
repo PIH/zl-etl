@@ -1,5 +1,5 @@
 type: "job-pipeline"
-description: "Test Import To Table Partition-TEST"
+description: "Test Import To Table Partition"
 parameters:
   siteName: "humci"
   partitionNum: "1"
