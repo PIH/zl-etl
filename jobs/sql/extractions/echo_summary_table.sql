@@ -116,6 +116,10 @@ UPDATE echo_summary_table t
 SET t.cardiomyopathy = CASE WHEN answerEverExists(t.patient_id,'PIH','11499','PIH','5016',null)=1 THEN TRUE ELSE FALSE END;
 
 -- ########### beta_blocker | Dispensing ################################
+set @med_name = concept_from_mapping ('PIH','1282');
+
+set @atenolol = concept_from_mapping ('PIH','3186');
+
 
 UPDATE echo_summary_table t 
 SET t.beta_blocker_atenolol= (
@@ -123,13 +127,14 @@ select if(obs_id is null,FALSE,TRUE)
 from obs o where o.voided =0 
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	and o.value_coded  = concept_from_mapping('PIH','3186') 
+	and o.concept_id = @med_name
+	and o.value_coded  = @atenolol
 	limit 1);
 
 UPDATE echo_summary_table t 
 SET t.beta_blocker_atenolol= FALSE WHERE t.beta_blocker_atenolol IS NULL;
 
+set @metoprolol = concept_from_mapping ('PIH','12491');
 
 UPDATE echo_summary_table t 
 SET t.beta_blocker_metoprolol = (
@@ -137,11 +142,13 @@ select if(obs_id is null,FALSE,TRUE)
 from obs o where o.voided =0 
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	and o.value_coded  = concept_from_mapping('PIH','12491')
+	and o.concept_id = @med_name
+	and o.value_coded  = @metoprolol
 	limit 1);
 UPDATE echo_summary_table t 
 SET t.beta_blocker_metoprolol= FALSE WHERE t.beta_blocker_metoprolol IS NULL;
+
+set @carvedilol = concept_from_mapping ('PIH','3185');
 
 UPDATE echo_summary_table t 
 SET t.beta_blocker_carvedilol = (
@@ -149,12 +156,15 @@ select CASE WHEN obs_id is NOT NULL THEN TRUE ELSE FALSE END
 from obs o where o.voided =0 
 	AND o.person_id =  t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id= t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	and o.value_coded  = concept_from_mapping('PIH','3185')
+	and o.concept_id = @med_name
+	and o.value_coded  = @carvedilol
 	limit 1);
 UPDATE echo_summary_table t 
 SET t.beta_blocker_carvedilol= FALSE WHERE t.beta_blocker_carvedilol IS NULL;
 
+set @lisinopril = concept_from_mapping ('PIH','3183');
+set @benzylpenicillin = concept_from_mapping ('PIH','12345');
+set @benzathine = concept_from_mapping ('PIH','4034');
 
 UPDATE echo_summary_table t 
 SET t.penicillin  = (
@@ -162,14 +172,20 @@ select if(obs_id is null,0,1)
 from obs o where o.voided =0 
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	and (o.value_coded  = concept_from_mapping('PIH','3183') 
-			OR o.value_coded  = concept_from_mapping('PIH','12345')
-			OR o.value_coded  = concept_from_mapping('PIH','4034')) 
+	and o.concept_id = @med_name
+	and (o.value_coded  = @lisinopril
+			OR o.value_coded  =  @benzylpenicillin 
+			OR o.value_coded  = @benzathine) 
 	limit 1);
 UPDATE echo_summary_table t 
 SET t.penicillin= FALSE WHERE t.penicillin IS NULL;
 
+set @Phenoxymethylpenicillin = concept_from_mapping ('PIH','9185');
+set @Enalapril_maleate = concept_from_mapping ('PIH','9230');
+set @Enalapril = concept_from_mapping ('PIH','1242');
+set @Hydrochlorothiazide_Losartan = concept_from_mapping ('PIH','13740');
+set @Losartan = concept_from_mapping ('PIH','6769');
+set @Valsartan = concept_from_mapping ('PIH','10601');
 
 UPDATE echo_summary_table t 
 SET t.ace_inhibitor = (
@@ -177,18 +193,18 @@ select if(obs_id is null,0,1)
 from obs o where o.voided =0 
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	and (o.value_coded  = concept_from_mapping('PIH','9185') 
-			OR o.value_coded  = concept_from_mapping('PIH','9230')
-			OR o.value_coded  = concept_from_mapping('PIH','1242')
-			OR o.value_coded  = concept_from_mapping('PIH','13740')
-			OR o.value_coded  = concept_from_mapping('PIH','10601')
-			OR o.value_coded  = concept_from_mapping('PIH','6769')
-			OR o.value_coded  = concept_from_mapping('PIH','10601')) 
+	and o.concept_id = @med_name
+	and (o.value_coded  = @Phenoxymethylpenicillin 
+			OR o.value_coded  = @Enalapril_maleate
+			OR o.value_coded  = @Enalapril
+			OR o.value_coded  = @Hydrochlorothiazide_Losartan
+			OR o.value_coded  = @Losartan
+			OR o.value_coded  = @Valsartan) 
 	limit 1);
 UPDATE echo_summary_table t 
 SET t.ace_inhibitor= FALSE WHERE t.ace_inhibitor IS NULL;
 
+set @Spironolactone = concept_from_mapping ('PIH','4061');
 
 UPDATE echo_summary_table t 
 SET t.spironolactone = (
@@ -196,12 +212,13 @@ select if(obs_id is null,0,1)
 from obs o where o.voided =0 
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	AND o.value_coded  = concept_from_mapping('PIH','4061') 
+	and o.concept_id = @med_name
+	AND o.value_coded  = @Spironolactone
 	limit 1);
 UPDATE echo_summary_table t 
 SET t.spironolactone= FALSE WHERE t.spironolactone IS NULL;
 
+set @Hydralazine_hydrochloride = concept_from_mapping ('PIH','9084');
 
 UPDATE echo_summary_table t 
 SET t.hydralazine_hydrochloride = (
@@ -209,12 +226,13 @@ select if(obs_id is null,0,1)
 from obs o where o.voided =0 
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	AND o.value_coded  = concept_from_mapping('PIH','9084') 
+	and o.concept_id = @med_name
+	AND o.value_coded  = @Hydralazine_hydrochloride
 	limit 1);
 UPDATE echo_summary_table t 
 SET t.hydralazine_hydrochloride= FALSE WHERE t.hydralazine_hydrochloride IS NULL;
 
+set @Isosorbide_dinitrate = concept_from_mapping ('PIH','3428');
 
 UPDATE echo_summary_table t 
 SET t.isosorbide_dinitrate = (
@@ -222,11 +240,14 @@ select if(obs_id is null,0,1)
 from obs o where o.voided =0 
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	AND o.value_coded  = concept_from_mapping('PIH','3428') 
+	and o.concept_id = @med_name
+	AND o.value_coded  = @Isosorbide_dinitrate
 	limit 1);
 UPDATE echo_summary_table t 
 SET t.isosorbide_dinitrate= FALSE WHERE t.isosorbide_dinitrate IS NULL;
+
+set @hydrochlorothiazide = concept_from_mapping ('PIH','1243');
+set @LASIX = concept_from_mapping ('PIH','99');
 
 UPDATE echo_summary_table t 
 SET t.diuretic = (
@@ -234,14 +255,16 @@ select if(obs_id is null,0,1)
 from obs o where o.voided =0 
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	AND (o.value_coded  = concept_from_mapping('PIH','1243') 
-	OR o.value_coded  = concept_from_mapping('PIH','99') 
+	and o.concept_id = @med_name
+	AND (o.value_coded  = @hydrochlorothiazide
+	OR o.value_coded  = @LASIX 
 	)
 	limit 1);
 UPDATE echo_summary_table t 
 SET t.diuretic= FALSE WHERE t.diuretic IS NULL;
 
+set @Amlodipine_besylate = concept_from_mapping ('PIH','9083');
+set @Nifedipine = concept_from_mapping ('PIH','250');
 
 UPDATE echo_summary_table t 
 SET t.calcium_channel_blocker = (
@@ -249,9 +272,9 @@ select if(obs_id is null,0,1)
 from obs o where o.voided =0 
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = concept_from_mapping('PIH','1282')
-	AND (o.value_coded  = concept_from_mapping('PIH','9083') 
-	OR o.value_coded  = concept_from_mapping('PIH','250') 
+	and o.concept_id = @med_name
+	AND (o.value_coded  = @Amlodipine_besylate
+	OR o.value_coded  = @Nifedipine
 	)
 	limit 1);
 UPDATE echo_summary_table t 
@@ -279,32 +302,41 @@ WHERE erank=1
 AND patient_id=t.patient_id);
 
 -- ############### dm1, dm2 #################################################################
+set @type_1_diabetes = concept_from_mapping ('PIH','6691');
+set @diagnosis = concept_from_mapping ('PIH','3064');
+set @diabetes_set = concept_from_mapping ('PIH','11501');
+set @type_2_diabetes = concept_from_mapping ('PIH','6692');
+set @type_2_diabetes_oral_hypoglycemic = concept_from_mapping ('PIH','12228');
+set @type_2_diabetes_insulin_dependant = concept_from_mapping ('PIH','11943');
+set @type_2_diabetes_without_hypoglycemic = concept_from_mapping ('PIH','12227');
+set @type_2_diabetes_requiring_insulin = concept_from_mapping ('PIH','12251');
+
 UPDATE echo_summary_table t 
 SET t.dm1 =(
 		SELECT 
-		CASE WHEN value_coded =concept_from_mapping ('PIH','6691') THEN TRUE ELSE FALSE END
+		CASE WHEN value_coded =@type_1_diabetes THEN TRUE ELSE FALSE END
 						from obs o2
 		            where o2.voided = 0
 		          AND o2.person_id =  t.patient_id
-		            and o2.concept_id = concept_from_mapping('PIH','3064')  -- diagnosis question
-		                and concept_in_set(o2.value_coded, concept_from_mapping('PIH','11501'))=1
+		            and o2.concept_id = @diagnosis  -- diagnosis question
+		                and concept_in_set(o2.value_coded, @diabetes_set)=1
 		                LIMIT 1
 		                );
 		               
 UPDATE echo_summary_table t 
 SET t.dm2 =(
 		SELECT 
-				CASE WHEN value_coded IN (concept_from_mapping ('PIH','6692'),
-													concept_from_mapping('PIH','12228'),
-													concept_from_mapping('PIH','11943'),
-													concept_from_mapping('PIH','12227'),
-													concept_from_mapping('PIH','12251')
+				CASE WHEN value_coded IN (@type_2_diabetes,
+													@type_2_diabetes_oral_hypoglycemic,
+													@type_2_diabetes_insulin_dependant,
+													@type_2_diabetes_without_hypoglycemic,
+													@type_2_diabetes_requiring_insulin
 													) THEN TRUE ELSE FALSE END 
 					from obs o2
 		            where o2.voided = 0
 		          AND o2.person_id =  t.patient_id
-		            and o2.concept_id = concept_from_mapping('PIH','3064')  -- diagnosis question
-		                and concept_in_set(o2.value_coded, concept_from_mapping('PIH','11501'))=1
+		            and o2.concept_id = @diagnosis  -- diagnosis question
+		                and concept_in_set(o2.value_coded, @diabetes_set)=1
 		                LIMIT 1
 		           );
 
@@ -319,16 +351,16 @@ WHERE dm2 IS NULL ;
 
 -- ################# Hypertension ####################################################
 
+set @pre_hypertension = concept_from_mapping('PIH','12697');
+set @mild_hypertension = concept_from_mapping('PIH','12698');
+set @hypertensive_crisis = concept_from_mapping('PIH','8885');
+set @hypertension = concept_from_mapping('PIH','903');
+set @uncontrolled_hypertension = concept_from_mapping('PIH','12629');
+set @severe_uncontrolled_hypertension= concept_from_mapping('PIH','12634');
+
 UPDATE echo_summary_table t 
 SET t.hypertension =(
-			SELECT MAX(CASE WHEN (
-			                                             value_coded=concept_from_mapping('PIH','12697')  OR
-			                                             value_coded=concept_from_mapping('PIH','12698')  OR
-			                                             value_coded=concept_from_mapping('PIH','8885')  OR
-			                                             value_coded=concept_from_mapping('PIH','903')  OR
-			                                             value_coded=concept_from_mapping('PIH','12629')  OR
-			                                             value_coded=concept_from_mapping('PIH','12634')
-			                                             )
+			SELECT MAX(CASE WHEN value_coded in (@pre_hypertension,@mild_hypertension,@hypertensive_crisis,@hypertension,@uncontrolled_hypertension,@severe_uncontrolled_hypertension)
 			      THEN TRUE ELSE FALSE END) AS 'Hypertension'
 			from obs o
 			where  o.voided = 0
@@ -341,21 +373,20 @@ SET hypertension=FALSE WHERE hypertension IS NULL;
 
 -- ################# asthma ####################################################
 
+set @intermittent_asthma = concept_from_mapping('PIH','7401');
+set @moderate_persistent_asthma = concept_from_mapping('PIH','7400');
+set @severe_persistent_asthma = concept_from_mapping('PIH','7402');
+set @mild_persistent_asthma = concept_from_mapping('PIH','7403');
+set @severe_uncontrolled_asthma = concept_from_mapping('PIH','7404');
+set @asthma = concept_from_mapping('PIH','5');
+set @severe_asthma = concept_from_mapping('PIH','13541');
+set @asthma_exacerbation = concept_from_mapping('PIH','4');
+set @mild_intermittent_asthma = concept_from_mapping('PIH','7953');
+set @asthma_night_symptoms = concept_from_mapping('PIH','11731');
+
 UPDATE echo_summary_table t 
 SET t.asthma =(
-			SELECT MAX(CASE WHEN (
-			                                             value_coded=concept_from_mapping('PIH','7401')  OR
-			                                             value_coded=concept_from_mapping('PIH','7403')  OR
-			                                             value_coded=concept_from_mapping('PIH','7400')  OR
-			                                             value_coded=concept_from_mapping('PIH','7402')  OR
-			                                             value_coded=concept_from_mapping('PIH','7404')  OR
-			                                             value_coded=concept_from_mapping('PIH','5') OR
-			                                             value_coded=concept_from_mapping('PIH','13541') OR
-			                                              value_coded=concept_from_mapping('PIH','4') OR
-			                                              value_coded=concept_from_mapping('PIH','7403') OR
-			                                              value_coded=concept_from_mapping('PIH','7953') OR 
-			                                               value_coded=concept_from_mapping('PIH','11731')
-			                                             )
+			SELECT MAX(CASE WHEN value_coded in (@intermittent_asthma,	@moderate_persistent_asthma,	@severe_persistent_asthma,	@mild_persistent_asthma,	@severe_uncontrolled_asthma,	@asthma,	@severe_asthma,	@asthma_exacerbation,	@mild_intermittent_asthma,	@asthma_night_symptoms)
 			      THEN TRUE ELSE FALSE END) AS 'Hypertension'
 			from obs o
 			where  o.voided = 0
@@ -368,14 +399,13 @@ SET asthma=FALSE WHERE asthma IS NULL;
 
 
 -- ################# sickle_cell ####################################################
+set @sickle_cell_anemia = concept_from_mapping('PIH','7908');
+set @sickle_cell_anemia_with_crisis = concept_from_mapping('PIH','8573');
+set @sickle_cell_anemia_without_crisis = concept_from_mapping('PIH','8570');
 
 UPDATE echo_summary_table t 
 SET t.sickle_cell =(
-			SELECT MAX(CASE WHEN (
-			                                             value_coded=concept_from_mapping('PIH','7908')  OR
-			                                             value_coded=concept_from_mapping('PIH','8573')  OR
-			                                             value_coded=concept_from_mapping('PIH','8570')
-			                                             )
+			SELECT MAX(CASE WHEN value_coded in ( @sickle_cell_anemia,  @sickle_cell_anemia_with_crisis, @sickle_cell_anemia_without_crisis)
 			      THEN TRUE ELSE FALSE END) AS 'Hypertension'
 			from obs o
 			where  o.voided = 0
@@ -388,12 +418,11 @@ SET sickle_cell=FALSE WHERE sickle_cell IS NULL;
 
 
 -- ################# copd ####################################################
+set @copd = concept_from_mapping('PIH','3716');
 
 UPDATE echo_summary_table t 
 SET t.copd =(
-			SELECT MAX(CASE WHEN (
-			                                             value_coded=concept_from_mapping('PIH','3716')
-			                                             )
+			SELECT MAX(CASE WHEN value_coded=@copd
 			      THEN TRUE ELSE FALSE END) AS 'Hypertension'
 			from obs o
 			where  o.voided = 0
