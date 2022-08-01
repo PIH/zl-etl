@@ -294,7 +294,7 @@ inner join tb_lab_results l on l.encounter_id =
 		 (l2.test_type = 'smear' and l2.test_result_text in ('1+','++','+++')) OR
 		 (l2.test_type = 'culture' and l2.test_result_text in ('Scanty','++','+++')))
 	and l2.specimen_collection_date	<= t.reporting_date 
-	order by l2.specimen_collection_date  desc, l2.date_entered desc );
+	order by l2.specimen_collection_date  desc, l2.index_desc );
 
 
 -- ############################### Breastfeeding data ##################################################################
