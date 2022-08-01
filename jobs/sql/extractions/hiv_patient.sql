@@ -29,6 +29,7 @@ CREATE TEMPORARY TABLE temp_patient
     birthplace_sc               VARCHAR(100),
     birthplace_locality         VARCHAR(100),
     birthplace_province         VARCHAR(100),
+    patient_registration_date	DATE,
     initial_enrollment_location VARCHAR(100),
     program_location_id         INT,
     latest_enrollment_location VARCHAR(100),
@@ -140,13 +141,17 @@ SET birthplace_locality = o.value_text;
 UPDATE temp_patient t JOIN obs o ON t.patient_id = o.person_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'State Province')
 SET birthplace_province = o.value_text;
 
+UPDATE temp_patient t set patient_registration_date = registration_date(t.patient_id);
+
+set @civil_status = CONCEPT_FROM_MAPPING('PIH','CIVIL STATUS');
+set @occupation = CONCEPT_FROM_MAPPING('PIH','Occupation');
 
 UPDATE temp_patient t JOIN obs m ON t.patient_id = m.person_id AND 
-m.voided = 0 AND concept_id = CONCEPT_FROM_MAPPING('PIH','CIVIL STATUS')
+m.voided = 0 AND concept_id = @civil_status 
 SET marital_status = CONCEPT_NAME(value_coded, 'en');
 
 UPDATE temp_patient t JOIN obs m ON t.patient_id = m.person_id AND 
-m.voided = 0 AND concept_id = CONCEPT_FROM_MAPPING('PIH','Occupation')
+m.voided = 0 AND concept_id = @occupation
 SET occupation = CONCEPT_NAME(value_coded, 'en');
 
 UPDATE temp_patient t JOIN person_attribute m ON t.patient_id = m.person_id AND 
@@ -663,11 +668,13 @@ art_regimen TEXT
 
 CREATE INDEX temp_hiv_art_patient ON temp_hiv_art (patient_id);
 
+set @ART_order_reason = concept_from_mapping( 'CIEL','138405');
+
 -- the following will add the first row (sorted by date_activated, date_created, order_id) for each patient
 INSERT INTO temp_hiv_art (patient_id,order_id,art_start_date,initial_art_regimen)
 	SELECT o2.patient_id, o2.order_id, o2.date_activated , concept_name(o2.concept_id ,'en') FROM
 		(SELECT o.* FROM orders o
-		WHERE o.order_reason = concept_from_mapping( 'CIEL','138405')
+		WHERE o.order_reason = @ART_order_reason 
 		ORDER BY date_activated, date_created, order_id ) o2
 	GROUP BY o2.patient_id
 	ORDER BY patient_id 
@@ -691,6 +698,7 @@ t.birthplace_commune,
 t.birthplace_sc,
 t.birthplace_locality,
 t.birthplace_province,
+t.patient_registration_date,
 t.initial_enrollment_location,
 t.latest_enrollment_location,
 t.marital_status,
