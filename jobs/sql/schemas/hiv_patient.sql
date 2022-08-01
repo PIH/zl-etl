@@ -12,6 +12,7 @@ create table hiv_patient
     birthplace_sc                  VARCHAR(255),
     birthplace_locality            VARCHAR(255),
     birthplace_province            VARCHAR(255),
+    patient_registration_date      DATE,
     initial_enrollment_location    VARCHAR(255),
     latest_enrollment_location     VARCHAR(255),
     marital_status                 CHAR(60),
