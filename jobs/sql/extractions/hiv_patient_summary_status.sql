@@ -178,7 +178,7 @@ inner join tb_lab_results l on l.encounter_id =
 	where l2.emr_id = t.emr_id
 	and ((l2.test_type = 'genxpert' and l2.test_result_text = ('Detected')) OR 
 		 (l2.test_type = 'smear' and l2.test_result_text in ('1+','++','+++')))
-	order by l2.specimen_collection_date  desc, l2.date_entered desc );
+	order by l2.specimen_collection_date  desc, l2.index_desc );
 
 -- last weight
 update t 
