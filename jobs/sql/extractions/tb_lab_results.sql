@@ -289,25 +289,46 @@ UPDATE temp_reason_no_genxpert trs INNER JOIN encounter e ON e.voided = 0 AND tr
 UPDATE temp_reason_no_genxpert trs INNER JOIN obs o ON o.voided = 0 AND trs.encounter_id = o.encounter_id AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'Date of test results')
     SET test_result_date = DATE(o.value_datetime);
 
-
-## Final query section
+### compile final results   
 DROP TEMPORARY TABLE IF EXISTS temp_tb_final_query;
-CREATE TEMPORARY TABLE temp_tb_final_query
-SELECT * FROM temp_tb_smear_results
-UNION ALL
-SELECT * FROM temp_tb_culture_results
-UNION ALL
-SELECT * FROM temp_tb_genxpert_results
-UNION ALL
-SELECT * FROM temp_tb_skin_results
-UNION ALL
-SELECT * FROM temp_reason_no_smear
-UNION ALL
-SELECT * FROM temp_reason_no_culture
-UNION ALL
-SELECT * FROM temp_reason_no_genxpert
-ORDER BY patient_id, encounter_id;
+   CREATE TEMPORARY TABLE temp_tb_final_query
+(
+    tb_lab_result_id			INT(11) PRIMARY KEY AUTO_INCREMENT,
+	patient_id                  INT(11),
+    encounter_id                INT(11),
+    test_location			VARCHAR(255),
+    order_id                    INT(11),
+    order_number                VARCHAR(50),
+    specimen_collection_date    DATE,
+    sample_taken_date_estimated VARCHAR(11),
+    test_result_date            DATE,
+    test_related_to             VARCHAR(25),
+    test_type                   VARCHAR(255),
+    test_status					VARCHAR(255),
+    reason_test_not_perform     VARCHAR(255),
+    test_result_text            VARCHAR(255),
+    test_result_numeric         DOUBLE,
+    date_created                DATETIME,
+    creator                     INT,
+    index_asc                   INT(11),
+    index_desc                  INT(11)
+);
 
+INSERT INTO temp_tb_final_query 
+SELECT null, tsr.* FROM temp_tb_smear_results tsr
+UNION ALL
+SELECT null, tcr.* FROM temp_tb_culture_results tcr
+UNION ALL
+SELECT null, tgr.* FROM temp_tb_genxpert_results tgr
+UNION ALL
+SELECT null,tskr.* FROM temp_tb_skin_results tskr
+UNION ALL
+SELECT null,rsn.* FROM temp_reason_no_smear rsn
+UNION ALL
+SELECT null,rnc.* FROM temp_reason_no_culture rnc
+UNION ALL
+SELECT null,rng.* FROM temp_reason_no_genxpert rng
+ORDER BY patient_id, encounter_id;
 
 -- The indexes are calculated using the specimen collection date
 ### index ascending
@@ -379,7 +400,8 @@ UPDATE temp_tb_final_query tbf
    
 ## Final query
 SELECT
-    zlemr(patient_id),
+    tb_lab_result_id,
+	zlemr(patient_id),
     dosId(patient_id),
     concat(@partition,'-',encounter_id),
     test_location, 
