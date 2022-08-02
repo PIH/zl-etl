@@ -276,8 +276,8 @@ SET t1.latest_tb_test_date = tb.specimen_collection_date,
 t1.latest_tb_test_type = tb.test_type,
 t1.latest_tb_test_result = tb.test_result_text 
 FROM #temp_eom_appts t1 
-INNER JOIN tb_lab_results tb on tb.encounter_id =
-	(select top 1 tb2.encounter_id
+INNER JOIN tb_lab_results tb on tb.tb_lab_results_id =
+	(select top 1 tb2.tb_lab_results_id
 	from tb_lab_results tb2 
 	where tb2.emr_id = t1.emr_id 
 	and tb2.specimen_collection_date <= t1.reporting_date 	
@@ -287,8 +287,8 @@ INNER JOIN tb_lab_results tb on tb.encounter_id =
 update t
 set latest_tb_coinfection_date = l.specimen_collection_date 
 from #temp_eom_appts t
-inner join tb_lab_results l on l.encounter_id = 
-	(select top 1 l2.encounter_id from tb_lab_results l2 
+inner join tb_lab_results l on l.tb_lab_results_id = 
+	(select top 1 l2.tb_lab_results_id from tb_lab_results l2 
 	where l2.emr_id = t.emr_id
 	and ((l2.test_type = 'genxpert' and l2.test_result_text = ('Detected')) OR 
 		 (l2.test_type = 'smear' and l2.test_result_text in ('1+','++','+++')) OR
