@@ -4,6 +4,37 @@ SET @ncd_init_enc = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '
 SET @ncd_follow_enc = (SELECT encounter_type_id FROM encounter_type e WHERE uuid = '5cbfd6a2-92d9-4ad0-b526-9d29bfe1d10c');
 select program_id into @ncd_program_id from program where uuid = '515796ec-bf3a-11e7-abc4-cec278b6b50a';
 
+DROP TEMPORARY TABLE IF EXISTS ncd_patient_table;
+CREATE TEMPORARY TABLE ncd_patient_table (
+emr_id varchar(50),
+birthdate date,
+sex char(1),
+department varchar(50),
+commune varchar(50),
+ncd_enrollment_date date,
+ncd_enrollment_location varchar(50),
+htn bit,
+diabetes bit,
+respiratory bit,
+epilepsy bit,
+heart_failure bit,
+cerebrovascular_accident bit,
+renal_failure bit,
+liver_failure bit,
+rehabilitation bit,
+sickle_cell bit,
+other_ncd bit,
+dm_type varchar(50),
+heart_failure_category varchar(50),
+cardiomyopathy varchar(50),
+nyha_class varchar(50),
+heart_failure_improbable bit,
+ncd_status varchar(50),
+ncd_status_date date,
+deceased bit,
+date_of_death date
+);
+
 -- -------------------- INSERT patients IN SCOPE OF NCD -----------------------------------------------------
 insert into ncd_patient_table (patient_id)
 SELECT patient_id  FROM (
