@@ -38,3 +38,4 @@ configuration:
           - tableName: "ncd_patient_table" 
           - tableName: "pathology_encounters"          
           - tableName: "echo_summary_table"
+          - tableName: "data_warnings"
