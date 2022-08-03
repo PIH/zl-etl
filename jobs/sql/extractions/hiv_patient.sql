@@ -1,7 +1,7 @@
 SET sql_safe_updates = 0;
 
 SELECT patient_identifier_type_id INTO @zl_emr_id FROM patient_identifier_type WHERE uuid = 'a541af1e-105c-40bf-b345-ba1fd6a59b85';
-SELECT patient_identifier_type_id INTO @dossier FROM patient_identifier_type WHERE uuid = 'e66645eb-03a8-4991-b4ce-e87318e37566';
+SELECT patient_identifier_type_id INTO @dossier FROM patient_identifier_type WHERE uuid = '3B954DB1-0D41-498E-A3F9-1E20CCC47323';
 SELECT patient_identifier_type_id INTO @hiv_id FROM patient_identifier_type WHERE uuid = '139766e8-15f5-102d-96e4-000c29c2a5d7';
 
 SET @hiv_program_id = (SELECT program_id FROM program WHERE retired = 0 AND uuid = 'b1cb1fc1-5190-4f7a-af08-48870975dafc');
