@@ -6,6 +6,7 @@ select program_id into @ncd_program_id from program where uuid = '515796ec-bf3a-
 
 DROP TEMPORARY TABLE IF EXISTS ncd_patient_table;
 CREATE TEMPORARY TABLE ncd_patient_table (
+patient_id int,
 emr_id varchar(50),
 birthdate date,
 sex char(1),
@@ -68,8 +69,7 @@ CREATE OR REPLACE VIEW first_enc AS
 CREATE OR REPLACE VIEW first_enc_details AS 
 	SELECT DISTINCT e.patient_id, e.encounter_datetime  , e.encounter_id,e.encounter_type ,l.name 
         FROM encounter e INNER JOIN first_enc X ON X.patient_id =e.patient_id AND X.encounter_datetime=e.encounter_datetime
-		INNER JOIN location l ON l.location_id =e.location_id
-		WHERE e.patient_id IN (SELECT patient_id FROM ncd_patient_table npt WHERE ncd_enrollment_date IS NULL);
+		INNER JOIN location l ON l.location_id =e.location_id;
 
 	
 UPDATE 
@@ -84,7 +84,8 @@ ncd_patient_table tt INNER JOIN (
   SELECT patient_id,CAST(encounter_datetime AS date) date_enrolled,name 
   FROM first_enc_details) fe on fe.patient_id = tt.patient_id
 SET tt.ncd_enrollment_location=fe.name,
-	   tt.ncd_enrollment_date=fe.date_enrolled;
+	   tt.ncd_enrollment_date=fe.date_enrolled
+	  WHERE tt.ncd_enrollment_date IS NULL;
 
 -- -------------------------------------------------------- death flag, death date -----------------------
 UPDATE ncd_patient_table tt INNER JOIN (
@@ -299,5 +300,3 @@ FROM ncd_patient_table
 WHERE (diabetes IS NOT NULL AND  respiratory IS NOT NULL AND htn IS NOT NULL AND epilepsy IS NOT NULL AND heart_failure IS NOT NULL 
 AND cerebrovascular_accident IS NOT NULL AND renal_failure IS NOT NULL
 AND liver_failure IS NOT NULL AND rehabilitation IS NOT NULL AND sickle_cell IS NOT NULL AND other_ncd IS NOT NULL);
-
-
