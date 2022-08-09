@@ -130,7 +130,8 @@ SET t.lvsf_change =(
 			WHEN lvsf_most_recent LIKE '%impossible%' OR lvsf_prior LIKE '%impossible%' THEN 'Impossible to evaluate'
 			WHEN lvsf_most_recent = lvsf_prior THEN 'No Change'
 			WHEN (lvsf_most_recent LIKE '%normal%' AND lvsf_prior like '%very%low%') OR
-			(lvsf_most_recent LIKE '%normal%' AND lvsf_prior like '%mildly%depressed%')
+			(lvsf_most_recent LIKE '%normal%' AND lvsf_prior like '%mildly%depressed%') OR 
+			(lvsf_most_recent LIKE '%mildly%depressed%' AND lvsf_prior like '%very%low%') 
 			THEN 'Improved'
 			WHEN (lvsf_most_recent  LIKE '%very%low%' AND lvsf_prior  like '%normal%') 
 			OR  (lvsf_most_recent  LIKE '%mildly%depressed%' AND lvsf_prior  like '%normal%')
@@ -228,6 +229,7 @@ set @Enalapril = concept_from_mapping ('PIH','1242');
 set @Hydrochlorothiazide_Losartan = concept_from_mapping ('PIH','13740');
 set @Losartan = concept_from_mapping ('PIH','6769');
 set @Valsartan = concept_from_mapping ('PIH','10601');
+set @Lisinopril = concept_from_mapping ('PIH','3183');
 
 UPDATE echo_summary_table t 
 SET t.ace_inhibitor = (
@@ -241,6 +243,7 @@ from obs o where o.voided =0
 			OR o.value_coded  = @Enalapril
 			OR o.value_coded  = @Hydrochlorothiazide_Losartan
 			OR o.value_coded  = @Losartan
+			OR o.value_coded  = @Lisinopril
 			OR o.value_coded  = @Valsartan) 
 	limit 1);
 UPDATE echo_summary_table t 
