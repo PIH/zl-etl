@@ -56,6 +56,7 @@
         <liquibaseSourceDir>${project.build.directory}/openmrs-config-zl/pih/liquibase/sql/</liquibaseSourceDir>
         <liquibaseDestDir>${project.build.directory}/zl-etl/jobs/sql/utils/</liquibaseDestDir>
         <petlJobExtractionSqlDir>${project.build.directory}/zl-etl/jobs/sql/extractions/</petlJobExtractionSqlDir>
+        <configZlVersion>1.37.0-SNAPSHOT</configZlVersion>
     </properties>
 
     <build>
@@ -76,7 +77,7 @@
                                 <artifactItem>
                                     <groupId>org.pih.openmrs</groupId>
                                     <artifactId>openmrs-config-zl</artifactId>
-                                    <version>1.37.0-SNAPSHOT</version>
+                                    <version>${configZlVersion}</version>
                                     <type>zip</type>
                                     <overWrite>false</overWrite>
                                     <outputDirectory>${project.build.directory}/openmrs-config-zl</outputDirectory>
