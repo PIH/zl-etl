@@ -400,8 +400,8 @@ UPDATE temp_tb_final_query tbf
    
 ## Final query
 SELECT
-    tb_lab_result_id,
-	zlemr(patient_id),
+    concat(@partition,'-',tb_lab_result_id),
+    zlemr(patient_id),
     dosId(patient_id),
     concat(@partition,'-',encounter_id),
     test_location, 
