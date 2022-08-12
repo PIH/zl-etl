@@ -6,7 +6,7 @@
     <name>ZL ETL</name>
     <description>ETL Project for Zanmi Lasante(ZL) OpenMRS instances</description>
     <url>https://github.com/PIH/zl-etl</url>
-    <version>1.2.2-SNAPSHOT</version>
+    <version>1.2.2</version>
     <packaging>pom</packaging>
 
     <developers>
