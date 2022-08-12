@@ -13,7 +13,7 @@ sex char(1),
 department varchar(50),
 commune varchar(50),
 ncd_enrollment_date date,
-ncd_enrollment_location varchar(50),
+ncd_first_encounter_date date,
 htn bit,
 diabetes bit,
 respiratory bit,
@@ -61,31 +61,41 @@ tt.commune =person_address_city_village(tt.patient_id) ;
 
 -- -------------------------------------------------------- Enrolled date, location of enrollment -----------------------
 
-CREATE OR REPLACE VIEW first_enc AS
+DROP TABLE IF EXISTS first_enc;
+CREATE TEMPORARY TABLE first_enc AS
 		SELECT patient_id , min(encounter_datetime) encounter_datetime
 		FROM encounter e 
-		GROUP BY patient_id ;
-	
-CREATE OR REPLACE VIEW first_enc_details AS 
-	SELECT DISTINCT e.patient_id, e.encounter_datetime  , e.encounter_id,e.encounter_type ,l.name 
-        FROM encounter e INNER JOIN first_enc X ON X.patient_id =e.patient_id AND X.encounter_datetime=e.encounter_datetime
-		INNER JOIN location l ON l.location_id =e.location_id;
+		WHERE encounter_type IN (@ncd_init_enc, @ncd_follow_enc)
+		GROUP BY patient_id;
+
+DROP TABLE IF EXISTS first_enc_details;
+CREATE TEMPORARY TABLE  first_enc_details AS 
+	SELECT DISTINCT e.patient_id, e.encounter_datetime  , e.encounter_id,e.encounter_type
+        FROM encounter e INNER JOIN first_enc X ON X.patient_id =e.patient_id AND X.encounter_datetime=e.encounter_datetime;
 
 	
 UPDATE 
 ncd_patient_table tt INNER JOIN (
-  SELECT patient_id,date_enrolled ,location_name(location_id) AS location_name 
-  FROM patient_program pp) st on st.patient_id = tt.patient_id
-SET tt.ncd_enrollment_location=st.location_name,
-	   tt.ncd_enrollment_date=CAST(st.date_enrolled AS date);
+  SELECT patient_id,min(date_enrolled) date_enrolled
+  FROM patient_program pp
+  WHERE program_id=@ncd_program_id
+  GROUP BY patient_id 
+  ORDER BY date_enrolled ASC) st on st.patient_id = tt.patient_id
+SET tt.ncd_enrollment_date=CAST(st.date_enrolled AS date);
 
 UPDATE 
 ncd_patient_table tt INNER JOIN (
-  SELECT patient_id,CAST(encounter_datetime AS date) date_enrolled,name 
+  SELECT patient_id,CAST(encounter_datetime AS date) date_enrolled 
   FROM first_enc_details) fe on fe.patient_id = tt.patient_id
-SET tt.ncd_enrollment_location=fe.name,
-	   tt.ncd_enrollment_date=fe.date_enrolled
+SET tt.ncd_first_encounter_date=fe.date_enrolled;
+
+UPDATE 
+ncd_patient_table tt INNER JOIN (
+  SELECT patient_id,CAST(encounter_datetime AS date) date_enrolled 
+  FROM first_enc_details) fe on fe.patient_id = tt.patient_id
+SET tt.ncd_enrollment_date=fe.date_enrolled
 	  WHERE tt.ncd_enrollment_date IS NULL;
+	 
 
 -- -------------------------------------------------------- death flag, death date -----------------------
 UPDATE ncd_patient_table tt INNER JOIN (
@@ -242,6 +252,10 @@ order by o2.obs_datetime desc limit 1);
  UPDATE ncd_patient_table tt 
 SET  tt.heart_failure_improbable =( 
  SELECT CASE WHEN NOT obs_value_coded_list(tt.patient_id, 'PIH','11926',@locale) IS NULL THEN TRUE ELSE FALSE END AS heart_failure_improbable);
+
+UPDATE ncd_patient_table tt 
+SET  tt.heart_failure_improbable=FALSE 
+WHERE tt.heart_failure=FALSE;
  
  -- ---------------------------------------------- Cardiomyopathy ------------------------------------------------------------------------------------------------
  UPDATE ncd_patient_table tt 
@@ -275,7 +289,7 @@ sex,
 department,
 commune,
 ncd_enrollment_date,
-ncd_enrollment_location ,
+ncd_first_encounter_date,
 htn ,
 diabetes ,
 respiratory ,
