@@ -72,15 +72,32 @@ from #temp_export t
 inner join hiv_patient p on p.emr_id = t.emr_id 
  ;
 
+drop table if exists #temp_min_dispensing;
+select emr_id, min(dispense_date) "min_dispense_date" 
+into #temp_min_dispensing
+from hiv_dispensing hd
+where (arv_1_med is not null or arv_2_med is not null or arv_3_med is not NULL)
+group by emr_id;
+
+drop table if exists #temp_min_arv_date;
+select emr_id, min(hr.start_date) "min_arv_start_date" 
+into #temp_min_arv_date
+from hiv_regimens hr 
+where order_action = 'NEW'	
+and drug_category = 'ART'
+group by emr_id;
+
+
 update t 
-set arv_start_date = hr.start_date 
+set arv_start_date = 
+ CASE 
+	WHEN ISNULL(min_dispense_date,'9999-12-31') < ISNULL(min_arv_start_date,'9999-12-31') THEN min_dispense_date 
+	ELSE min_arv_start_date
+END
 from #temp_export t
-inner join hiv_regimens hr on hr.order_id  = 
-	(select top 1 order_id from hiv_regimens hr2 
-	where order_action = 'NEW'	
-	and drug_category = 'ART'
-	and hr2.emr_id = t.emr_id 
-	order by hr2.start_date asc, hr2.end_date asc );
+left outer join #temp_min_dispensing tmd on tmd.emr_id  = t.emr_id 
+left outer join #temp_min_arv_date tad on tad.emr_id  = t.emr_id 
+;
 
 update t
 set months_on_art = DATEDIFF(month, arv_start_date, GETDATE())
