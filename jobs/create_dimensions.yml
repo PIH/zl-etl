@@ -1,0 +1,7 @@
+# Executing scripts to create DWH refrence dimensions
+type: "sql-execution"
+description: "Create reference dimensions tables"
+configuration:
+  datasource: "openmrs-humci.yml"
+  scripts:
+    - "sql/utils/dim_date.sql"
