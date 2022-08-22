@@ -1,14 +1,7 @@
-BEGIN TRY
-	DROP TABLE [dbo].[Dim_Date]
-END TRY
-
-BEGIN CATCH
-	/*No Action*/
-END CATCH
 
 /**********************************************************************************/
 
-CREATE TABLE	[dbo].[Dim_Date]
+CREATE TABLE #Dim_Date
 	(	[DateKey] INT primary key, 
 		[Date] DATETIME,
 		[FullDateUK] CHAR(10), -- Date in dd-MM-yyyy format
@@ -141,7 +134,7 @@ BEGIN
 
 /* Populate Your Dimension Table with values*/
 	
-	INSERT INTO [dbo].[Dim_Date]
+	INSERT INTO #Dim_Date
 	SELECT
 		
 		CONVERT (char(8),@CurrentDate,112) as DateKey,
@@ -241,48 +234,48 @@ Update Values of Holiday as per UK Government Declaration for National Holiday.
 Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 	
 -- Good Friday  April 18 
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUK = 'Good Friday'
 	WHERE [Month] = 4 AND [DayOfMonth]  = 18
 
 -- Easter Monday  April 21 
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUK = 'Easter Monday'
 	WHERE [Month] = 4 AND [DayOfMonth]  = 21
 
 -- Early May Bank Holiday   May 5 
-   UPDATE [dbo].[Dim_Date]
+   UPDATE #Dim_Date
 		SET HolidayUK = 'Early May Bank Holiday'
 	WHERE [Month] = 5 AND [DayOfMonth]  = 5
 
 -- Spring Bank Holiday  May 26 
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUK = 'Spring Bank Holiday'
 	WHERE [Month] = 5 AND [DayOfMonth]  = 26
 
 -- Summer Bank Holiday  August 25 
-    UPDATE [dbo].[Dim_Date]
+    UPDATE #Dim_Date
 		SET HolidayUK = 'Summer Bank Holiday'
 	WHERE [Month] = 8 AND [DayOfMonth]  = 25
 
 -- Boxing Day  December 26  	
-    UPDATE [dbo].[Dim_Date]
+    UPDATE #Dim_Date
 		SET HolidayUK = 'Boxing Day'
 	WHERE [Month] = 12 AND [DayOfMonth]  = 26	
 
 --CHRISTMAS
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUK = 'Christmas Day'
 	WHERE [Month] = 12 AND [DayOfMonth]  = 25
 
 --New Years Day
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUK  = 'New Year''s Day'
 	WHERE [Month] = 1 AND [DayOfMonth] = 1
 
 --Update flag for UK Holidays 1= Holiday, 0=No Holiday
 	
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET IsHolidayUK  = CASE WHEN HolidayUK   IS NULL 
 		THEN 0 WHEN HolidayUK   IS NOT NULL THEN 1 END
 		
@@ -293,7 +286,7 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 /*Update HOLIDAY Field of USA In dimension*/
 	
  	/*THANKSGIVING - Fourth THURSDAY in November*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Thanksgiving Day'
 	WHERE
 		[Month] = 11 
@@ -301,30 +294,30 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 		AND DayOfWeekInMonth = 4
 
 	/*CHRISTMAS*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Christmas Day'
 		
 	WHERE [Month] = 12 AND [DayOfMonth]  = 25
 
 	/*4th of July*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Independance Day'
 	WHERE [Month] = 7 AND [DayOfMonth] = 4
 
 	/*New Years Day*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'New Year''s Day'
 	WHERE [Month] = 1 AND [DayOfMonth] = 1
 
 	/*Memorial Day - Last Monday in May*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Memorial Day'
-	FROM [dbo].[Dim_Date]
+	FROM #Dim_Date
 	WHERE DateKey IN 
 		(
 		SELECT
 			MAX(DateKey)
-		FROM [dbo].[Dim_Date]
+		FROM #Dim_Date
 		WHERE
 			[MonthName] = 'May'
 			AND [DayOfWeekUSA]  = 'Monday'
@@ -334,14 +327,14 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 		)
 
 	/*Labor Day - First Monday in September*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Labor Day'
-	FROM [dbo].[Dim_Date]
+	FROM #Dim_Date
 	WHERE DateKey IN 
 		(
 		SELECT
 			MIN(DateKey)
-		FROM [dbo].[Dim_Date]
+		FROM #Dim_Date
 		WHERE
 			[MonthName] = 'September'
 			AND [DayOfWeekUSA] = 'Monday'
@@ -351,21 +344,21 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 		)
 
 	/*Valentine's Day*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Valentine''s Day'
 	WHERE
 		[Month] = 2 
 		AND [DayOfMonth] = 14
 
 	/*Saint Patrick's Day*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Saint Patrick''s Day'
 	WHERE
 		[Month] = 3
 		AND [DayOfMonth] = 17
 
 	/*Martin Luthor King Day - Third Monday in January starting in 1983*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Martin Luthor King Jr Day'
 	WHERE
 		[Month] = 1
@@ -374,7 +367,7 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 		AND DayOfWeekInMonth = 3
 
 	/*President's Day - Third Monday in February*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'President''s Day'
 	WHERE
 		[Month] = 2
@@ -382,7 +375,7 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 		AND DayOfWeekInMonth = 3
 
 	/*Mother's Day - Second Sunday of May*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Mother''s Day'
 	WHERE
 		[Month] = 5
@@ -390,7 +383,7 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 		AND DayOfWeekInMonth = 2
 
 	/*Father's Day - Third Sunday of June*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Father''s Day'
 	WHERE
 		[Month] = 6
@@ -398,7 +391,7 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 		AND DayOfWeekInMonth = 3
 
 	/*Halloween 10/31*/
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 		SET HolidayUSA = 'Halloween'
 	WHERE
 		[Month] = 10
@@ -414,7 +407,7 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 			DateKey,
 			[Year],
 			[DayOfMonth] 
-		FROM [dbo].[Dim_Date]
+		FROM #Dim_Date
 		WHERE
 			[Month] = 11
 			AND [DayOfWeekUSA] = 'Monday'
@@ -458,21 +451,21 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 			SELECT @CURRENTYEAR = @CURRENTYEAR + 1
 		END
 
-		UPDATE [dbo].[Dim_Date]
+		UPDATE #Dim_Date
 			SET HolidayUSA  = 'Election Day'				
-		FROM [dbo].[Dim_Date] DT
+		FROM #Dim_Date DT
 			JOIN @Holidays HL ON (HL.DateID + 1) = DT.DateKey
 		WHERE
 			[Week] = 1
 	END
 	--set flag for USA holidays in Dimension
-	UPDATE [dbo].[Dim_Date]
+	UPDATE #Dim_Date
 SET IsHolidayUSA = CASE WHEN HolidayUSA  IS NULL THEN 0 WHEN HolidayUSA  IS NOT NULL THEN 1 END
 /*****************************************************************************************/
 
 EXEC sp_rename 'Dim_Date.LastDayOfMonth','LastDateofMonth','COLUMN';
 
-SELECT * FROM [dbo].[Dim_Date];
+SELECT * FROM #Dim_Date;
 
 
 -- ####################### Script 2 #################################################################
