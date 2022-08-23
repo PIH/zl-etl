@@ -37,3 +37,5 @@ CREATE TABLE [Dim_Date]
 		[IsHolidayUK] BIT Null,-- Flag 1=National Holiday, 0-No National Holiday
 		[HolidayUK] VARCHAR(50) Null --Name of Holiday in UK
 	)
+
+	

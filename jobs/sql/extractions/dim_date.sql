@@ -1,6 +1,4 @@
 
-/**********************************************************************************/
-
 CREATE TABLE #Dim_Date
 	(	[DateKey] INT primary key, 
 		[Date] DATETIME,
