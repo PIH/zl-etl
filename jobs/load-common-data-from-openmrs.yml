@@ -37,6 +37,7 @@ configuration:
           - tableName: "tb_screening"
           - tableName: "ncd_patient_table"
           - tableName: "pathology_encounters"
+          - tableName: "pathology_procedures"          
           - tableName: "echo_summary_table"
           - tableName: "data_warnings"
           - tableName: "dim_date"
