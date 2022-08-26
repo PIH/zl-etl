@@ -149,9 +149,13 @@
                         <configuration>
                             <fileSets>
                                 <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/pathology.sql</sourceFile>
+                                    <sourceFile>${dataExportSqlDir}/pathology_encounters.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/pathology_encounters.sql</destinationFile>
                                 </fileSet>
+                                <fileSet>
+                                    <sourceFile>${dataExportSqlDir}/pathology_procedures.sql</sourceFile>
+                                    <destinationFile>${petlJobExtractionSqlDir}/pathology_procedures.sql</destinationFile>
+                                </fileSet>                                
                                 <fileSet>
                                     <sourceFile>${dataExportSqlDir}/echocardiogram_encounters.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/echocardiogram_encounters.sql</destinationFile>
