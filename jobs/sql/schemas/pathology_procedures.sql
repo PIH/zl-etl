@@ -1,6 +1,5 @@
 CREATE TABLE pathology_procedures
 (
-patient_id					INT,
 emr_id						VARCHAR(50),
 encounter_id				VARCHAR(50),
 order_id					VARCHAR(50),
