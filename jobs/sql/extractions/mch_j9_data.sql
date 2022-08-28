@@ -73,39 +73,61 @@ prenatal_teas varchar(255)
 );
 
 -- insert one row for every patient enrollment row 
-insert into temp_j9 (patient_id,patient_program_id,date_enrolled,date_completed)
-select patient_id,patient_program_id,date_enrolled,date_completed 
+insert into temp_j9 (patient_id)
+select distinct patient_id
 from patient_program pp 
 where program_id = @mchProgram
 and voided = 0
 ;
+create index temp_j9_pi on temp_j9(patient_id);
+
+update temp_j9 t
+set patient_program_id = patientProgramId(t.patient_id,@mchProgram, null);
+
+update temp_j9 t 
+inner join patient_program pp on pp.patient_program_id = t.patient_program_id
+set t.date_enrolled = pp.date_enrolled ,
+	t.date_completed = pp.date_completed ;
+
+DROP TEMPORARY TABLE IF EXISTS temp_encounter;
+create temporary table temp_encounter 
+select e.encounter_id, e.encounter_datetime , e.patient_id  , e.encounter_type 
+from encounter e 
+inner join temp_j9 t on t.patient_id = e.patient_id 
+where e.encounter_type in (@ob_gyn_enc_id,@socio_enc_id) 
+and e.voided = 0;
+
+create index temp_encounter_ei on temp_encounter(encounter_id);
+create index temp_encounter_ci1 on temp_encounter(patient_id, encounter_type);
+create index temp_encounter_ci2 on temp_encounter(patient_id, encounter_datetime);
 
 DROP TEMPORARY TABLE IF EXISTS temp_obs;
 create temporary table temp_obs 
 select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.comments, o.date_created, o.obs_datetime  
-from encounter e 
-inner join obs o on o.encounter_id = e.encounter_id and o.voided = 0
-where e.encounter_type in (@ob_gyn_enc_id,@socio_enc_id) 
-and e.voided = 0;
+from obs o
+inner join temp_encounter t on o.encounter_id = t.encounter_id 
+where o.voided = 0;
 
 create index temp_obs_ci1 on temp_obs(encounter_id,concept_id);
 create index temp_obs_ci2 on temp_obs(person_id,concept_id);
 create index temp_obs_ci3 on temp_obs(date_created, obs_id);
+create index temp_obs_ci4 on temp_obs(obs_group_id, concept_id);
+create index temp_obs_ci5 on temp_obs(person_id, concept_id, obs_datetime);
 create index temp_obs_oi on temp_obs(obs_id);
 
 -- encounter_id of latest encounter_id (used in calculations below) 
-update temp_j9
-set last_socio_encounter_id = latestEnc(patient_id, @socioEncName, null);
+update temp_j9 t
+set last_socio_encounter_id = latest_enc_from_temp(patient_id, @socio_enc_id, null);
 
 update temp_j9 t
 set program_state = currentProgramState(t.patient_program_id, @mchWorkflow, @locale);
 
 -- mothers group
+set @m_group_concept_id = concept_from_mapping('PIH','11665');
 update temp_j9 t 
-set mothers_group_obs_id = latest_obs_from_temp(patient_id,'PIH','11665');
+set mothers_group_obs_id = latest_obs_from_temp_from_concept_id(patient_id,@m_group_concept_id);
 update temp_j9 t 
 set mothers_group = value_text_from_temp(mothers_group_obs_id);
-
 
 -- patient age
 update temp_j9
@@ -113,14 +135,16 @@ set patient_age = current_age_in_years(patient_id);
 
 -- columns from socioeconomic form
 -- education level
+set @el_id = concept_from_mapping('CIEL','1712');
 update temp_j9
-set education_level_obs_id = latest_obs_from_temp(patient_id,'CIEL','1712');
+set education_level_obs_id = latest_obs_from_temp_from_concept_id(patient_id,@el_id);
 update temp_j9
 set education_level = value_coded_name_from_temp(education_level_obs_id,@locale);
 
 -- able to read or write
+set @able_rw_id = concept_from_mapping('CIEL','166855');
 update temp_j9
-set able_read_write_obs_id =latest_obs_from_temp(patient_id, 'CIEL','166855');
+set able_read_write_obs_id =latest_obs_from_temp_from_concept_id(patient_id, @able_rw_id);
 update temp_j9
 set able_read_write = value_coded_as_boolean_from_temp(able_read_write_obs_id);
 
@@ -132,39 +156,45 @@ inner join temp_obs o on o.encounter_id = last_socio_encounter_id and o.voided =
 set family_support = if(o.obs_id is null,null,1 );
 
 -- partner support checkbox
+set @partner_support_id = concept_from_mapping('PIH','13747');
 update temp_j9 
-set partner_support_anc_obs_id = latest_obs_from_temp(patient_id, 'PIH','13747');
+set partner_support_anc_obs_id = latest_obs_from_temp_from_concept_id(patient_id, @partner_support_id);
 update temp_j9 
 set partner_support_anc = value_coded_as_boolean_from_temp(partner_support_anc_obs_id);
 
 -- currently employed checkbox
+set @employment_status_id = concept_from_mapping('PIH','3395');
 update temp_j9
-set employment_status_obs_id = latest_obs_from_temp(patient_id, 'PIH','3395');
+set employment_status_obs_id = latest_obs_from_temp_from_concept_id(patient_id, @employment_status_id);
 update temp_j9
 set employment_status = value_coded_as_boolean_from_temp(employment_status_obs_id);
 
 -- number household members
+set @number_hh_id = concept_from_mapping('CIEL','1474');
 update temp_j9
-set number_household_members_obs_id = latest_obs_from_temp(patient_id, 'CIEL','1474');
+set number_household_members_obs_id = latest_obs_from_temp_from_concept_id(patient_id, @number_hh_id);
 update temp_j9
 set number_household_members = value_numeric_from_temp(number_household_members_obs_id);
 
 -- access to transpoirt
+set @at_id= concept_from_mapping('PIH','13746');
 update temp_j9
-set access_transport_obs_id = latest_obs_from_temp(patient_id, 'PIH','13746');
+set access_transport_obs_id = latest_obs_from_temp_from_concept_id(patient_id, @at_id);
 update temp_j9
 set access_transport = value_coded_as_boolean_from_temp(access_transport_obs_id);
 
 -- mode of transport
+set @mt_id= concept_from_mapping('PIH','975');
 update temp_j9
-set mode_transport_obs_id = latest_obs_from_temp(patient_id,'PIH','975');
+set mode_transport_obs_id = latest_obs_from_temp_from_concept_id(patient_id,@mt_id);
 update temp_j9
 set mode_transport = value_coded_name_from_temp(mode_transport_obs_id,@locale);
 
 -- columns from obgyn form
 -- expected delivery date
+set @edd_id= concept_from_mapping('PIH','5596');
 update temp_j9
-set expected_delivery_date_obs_id = latest_obs(patient_id,'PIH','5596');
+set expected_delivery_date_obs_id = latest_obs_from_temp_from_concept_id(patient_id,@edd_id);
 update temp_j9
 set expected_delivery_date = value_datetime_from_temp(expected_delivery_date_obs_id);
 
@@ -191,10 +221,18 @@ inner join obs o on o.person_id = t.patient_id and o.obs_id =
 	order by o2.obs_datetime desc limit 1)
 set highest_birth_number_obs_group = o.obs_group_id ;
 
--- prior birth delivery type (using 2 fields above)
+set @deliveryTypeId = concept_from_mapping('PIH','11663');
+
+-- prior birth delivery type (using 2 fields above) -- this is REALLY SLOW!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+update temp_j9 t
+inner join temp_obs o on o.voided = 0
+      and       o.obs_group_id= highest_birth_number_obs_group
+      and       o.concept_id = @deliveryTypeId
+set prior_birth_delivery_type =  concept_name(o.value_coded, @locale)     ;
+/*
 update temp_j9 t
 set prior_birth_delivery_type = obs_from_group_id_value_coded_list_from_temp(t.highest_birth_number_obs_group, 'PIH','11663',@locale);
-
+*/
 -- prior birth delivery outcome (status) (using 2 fields above)
 update temp_j9 t
 set prior_birth_neonatal_status = obs_from_group_id_value_coded_list_from_temp(t.highest_birth_number_obs_group, 'PIH','12899',@locale);
@@ -291,20 +329,23 @@ inner join
 set number_family_planning_visits = s.count_visits;
 
 -- marital status
+set @ms_id = concept_from_mapping('CIEL','1712');
 update temp_j9 t 
-set marital_status_obs_id = latest_obs_from_temp(t.patient_id, 'PIH','1054');
+set marital_status_obs_id = latest_obs_from_temp_from_concept_id(t.patient_id, @ms_id);
 update temp_j9 t 
 set marital_status = value_coded_name_from_temp(marital_status_obs_id,@locale);
 
 -- religion
+set @r_id = concept_from_mapping('PIH','10154');
 update temp_j9 t 
-set religion_obs_id = latest_obs_from_temp(t.patient_id, 'PIH','10154');
+set religion_obs_id = latest_obs_from_temp_from_concept_id(t.patient_id, @r_id);
 update temp_j9 t 
 set religion = value_coded_name_from_temp(religion_obs_id,@locale);
 
 -- number of living children
+SET @nlc_id = concept_from_mapping('PIH','11117');
 update temp_j9 t 
-set number_living_children_obs_id = latest_obs(t.patient_id, 'PIH','11117');
+set number_living_children_obs_id = latest_obs_from_temp_from_concept_id(t.patient_id, @nlc_id);
 update temp_j9 t 
 set number_living_children = value_numeric_from_temp(number_living_children_obs_id);
 
@@ -325,14 +366,16 @@ update temp_j9 t
 set address_street_landmark = person_address_two(patient_id);
 
 -- traditional healer
+SET @tnh_id = concept_from_mapping('PIH','13242');
 update temp_j9 t 
-set traditional_healer_obs_id = latest_obs_from_temp(t.patient_id, 'PIH','13242');
+set traditional_healer_obs_id = latest_obs_from_temp_from_concept_id(t.patient_id, @tnh_id);
 update temp_j9 t 
 set traditional_healer = value_coded_name_from_temp(traditional_healer_obs_id,@locale);
 
 -- used prenatal teas
+SET @pt_id = concept_from_mapping('PIH','13737');
 update temp_j9 t 
-set prenatal_teas_obs_id = latest_obs_from_temp(t.patient_id, 'PIH','13737');
+set prenatal_teas_obs_id = latest_obs_from_temp_from_concept_id(t.patient_id, @pt_id);
 update temp_j9 t 
 set prenatal_teas = value_coded_name_from_temp(prenatal_teas_obs_id,@locale);
 
