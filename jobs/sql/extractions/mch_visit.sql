@@ -89,12 +89,15 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     index_desc         INT
 );
 
-CREATE INDEX temp_obgyn_visit_patient_id ON temp_obgyn_visit (patient_id);
-CREATE INDEX temp_obgyn_visit_encounter_id ON temp_obgyn_visit (encounter_id);
 
 INSERT INTO temp_obgyn_visit(patient_id, encounter_id, visit_date, visit_site, date_entered)
-SELECT patient_id, encounter_id, DATE(encounter_datetime), LOCATION_NAME(location_id), date_created FROM encounter WHERE voided = 0 AND encounter_type = @obgyn_encounter;
+SELECT distinct e.patient_id, e.encounter_id, DATE(e.encounter_datetime), LOCATION_NAME(e.location_id), e.date_created 
+FROM encounter e
+inner join obs o on o.encounter_id = e.encounter_id and o.voided = 0 -- ensure that only rows with obs are included
+WHERE e.voided = 0 AND encounter_type = @obgyn_encounter;
 
+CREATE INDEX temp_obgyn_visit_patient_id ON temp_obgyn_visit (patient_id);
+CREATE INDEX temp_obgyn_visit_encounter_id ON temp_obgyn_visit (encounter_id);
 
 UPDATE temp_obgyn_visit t 
 SET 
