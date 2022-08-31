@@ -56,7 +56,7 @@
         <liquibaseSourceDir>${project.build.directory}/openmrs-config-zl/pih/liquibase/sql/</liquibaseSourceDir>
         <liquibaseDestDir>${project.build.directory}/zl-etl/jobs/sql/utils/</liquibaseDestDir>
         <petlJobExtractionSqlDir>${project.build.directory}/zl-etl/jobs/sql/extractions/</petlJobExtractionSqlDir>
-        <configZlVersion>1.39.0-SNAPSHOT</configZlVersion>
+        <configZlVersion>1.40.0-SNAPSHOT</configZlVersion>
     </properties>
 
     <build>
