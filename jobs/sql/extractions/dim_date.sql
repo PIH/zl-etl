@@ -1,4 +1,3 @@
-
 CREATE TABLE #Dim_Date
 	(	[DateKey] INT primary key, 
 		[Date] DATETIME,
@@ -43,7 +42,7 @@ CREATE TABLE #Dim_Date
 --Value of Start Date Must be Less than Your End Date 
 
 DECLARE @StartDate DATETIME = '01/01/2013' --Starting value of Date Range
-DECLARE @EndDate DATETIME = '01/01/2070' --End Value of Date Range
+DECLARE @EndDate DATETIME = '01/01/2050' --End Value of Date Range
 
 --Temporary Variables To Hold the Values During Processing of Each Date of Year
 DECLARE
@@ -142,7 +141,7 @@ BEGIN
 		DATEPART(DD, @CurrentDate) AS DayOfMonth,
 		--Apply Suffix values like 1st, 2nd 3rd etc..
 		CASE 
-			WHEN DATEPART(DD,@CurrentDate) IN (11,12,13) 
+			WHEN DATEPART(DD,@CurrentDate) IN (11,12,13)
 			THEN CAST(DATEPART(DD,@CurrentDate) AS VARCHAR) + 'th'
 			WHEN RIGHT(DATEPART(DD,@CurrentDate),1) = 1
 			THEN CAST(DATEPART(DD,@CurrentDate) AS VARCHAR) + 'st'
@@ -172,11 +171,8 @@ BEGIN
 		@DayOfWeekInYear AS DayOfWeekInYear,
 		@DayOfQuarter AS DayOfQuarter,
 		DATEPART(DY, @CurrentDate) AS DayOfYear,
-		DATEPART(WW, @CurrentDate) + 1 - DATEPART(WW, CONVERT(VARCHAR, 
-		DATEPART(MM, @CurrentDate)) + '/1/' + CONVERT(VARCHAR, 
-		DATEPART(YY, @CurrentDate))) AS WeekOfMonth,
-		(DATEDIFF(DD, DATEADD(QQ, DATEDIFF(QQ, 0, @CurrentDate), 0), 
-		@CurrentDate) / 7) + 1 AS WeekOfQuarter,
+		DATEPART(WW, @CurrentDate) + 1 - DATEPART(WW, CONVERT(VARCHAR,DATEPART(MM, @CurrentDate)) + '/1/' + CONVERT(VARCHAR,DATEPART(YY, @CurrentDate))) AS WeekOfMonth,
+		(DATEDIFF(DD, DATEADD(QQ, DATEDIFF(QQ, 0, @CurrentDate), 0), @CurrentDate) / 7) + 1 AS WeekOfQuarter,
 		DATEPART(WW, @CurrentDate) AS WeekOfYear,
 		DATEPART(MM, @CurrentDate) AS Month,
 		DATENAME(MM, @CurrentDate) AS MonthName,
@@ -194,21 +190,14 @@ BEGIN
 			END AS QuarterName,
 		DATEPART(YEAR, @CurrentDate) AS Year,
 		'CY ' + CONVERT(VARCHAR, DATEPART(YEAR, @CurrentDate)) AS YearName,
-		LEFT(DATENAME(MM, @CurrentDate), 3) + '-' + CONVERT(VARCHAR, 
-		DATEPART(YY, @CurrentDate)) AS MonthYear,
-		RIGHT('0' + CONVERT(VARCHAR, DATEPART(MM, @CurrentDate)),2) + 
-		CONVERT(VARCHAR, DATEPART(YY, @CurrentDate)) AS MMYYYY,
-		CONVERT(DATETIME, CONVERT(DATE, DATEADD(DD, - (DATEPART(DD, 
-		@CurrentDate) - 1), @CurrentDate))) AS FirstDayOfMonth,
-		CONVERT(DATETIME, CONVERT(DATE, DATEADD(DD, - (DATEPART(DD, 
-		(DATEADD(MM, 1, @CurrentDate)))), DATEADD(MM, 1, 
-		@CurrentDate)))) AS LastDayOfMonth,
+		LEFT(DATENAME(MM, @CurrentDate), 3) + '-' + CONVERT(VARCHAR, DATEPART(YY, @CurrentDate)) AS MonthYear,
+		RIGHT('0' + CONVERT(VARCHAR, DATEPART(MM, @CurrentDate)),2) + CONVERT(VARCHAR, DATEPART(YY, @CurrentDate)) AS MMYYYY,
+		CONVERT(DATETIME, CONVERT(DATE, DATEADD(DD, - (DATEPART(DD, @CurrentDate) - 1), @CurrentDate))) AS FirstDayOfMonth,
+		CONVERT(DATETIME, CONVERT(DATE, DATEADD(DD, - (DATEPART(DD, (DATEADD(MM, 1, @CurrentDate)))), DATEADD(MM, 1, @CurrentDate)))) AS LastDayOfMonth,
 		DATEADD(QQ, DATEDIFF(QQ, 0, @CurrentDate), 0) AS FirstDayOfQuarter,
 		DATEADD(QQ, DATEDIFF(QQ, -1, @CurrentDate), -1) AS LastDayOfQuarter,
-		CONVERT(DATETIME, '01/01/' + CONVERT(VARCHAR, DATEPART(YY, 
-		@CurrentDate))) AS FirstDayOfYear,
-		CONVERT(DATETIME, '12/31/' + CONVERT(VARCHAR, DATEPART(YY, 
-		@CurrentDate))) AS LastDayOfYear,
+		CONVERT(DATETIME, '01/01/' + CONVERT(VARCHAR, DATEPART(YY, @CurrentDate))) AS FirstDayOfYear,
+		CONVERT(DATETIME, '12/31/' + CONVERT(VARCHAR, DATEPART(YY, @CurrentDate))) AS LastDayOfYear,
 		NULL AS IsHolidayUSA,
 		CASE DATEPART(DW, @CurrentDate)
 			WHEN 1 THEN 0
@@ -224,12 +213,9 @@ BEGIN
 	SET @CurrentDate = DATEADD(DD, 1, @CurrentDate)
 END
 
-/******************************************************************************************
+/********************************************************************************************/
  
-Step 3.
-Update Values of Holiday as per UK Government Declaration for National Holiday.
-
-Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
+/*Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday*/
 	
 -- Good Friday  April 18 
 	UPDATE #Dim_Date
@@ -274,12 +260,8 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 --Update flag for UK Holidays 1= Holiday, 0=No Holiday
 	
 	UPDATE #Dim_Date
-		SET IsHolidayUK  = CASE WHEN HolidayUK   IS NULL 
-		THEN 0 WHEN HolidayUK   IS NOT NULL THEN 1 END
+		SET IsHolidayUK  = CASE WHEN HolidayUK   IS NULL THEN 0 WHEN HolidayUK   IS NOT NULL THEN 1 END
 		
- 
---Step 4.
---Update Values of Holiday as per USA Govt. Declaration for National Holiday.
 
 /*Update HOLIDAY Field of USA In dimension*/
 	
@@ -397,8 +379,7 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 
 	/*Election Day - The first Tuesday after the first Monday in November*/
 	BEGIN
-	DECLARE @Holidays TABLE (ID INT IDENTITY(1,1), 
-	DateID int, Week TINYINT, YEAR CHAR(4), DAY CHAR(2))
+	DECLARE @Holidays TABLE (ID INT IDENTITY(1,1), DateID int, Week TINYINT, YEAR CHAR(4), DAY CHAR(2))
 
 		INSERT INTO @Holidays(DateID, [Year],[Day])
 		SELECT
@@ -457,11 +438,9 @@ Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday */
 			[Week] = 1
 	END
 	--set flag for USA holidays in Dimension
-	UPDATE #Dim_Date
+UPDATE #Dim_Date
 SET IsHolidayUSA = CASE WHEN HolidayUSA  IS NULL THEN 0 WHEN HolidayUSA  IS NOT NULL THEN 1 END
 /*****************************************************************************************/
-
-EXEC sp_rename 'Dim_Date.LastDayOfMonth','LastDateofMonth','COLUMN';
 
 SELECT * FROM #Dim_Date;
 
