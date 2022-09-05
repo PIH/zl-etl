@@ -1,28 +1,28 @@
 CREATE TABLE #Dim_Date
 	(	[DateKey] INT primary key, 
 		[Date] DATETIME,
-		[FullDateUK] CHAR(10), -- Date in dd-MM-yyyy format
-		[FullDateUSA] CHAR(10),-- Date in MM-dd-yyyy format
-		[DayOfMonth] VARCHAR(2), -- Field will hold day number of Month
-		[DaySuffix] VARCHAR(4), -- Apply suffix as 1st, 2nd ,3rd etc
-		[DayName] VARCHAR(9), -- Contains name of the day, Sunday, Monday 
-		[DayOfWeekUSA] CHAR(1),-- First Day Sunday=1 and Saturday=7
-		[DayOfWeekUK] CHAR(1),-- First Day Monday=1 and Sunday=7
-		[DayOfWeekInMonth] VARCHAR(2), --1st Monday or 2nd Monday in Month
+		[FullDateUK] CHAR(10),
+		[FullDateUSA] CHAR(10),
+		[DayOfMonth] VARCHAR(2),
+		[DaySuffix] VARCHAR(4),
+		[DayName] VARCHAR(9),
+		[DayOfWeekUSA] CHAR(1),
+		[DayOfWeekUK] CHAR(1),
+		[DayOfWeekInMonth] VARCHAR(2),
 		[DayOfWeekInYear] VARCHAR(2),
 		[DayOfQuarter] VARCHAR(3),
 		[DayOfYear] VARCHAR(3),
-		[WeekOfMonth] VARCHAR(1),-- Week Number of Month 
-		[WeekOfQuarter] VARCHAR(2), --Week Number of the Quarter
-		[WeekOfYear] VARCHAR(2),--Week Number of the Year
-		[Month] VARCHAR(2), --Number of the Month 1 to 12
-		[MonthName] VARCHAR(9),--January, February etc
-		[MonthOfQuarter] VARCHAR(2),-- Month Number belongs to Quarter
+		[WeekOfMonth] VARCHAR(1),
+		[WeekOfQuarter] VARCHAR(2),
+		[WeekOfYear] VARCHAR(2),
+		[Month] VARCHAR(2),
+		[MonthName] VARCHAR(9),
+		[MonthOfQuarter] VARCHAR(2),
 		[Quarter] CHAR(1),
-		[QuarterName] VARCHAR(9),--First,Second..
-		[Year] CHAR(4),-- Year value of Date stored in Row
-		[YearName] CHAR(7), --CY 2012,CY 2013
-		[MonthYear] CHAR(10), --Jan-2013,Feb-2013
+		[QuarterName] VARCHAR(9),
+		[Year] CHAR(4),
+		[YearName] CHAR(7), 
+		[MonthYear] CHAR(10),
 		[MMYYYY] CHAR(6),
 		[FirstDayOfMonth] DATE,
 		[LastDayOfMonth] DATE,
@@ -30,21 +30,18 @@ CREATE TABLE #Dim_Date
 		[LastDayOfQuarter] DATE,
 		[FirstDayOfYear] DATE,
 		[LastDayOfYear] DATE,
-		[IsHolidayUSA] BIT,-- Flag 1=National Holiday, 0-No National Holiday
-		[IsWeekday] BIT,-- 0=Week End ,1=Week Day
-		[HolidayUSA] VARCHAR(50),--Name of Holiday in US
-		[IsHolidayUK] BIT Null,-- Flag 1=National Holiday, 0-No National Holiday
-		[HolidayUK] VARCHAR(50) Null --Name of Holiday in UK
+		[IsHolidayUSA] BIT,
+		[IsWeekday] BIT,
+		[HolidayUSA] VARCHAR(50),
+		[IsHolidayUK] BIT Null,
+		[HolidayUK] VARCHAR(50) Null
 	)
 
-/********************************************************************************************/
---Specify Start Date and End date here
---Value of Start Date Must be Less than Your End Date 
+-- ------------------------------------------------------------------------------------
 
-DECLARE @StartDate DATETIME = '01/01/2013' --Starting value of Date Range
-DECLARE @EndDate DATETIME = '01/01/2050' --End Value of Date Range
+DECLARE @StartDate DATETIME = '01/01/2013' 
+DECLARE @EndDate DATETIME = '01/01/2050'
 
---Temporary Variables To Hold the Values During Processing of Each Date of Year
 DECLARE
 	@DayOfWeekInMonth INT,
 	@DayOfWeekInYear INT,
@@ -54,7 +51,7 @@ DECLARE
 	@CurrentMonth INT,
 	@CurrentQuarter INT
 
-/*Table Data type to store the day of week count for the month and year*/
+
 DECLARE @DayOfWeek TABLE (DOW INT, MonthCount INT, QuarterCount INT, YearCount INT)
 
 INSERT INTO @DayOfWeek VALUES (1, 0, 0, 0)
@@ -65,32 +62,24 @@ INSERT INTO @DayOfWeek VALUES (5, 0, 0, 0)
 INSERT INTO @DayOfWeek VALUES (6, 0, 0, 0)
 INSERT INTO @DayOfWeek VALUES (7, 0, 0, 0)
 
---Extract and assign various parts of Values from Current Date to Variable
 
 DECLARE @CurrentDate AS DATETIME = @StartDate
 SET @CurrentMonth = DATEPART(MM, @CurrentDate)
 SET @CurrentYear = DATEPART(YY, @CurrentDate)
 SET @CurrentQuarter = DATEPART(QQ, @CurrentDate)
 
-/********************************************************************************************/
---Proceed only if Start Date(Current date ) is less than End date you specified above
+-- --------------------------------------------------------------------------------
 
 WHILE @CurrentDate < @EndDate
 BEGIN
  
-/*Begin day of week logic*/
 
-         /*Check for Change in Month of the Current date if Month changed then 
-          Change variable value*/
 	IF @CurrentMonth != DATEPART(MM, @CurrentDate) 
 	BEGIN
 		UPDATE @DayOfWeek
 		SET MonthCount = 0
 		SET @CurrentMonth = DATEPART(MM, @CurrentDate)
 	END
-
-        /* Check for Change in Quarter of the Current date if Quarter changed then change 
-         Variable value*/
 
 	IF @CurrentQuarter != DATEPART(QQ, @CurrentDate)
 	BEGIN
@@ -99,9 +88,6 @@ BEGIN
 		SET @CurrentQuarter = DATEPART(QQ, @CurrentDate)
 	END
        
-        /* Check for Change in Year of the Current date if Year changed then change 
-         Variable value*/
-	
 
 	IF @CurrentYear != DATEPART(YY, @CurrentDate)
 	BEGIN
@@ -110,7 +96,6 @@ BEGIN
 		SET @CurrentYear = DATEPART(YY, @CurrentDate)
 	END
 	
-        -- Set values in table data type created above from variables 
 
 	UPDATE @DayOfWeek
 	SET 
@@ -126,10 +111,6 @@ BEGIN
 	FROM @DayOfWeek
 	WHERE DOW = DATEPART(DW, @CurrentDate)
 	
-/*End day of week logic*/
-
-
-/* Populate Your Dimension Table with values*/
 	
 	INSERT INTO #Dim_Date
 	SELECT
@@ -139,7 +120,6 @@ BEGIN
 		CONVERT (char(10),@CurrentDate,103) as FullDateUK,
 		CONVERT (char(10),@CurrentDate,101) as FullDateUSA,
 		DATEPART(DD, @CurrentDate) AS DayOfMonth,
-		--Apply Suffix values like 1st, 2nd 3rd etc..
 		CASE 
 			WHEN DATEPART(DD,@CurrentDate) IN (11,12,13)
 			THEN CAST(DATEPART(DD,@CurrentDate) AS VARCHAR) + 'th'
@@ -155,7 +135,6 @@ BEGIN
 		DATENAME(DW, @CurrentDate) AS DayName,
 		DATEPART(DW, @CurrentDate) AS DayOfWeekUSA,
 
-		-- check for day of week as Per US and change it as per UK format 
 		CASE DATEPART(DW, @CurrentDate)
 			WHEN 1 THEN 7
 			WHEN 2 THEN 1
@@ -213,10 +192,8 @@ BEGIN
 	SET @CurrentDate = DATEADD(DD, 1, @CurrentDate)
 END
 
-/********************************************************************************************/
- 
-/*Update HOLIDAY fields of UK as per Govt. Declaration of National Holiday*/
-	
+-- ------------------------------------------------------------------
+
 -- Good Friday  April 18 
 	UPDATE #Dim_Date
 		SET HolidayUK = 'Good Friday'
@@ -257,15 +234,14 @@ END
 		SET HolidayUK  = 'New Year''s Day'
 	WHERE [Month] = 1 AND [DayOfMonth] = 1
 
---Update flag for UK Holidays 1= Holiday, 0=No Holiday
+-- Update flag for UK Holidays 1= Holiday, 0=No Holiday
 	
 	UPDATE #Dim_Date
 		SET IsHolidayUK  = CASE WHEN HolidayUK   IS NULL THEN 0 WHEN HolidayUK   IS NOT NULL THEN 1 END
 		
 
-/*Update HOLIDAY Field of USA In dimension*/
-	
- 	/*THANKSGIVING - Fourth THURSDAY in November*/
+-- -----------------------------------------------------------
+		
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Thanksgiving Day'
 	WHERE
@@ -273,23 +249,23 @@ END
 		AND [DayOfWeekUSA] = 'Thursday' 
 		AND DayOfWeekInMonth = 4
 
-	/*CHRISTMAS*/
+	-- ------ CHRISTMAS -----------------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Christmas Day'
 		
 	WHERE [Month] = 12 AND [DayOfMonth]  = 25
 
-	/*4th of July*/
+	-- ---------- 4th of July ---------------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Independance Day'
 	WHERE [Month] = 7 AND [DayOfMonth] = 4
 
-	/*New Years Day*/
+	-- ------------ New Years Day ---------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'New Year''s Day'
 	WHERE [Month] = 1 AND [DayOfMonth] = 1
 
-	/*Memorial Day - Last Monday in May*/
+	-- ----------------------------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Memorial Day'
 	FROM #Dim_Date
@@ -306,7 +282,7 @@ END
 			[Month]
 		)
 
-	/*Labor Day - First Monday in September*/
+	-- --------- Labor Day - First Monday in September ----------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Labor Day'
 	FROM #Dim_Date
@@ -323,21 +299,21 @@ END
 			[Month]
 		)
 
-	/*Valentine's Day*/
+	-- --------------- Valentine's Day ----------------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Valentine''s Day'
 	WHERE
 		[Month] = 2 
 		AND [DayOfMonth] = 14
 
-	/*Saint Patrick's Day*/
+	-- ------------ Saint Patrick's Day ------------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Saint Patrick''s Day'
 	WHERE
 		[Month] = 3
 		AND [DayOfMonth] = 17
 
-	/*Martin Luthor King Day - Third Monday in January starting in 1983*/
+	-- ------------ Martin Luthor King Day - Third Monday in January starting in 1983*/
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Martin Luthor King Jr Day'
 	WHERE
@@ -346,7 +322,7 @@ END
 		AND [Year] >= 1983
 		AND DayOfWeekInMonth = 3
 
-	/*President's Day - Third Monday in February*/
+	-- ------------- President's Day - Third Monday in February ----------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'President''s Day'
 	WHERE
@@ -354,7 +330,7 @@ END
 		AND [DayOfWeekUSA] = 'Monday'
 		AND DayOfWeekInMonth = 3
 
-	/*Mother's Day - Second Sunday of May*/
+	-- --------------- Mother's Day - Second Sunday of May -------------------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Mother''s Day'
 	WHERE
@@ -362,7 +338,7 @@ END
 		AND [DayOfWeekUSA] = 'Sunday'
 		AND DayOfWeekInMonth = 2
 
-	/*Father's Day - Third Sunday of June*/
+	-- -------------- Father's Day - Third Sunday of June -------------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Father''s Day'
 	WHERE
@@ -370,14 +346,14 @@ END
 		AND [DayOfWeekUSA] = 'Sunday'
 		AND DayOfWeekInMonth = 3
 
-	/*Halloween 10/31*/
+	-- ------------------- Halloween 10/31 ---------------------
 	UPDATE #Dim_Date
 		SET HolidayUSA = 'Halloween'
 	WHERE
 		[Month] = 10
 		AND [DayOfMonth] = 31
 
-	/*Election Day - The first Tuesday after the first Monday in November*/
+	-- ------------ Election Day - The first Tuesday after the first Monday in November -------------
 	BEGIN
 	DECLARE @Holidays TABLE (ID INT IDENTITY(1,1), DateID int, Week TINYINT, YEAR CHAR(4), DAY CHAR(2))
 
@@ -440,9 +416,5 @@ END
 	--set flag for USA holidays in Dimension
 UPDATE #Dim_Date
 SET IsHolidayUSA = CASE WHEN HolidayUSA  IS NULL THEN 0 WHEN HolidayUSA  IS NOT NULL THEN 1 END
-/*****************************************************************************************/
 
 SELECT * FROM #Dim_Date;
-
-
--- ####################### Script 2 #################################################################
