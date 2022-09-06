@@ -40,4 +40,3 @@ configuration:
           - tableName: "pathology_procedures"          
           - tableName: "echo_summary_table"
           - tableName: "data_warnings"
-          - tableName: "dim_date"
