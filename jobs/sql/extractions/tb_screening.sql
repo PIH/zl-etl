@@ -7,6 +7,9 @@ SELECT encounter_type_id INTO @HIV_ped_intake FROM encounter_type WHERE uuid = '
 SELECT encounter_type_id INTO @HIV_ped_followup FROM encounter_type WHERE uuid = 'c31d34f2-40c4-11e7-a919-92ebcb67fe33';
 SET @present = CONCEPT_FROM_MAPPING('PIH','11563');
 SET @absent = CONCEPT_FROM_MAPPING('PIH','11564');
+set @positive = concept_from_mapping('PIH','703');
+set @negative = concept_from_mapping('PIH','664');
+set @tbScreeningResult = CONCEPT_FROM_MAPPING('CIEL', '160108');
 
 DROP TEMPORARY TABLE IF EXISTS temp_TB_screening;
 CREATE TEMPORARY TABLE temp_TB_screening
@@ -31,10 +34,6 @@ date_entered DATETIME,
 user_entered VARCHAR(50)
 );
 
-CREATE INDEX temp_TB_screening_patient_id ON temp_TB_screening (patient_id);
-CREATE INDEX temp_TB_screening_tb_screening_date ON temp_TB_screening (tb_screening_date);
-CREATE INDEX temp_TB_screening_encounter_id ON temp_TB_screening (encounter_id);
-
 -- load temp table with all intake/followup forms with any TB screening answer given
 INSERT INTO temp_TB_screening (patient_id, encounter_id, tb_screening_date, date_entered, user_entered)
 SELECT e.patient_id, e.encounter_id,e.encounter_datetime, date_created, username(creator) FROM encounter e
@@ -45,6 +44,9 @@ AND EXISTS
    AND o.voided = 0 AND o.concept_id IN (@absent,@present))
 ;  
 
+CREATE INDEX temp_TB_screening_patient_id ON temp_TB_screening (patient_id);
+CREATE INDEX temp_TB_screening_tb_screening_date ON temp_TB_screening (tb_screening_date);
+CREATE INDEX temp_TB_screening_encounter_id ON temp_TB_screening (encounter_id);
 create index temp_tb_screening_ei on temp_TB_screening(encounter_id);
 
 UPDATE temp_TB_screening
@@ -59,53 +61,60 @@ from obs o
  inner join temp_TB_screening t on t.encounter_id = o.encounter_id
 where o.voided = 0
 and o.concept_id in (
-	CONCEPT_FROM_MAPPING("CIEL", "160108"),
-	CONCEPT_FROM_MAPPING("PIH", "11563"),
-	CONCEPT_FROM_MAPPING("PIH", "11564"))
-;
+	@tbScreeningResult,
+	@positive,
+	@negative);
 
 create index temp_obs_ci1 on temp_obs(encounter_id,value_coded);
 create index temp_obs_ci2 on temp_obs(encounter_id,concept_id);
 
-
 -- update answer of each of the screening questions by bringing in the symptom/answer (fever, weight loss etc...)
 -- and update the temp table column based on whether the obs question was symptom question was present or absent
+set @feverResult = CONCEPT_FROM_MAPPING('PIH', '11565');
 UPDATE temp_TB_screening t
-INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = CONCEPT_FROM_MAPPING('PIH', '11565')
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @feverResult
 SET fever_result_concept =o.concept_id;
 
+set @weightLoss = CONCEPT_FROM_MAPPING('PIH', '11566');
 UPDATE temp_TB_screening t
-INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = CONCEPT_FROM_MAPPING('PIH', '11566')
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @weightLoss
 SET weight_loss_result_concept =o.concept_id;
 
+set @coughResult = CONCEPT_FROM_MAPPING('PIH', '11567');
 UPDATE temp_TB_screening t
-INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = CONCEPT_FROM_MAPPING('PIH', '11567')
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @coughResult
 SET cough_result_concept =o.concept_id;
 
+set @contactResult = CONCEPT_FROM_MAPPING('PIH', '11568');
 UPDATE temp_TB_screening t
-INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = CONCEPT_FROM_MAPPING('PIH', '11568')
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @contactResult
 SET tb_contact_result_concept =o.concept_id;
 
+set @lymphPain = CONCEPT_FROM_MAPPING('PIH', '11569');
 UPDATE temp_TB_screening t
-INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = CONCEPT_FROM_MAPPING('PIH', '11569')
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded =@lymphPain
 SET lymph_pain_result_concept =o.concept_id;
 
+set @bloodyCough = CONCEPT_FROM_MAPPING('PIH', '970');
 UPDATE temp_TB_screening t
-INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = CONCEPT_FROM_MAPPING('PIH', '970')
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @bloodyCough 
 SET bloody_cough_result_concept =o.concept_id;
 
+set @dyspnea = CONCEPT_FROM_MAPPING('PIH', '5960');
 UPDATE temp_TB_screening t
-INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = CONCEPT_FROM_MAPPING('PIH', '5960')
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @dyspnea
 SET dyspnea_result_concept =o.concept_id;
 
+set @chestPain = CONCEPT_FROM_MAPPING('PIH', '136');
 UPDATE temp_TB_screening t
-INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = CONCEPT_FROM_MAPPING('PIH', '136')
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @chestPain
 SET chest_pain_result_concept =o.concept_id;
 
+
 UPDATE temp_TB_screening t
-INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING("CIEL", "160108")
-SET tb_screening = if(o.value_coded = concept_from_mapping('PIH','703'), '1',
-					if(o.value_coded =  concept_from_mapping('PIH','664'),'0',null));
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.concept_id = @tbScreeningResult
+SET tb_screening = if(o.value_coded = @positive, '1',
+					if(o.value_coded =  @negative,'0',null));
 
 UPDATE temp_TB_screening t SET tb_screening_bool = IF(cough_result_concept = @present,'1',
   IF(fever_result_concept = @present,'1',
