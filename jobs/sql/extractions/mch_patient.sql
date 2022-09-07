@@ -2,6 +2,7 @@ SET sql_safe_updates = 0;
 SET @mch_patient_program_id = (SELECT program_id FROM program WHERE uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73');
 SET @mch_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'd83e98fd-dc7b-420f-aa3f-36f648b4483d');
 SET @delivery = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '00e5ebb2-90ec-11e8-9eb6-529269fb1459');
+SET @regEncId = (SELECT encounter_type_id  from encounter_type where uuid = '873f968a-73a8-4f9c-ac78-9f4778b751b6');      
 
 DROP TEMPORARY TABLE IF EXISTS temp_od_encounters;
 CREATE TEMPORARY TABLE temp_od_encounters
@@ -29,18 +30,27 @@ FROM encounter e WHERE e.voided = 0 AND e.encounter_type IN (@mch_encounter, @de
 UPDATE temp_od_encounters t JOIN encounter e ON t.patient_id = e.patient_id AND last_encounter_date = e.encounter_datetime AND e.encounter_type IN (@mch_encounter, @delivery) AND e.voided = 0
     SET t.last_encounter_id = e.encounter_id;
 
+DROP TEMPORARY TABLE IF EXISTS temp_obs;
+create temporary table temp_obs 
+select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.comments, o.date_created  
+from obs o
+inner join temp_od_encounters t on t.last_encounter_id = o.encounter_id
+where o.voided = 0;
+
+create index temp_obs_ci1 on temp_obs(encounter_id,concept_id);
+
 UPDATE temp_od_encounters t JOIN encounter e ON t.last_encounter_id = e.encounter_id AND e.voided = 0
     SET t.latest_enrollment_location  = LOCATION_NAME(e.location_id);
 
 UPDATE temp_od_encounters t
 SET t.encounter_type_name = ENCOUNTER_TYPE_NAME(last_encounter_id);
 
-UPDATE temp_od_encounters te JOIN obs o ON te.last_encounter_id = o.encounter_id AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'Type of HUM visit')
+UPDATE temp_od_encounters te JOIN temp_obs o ON te.last_encounter_id = o.encounter_id AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'Type of HUM visit')
     AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'ANC VISIT') AND o.voided = 0
     SET antenatal_visit = 1; -- yes
 
 -- estimated_delivery_date
-UPDATE temp_od_encounters te JOIN obs o ON te.last_encounter_id = o.encounter_id AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'ESTIMATED DATE OF CONFINEMENT') AND o.voided = 0
+UPDATE temp_od_encounters te JOIN temp_obs o ON te.last_encounter_id = o.encounter_id AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'ESTIMATED DATE OF CONFINEMENT') AND o.voided = 0
     SET estimated_delivery_date = DATE(value_datetime);
 
 -- this doesnot put into acount if the last visit date was more than
@@ -119,6 +129,7 @@ CREATE TEMPORARY TABLE IF NOT EXISTS temp_mch_patient
     gender                      VARCHAR(2),
     birthdate                   DATE,
     birthdate_estimated         BIT,
+    registration_encounter_id	INT(11),
     marital_status              VARCHAR(50),
     locality                    VARCHAR(100),
     age                         DOUBLE,
@@ -159,9 +170,28 @@ UPDATE temp_mch_patient tm JOIN current_name_address c ON person_id = patient_id
         tm.age = TIMESTAMPDIFF(YEAR,c.birthdate, NOW());
 
 # civil status
-UPDATE temp_mch_patient tm JOIN obs o ON person_id = patient_id AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'CIVIL STATUS')
-    SET marital_status = CONCEPT_NAME(value_coded, 'en');
+drop temporary table if exists temp_reg_encounters;
+create temporary table temp_reg_encounters
+select distinct e.patient_id, e.encounter_id
+from encounter e
+inner join temp_mch_patient t on e.patient_id = t.patient_id 
+where e.voided = 0
+and e.encounter_type = @regEncId;
 
+set @civilStatus =   CONCEPT_FROM_MAPPING('PIH', 'CIVIL STATUS');  
+drop temporary table if exists temp_cs_obs;
+create temporary table temp_cs_obs 
+select o.person_id, concept_name(o.value_coded, @locale) "marital_status"
+from obs o 
+inner join temp_reg_encounters t on o.encounter_id =  t.encounter_id
+where o.concept_id  = @civilStatus;
+
+create index tco_p on temp_cs_obs(person_id);
+
+UPDATE temp_mch_patient tm 
+INNER JOIN temp_cs_obs o ON o.person_id = tm.patient_id 
+    SET tm.marital_status = o.marital_status;
+   
 # locality
 UPDATE temp_mch_patient tm JOIN person_address o ON person_id = patient_id
     SET locality = address1;
