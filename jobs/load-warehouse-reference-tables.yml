@@ -1,5 +1,5 @@
 type: "iterating-job"
-description: "Loading warehouse analysis tables"
+description: "Loading warehouse reference tables"
 configuration:
   jobTemplate:
     path: "import-analysis-tables.yml"
