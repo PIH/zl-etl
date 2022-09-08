@@ -9,4 +9,5 @@ configuration:
     retryIntervalUnit: "MINUTES"
   jobs:
     - path: "load-from-openmrs-all-sites.yml"
+    - path: "load-warehouse-reference-tables.yml"
     - path: "load-warehouse-analysis-tables.yml"
