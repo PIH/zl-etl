@@ -62,8 +62,8 @@ from obs o
 where o.voided = 0
 and o.concept_id in (
 	@tbScreeningResult,
-	@positive,
-	@negative);
+	@present,
+	@absent);
 
 create index temp_obs_ci1 on temp_obs(encounter_id,value_coded);
 create index temp_obs_ci2 on temp_obs(encounter_id,concept_id);
@@ -109,7 +109,6 @@ set @chestPain = CONCEPT_FROM_MAPPING('PIH', '136');
 UPDATE temp_TB_screening t
 INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.value_coded = @chestPain
 SET chest_pain_result_concept =o.concept_id;
-
 
 UPDATE temp_TB_screening t
 INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.concept_id = @tbScreeningResult
