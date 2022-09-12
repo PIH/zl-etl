@@ -1,4 +1,4 @@
-CREATE TABLE heart_failure_patient
+CREATE TABLE ncd_heart_failure_patient
 (
 emr_id		VARCHAR(10),
 sex		VARCHAR(2),
