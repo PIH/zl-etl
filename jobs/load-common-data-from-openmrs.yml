@@ -24,7 +24,7 @@ configuration:
           - tableName: "covid_lab_test"
           - tableName: "covid_visit"
           - tableName: "echocardiogram_encounters"
-          - tableName: "heart_failure_patient"
+          - tableName: "ncd_heart_failure_patient"
           - tableName: "mch_birth"
           - tableName: "mch_delivery"
           - tableName: "mch_patient"
