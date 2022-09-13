@@ -104,8 +104,8 @@ inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @chw
 set	chw = o.value_text;
 
 set @pregStatus = concept_from_mapping('PIH','PREGNANCY STATUS') ;
-set @yesID = @yesID ;
-set @noID = @noID  ;
+set @yesID =concept_from_mapping('PIH','YES');
+set @noID = concept_from_mapping('PIH','NO');
 update temp_hiv_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @pregStatus and o.voided = 0
 set	pregnant =	
