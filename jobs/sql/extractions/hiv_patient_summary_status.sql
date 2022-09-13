@@ -13,6 +13,7 @@ hiv_note_accompagnateur				varchar(255),
 address 							varchar(1000),
 locality							varchar(255),
 phone_number 						varchar(255),
+dispense_before_prescription		bit,
 arv_start_date						date,
 initial_arv_regimen 				varchar(255),
 arv_regimen							varchar(255),
@@ -57,7 +58,6 @@ set legacy_emr_id = hp.hivemr_v1_id
 from #temp_export t
 inner join hiv_patient hp on hp.emr_id = t.emr_id ;
 
-
 update t 
 	set first_name = p.given_name, 
 	last_name = p.family_name ,
@@ -72,12 +72,29 @@ from #temp_export t
 inner join hiv_patient p on p.emr_id = t.emr_id 
  ;
 
-drop table if exists #temp_min_dispensing;
-select emr_id, min(dispense_date) "min_dispense_date" 
-into #temp_min_dispensing
+DROP TABLE IF EXISTS #temp_min_dispensing;
+CREATE TABLE #temp_min_dispensing
+(
+emr_id 						varchar(255),
+min_dispense_date			datetime,
+initial_dispensed_regimen	varchar(1000)
+);
+
+insert into #temp_min_dispensing (emr_id, min_dispense_date)
+select emr_id, min(dispense_date)  
 from hiv_dispensing hd
 where (arv_1_med is not null or arv_2_med is not null or arv_3_med is not NULL)
 group by emr_id;
+
+update  #temp_min_dispensing
+set initial_dispensed_regimen = CONCAT(arv_1_med, ', ', arv_2_med, ', ', arv_3_med) 
+from #temp_min_dispensing t
+inner join  hiv_dispensing hd on hd.encounter_id =
+	(select top 1 hd2.encounter_id from hiv_dispensing hd2
+	where hd2.emr_id = t.emr_id 
+	and hd2.dispense_date = t.min_dispense_date
+	order by hd2.encounter_id desc )
+;
 
 drop table if exists #temp_min_arv_date;
 select emr_id, min(hr.start_date) "min_arv_start_date" 
@@ -90,20 +107,25 @@ group by emr_id;
 
 update t 
 set arv_start_date = 
- CASE 
-	WHEN ISNULL(min_dispense_date,'9999-12-31') < ISNULL(min_arv_start_date,'9999-12-31') THEN min_dispense_date 
-	ELSE min_arv_start_date
-END
+	CASE 
+		WHEN ISNULL(min_dispense_date,'9999-12-31') < ISNULL(min_arv_start_date,'9999-12-31') THEN min_dispense_date 
+		ELSE min_arv_start_date
+	END,
+	dispense_before_prescription =
+	CASE 
+		WHEN  ISNULL(min_dispense_date,'9999-12-31') < ISNULL(min_arv_start_date,'9999-12-31') THEN 1
+		ELSE 0
+	END
 from #temp_export t
 left outer join #temp_min_dispensing tmd on tmd.emr_id  = t.emr_id 
 left outer join #temp_min_arv_date tad on tad.emr_id  = t.emr_id 
 ;
 
-update t
+update t 
 set months_on_art = DATEDIFF(month, arv_start_date, GETDATE())
 from #temp_export t;
 
--- updating current drugs patient is on
+-- updating initial arv regimen when regimen prescription is prior to dispensing
 -- all of the STUFF nonsense is what you have to do in this version of SQL Server to do the 
 -- equivalent of group_concat or string_agg
 update t
@@ -113,14 +135,22 @@ inner join
 	(SELECT emr_id, STUFF(
 	         (SELECT DISTINCT ',' + drug_short_name
 	          FROM hiv_regimens r
-   	          inner join #temp_export t on t.emr_id = r.emr_id and t.arv_start_date = r.start_date 
+   	          inner join #temp_export t2 on t2.emr_id = r.emr_id and t2.arv_start_date = format(r.start_date  , 'd') 
 	          WHERE r.emr_id = r2.emr_id
 	          and order_action = 'NEW'	
 			  and drug_category = 'ART'
 			  FOR XML PATH (''))
 	          , 1, 1, '')  AS drugs
 	FROM hiv_regimens AS r2
-	GROUP BY emr_id) reg on reg.emr_id = t.emr_id;
+	GROUP BY emr_id) reg on reg.emr_id = t.emr_id
+where t.dispense_before_prescription = 0;
+
+update t 
+set initial_arv_regimen = tmd.initial_dispensed_regimen
+from #temp_export t
+inner join #temp_min_dispensing tmd on tmd.emr_id = t.emr_id
+where t.dispense_before_prescription = 1;
+
 
 update t
 set arv_regimen = reg.drugs
