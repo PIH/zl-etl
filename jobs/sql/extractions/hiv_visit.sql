@@ -3,7 +3,7 @@ set @partition = '${partitionNum}';
 	
 SET @hiv_intake = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
 SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
-	
+
 DROP TEMPORARY TABLE IF EXISTS temp_hiv_visit;
 CREATE TEMPORARY TABLE temp_hiv_visit
 (
@@ -136,7 +136,7 @@ inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id 
 set	internal_external_in = concept_name(o.value_coded, @locale);
 
 set @tranReferLoc = concept_from_mapping('PIH','8621');
-set @zlSite = @zlSite;
+set @zlSite = concept_from_mapping('PIH','8855');
 UPDATE temp_hiv_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id = @tranReferLoc and o.voided = 0
 set referral_transfer_location_in = location_name(o.value_text)
