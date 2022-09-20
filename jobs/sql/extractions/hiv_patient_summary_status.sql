@@ -88,10 +88,10 @@ group by emr_id;
 
 update  #temp_min_dispensing
 set initial_dispensed_regimen = 
-	CONCAT(arv_1_med,
-		CASE when arv_2_med is not null then ',' END,
+	CONCAT(arv_1_med, 
+		CASE when arv_1_med is not null and arv_2_med is not null then ',' END,
 		arv_2_med,
-		CASE when arv_3_med is not null then ',' END,
+		CASE when arv_2_med is not null and arv_3_med is not null then ',' END,
 		arv_3_med)
 from #temp_min_dispensing t
 inner join  hiv_dispensing hd on hd.encounter_id =
