@@ -87,7 +87,12 @@ where (arv_1_med is not null or arv_2_med is not null or arv_3_med is not NULL)
 group by emr_id;
 
 update  #temp_min_dispensing
-set initial_dispensed_regimen = CONCAT(arv_1_med, ', ', arv_2_med, ', ', arv_3_med) 
+set initial_dispensed_regimen = 
+	CONCAT(arv_1_med,
+		CASE when arv_2_med is not null then ',' END,
+		arv_2_med,
+		CASE when arv_3_med is not null then ',' END,
+		arv_3_med)
 from #temp_min_dispensing t
 inner join  hiv_dispensing hd on hd.encounter_id =
 	(select top 1 hd2.encounter_id from hiv_dispensing hd2
