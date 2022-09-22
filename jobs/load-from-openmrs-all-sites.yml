@@ -21,8 +21,5 @@ configuration:
     - siteName: "mirebalais"
       partitionNum: "6"
       dataset: "common-data"
-    - siteName: "hiv"
-      partitionNum: "8"
-      dataset: "hiv-data"
   jobTemplate:
     path: "load-${dataset}-from-openmrs.yml"

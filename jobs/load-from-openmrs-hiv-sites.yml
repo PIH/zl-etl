@@ -1,0 +1,11 @@
+type: "iterating-job"
+description: "Refreshing OpenMRS Data for all sites"
+configuration:
+  maxConcurrentJobs: 5  # Import into up to 5 sites concurrently
+  iterations:
+    - siteName: "hiv"
+      partitionNum: "8"
+      dataset: "hiv-data"
+  jobTemplate:
+    path: "load-${dataset}-from-openmrs.yml"
+    path: "load-warehouse-hiv-analysis-tables.yml"

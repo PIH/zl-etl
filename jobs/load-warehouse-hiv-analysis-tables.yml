@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Loading warehouse analysis tables"
+configuration:
+  jobTemplate:
+    path: "import-analysis-tables.yml"
+  iterations:
+    - tableName: "hiv_patient_summary_status"
+    - tableName: "hiv_monthly_reporting"
