@@ -10,4 +10,3 @@ configuration:
   jobs:
     - path: "load-from-openmrs-humci.yml"
     - path: "load-from-openmrs-hiv-sites.yml"
-    - path: "load-warehouse-reference-tables.yml"
