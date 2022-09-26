@@ -1,0 +1,10 @@
+type: "iterating-job"
+description: "Refreshing OpenMRS Data for HIV sites"
+configuration:
+  maxConcurrentJobs: 1
+  iterations:
+    - siteName: "hiv"
+      partitionNum: "8"
+      dataset: "hiv-data"
+  jobTemplate:
+    path: "load-${dataset}-from-openmrs.yml"

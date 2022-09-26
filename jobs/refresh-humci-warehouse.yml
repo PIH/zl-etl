@@ -9,5 +9,4 @@ configuration:
     retryIntervalUnit: "MINUTES"
   jobs:
     - path: "load-from-openmrs-humci.yml"
-    - path: "load-warehouse-reference-tables.yml"
-    - path: "load-warehouse-analysis-tables.yml"
+    - path: "load-from-openmrs-hiv-sites.yml"
