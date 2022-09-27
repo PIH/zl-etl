@@ -28,3 +28,6 @@ configuration:
           - tableName: "pmtct_pregnancy"
           - tableName: "tb_lab_results"
           - tableName: "tb_screening"
+          - tableName: "users"
+          - tableName: "user_roles"
+          - tableName: "user_logins"
