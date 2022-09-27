@@ -3,12 +3,12 @@ SET sql_safe_updates = 0;
 DROP TEMPORARY TABLE IF EXISTS temp_user_logins;
 
 CREATE TEMPORARY TABLE temp_user_logins (
-    session_id char(36) primary key,
-    username varchar(50),
-    date_logged_in datetime,
-    date_logged_out datetime,
-    date_session_destroyed datetime,
-    active_duration_minutes int
+                                            session_id char(36) primary key,
+                                            username varchar(50),
+                                            date_logged_in datetime,
+                                            date_logged_out datetime,
+                                            date_session_destroyed datetime,
+                                            active_duration_minutes int
 );
 
 -- Right now, we are only interested in successful logins.
@@ -39,19 +39,19 @@ WHERE l.event_type = 'AUTHENTICATION_LOGOUT_SUCCEEDED'
 
 -- If we have date_logged_in and date_logged_out, we use those
 UPDATE temp_user_logins s
-SET active_duration_minutes = ((date_logged_out - date_logged_in)/60)
+SET active_duration_minutes = timestampdiff(MINUTE, date_logged_in, date_logged_out)
 WHERE date_logged_out is not null and date_logged_in is not null
 ;
 
 -- If not, we use date_logged_in until 30 minutes prior to session expiry, which is inferred as last activity
 UPDATE temp_user_logins s
-SET active_duration_minutes = (((date_session_destroyed - date_logged_in)/60)-30)
+SET active_duration_minutes = (timestampdiff(MINUTE, date_logged_in, date_session_destroyed) - 30)
 WHERE active_duration_minutes is null and date_session_destroyed is not null and date_logged_in is not null
 ;
 
 -- If the computed duration above is less than zero, do not adjust for session timeout (likely server restart)
 UPDATE temp_user_logins s
-SET active_duration_minutes = (((date_session_destroyed - date_logged_in)/60))
+SET active_duration_minutes = timestampdiff(MINUTE, date_logged_in, date_session_destroyed)
 WHERE active_duration_minutes < 0
 ;
 
