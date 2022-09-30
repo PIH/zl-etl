@@ -1,13 +1,22 @@
-type: "job-pipeline"
-description: "Refreshing Data for HUM-CI"
+# Each iteration uses the same partition num and site name in order to ensure data is not duplicated across
+# multiple partitions if the same table is defined in multiple nested jobs (eg. lab and tb jobs)
+# This will result in the same ETLs running multiple times unnecessarily, but this is fine in a test environment
+type: "iterating-job"
+description: "Refreshing OpenMRS Data for HUM-CI"
 schedule:
   cron: "${executeCron.refreshHumciWarehouse}"
 configuration:
+  maxConcurrentJobs: 1  # Import one at a time
   errorHandling:
     maxAttempts: 3
     retryInterval: 60
     retryIntervalUnit: "MINUTES"
-  jobs:
-    - path: "load-from-openmrs-humci.yml"
-    - path: "load-warehouse-reference-tables.yml"
-    - path: "load-warehouse-analysis-tables.yml"
+  iterations:
+    - siteName: "humci"
+      partitionNum: "1"
+      dataset: "common-data"
+    - siteName: "humci"
+      partitionNum: "1"
+      dataset: "hiv-data"
+  jobTemplate:
+    path: "load-${dataset}-from-openmrs.yml"

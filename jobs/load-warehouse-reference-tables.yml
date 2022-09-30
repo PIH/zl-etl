@@ -1,7 +1,0 @@
-type: "iterating-job"
-description: "Loading warehouse reference tables"
-configuration:
-  jobTemplate:
-    path: "import-analysis-tables.yml"
-  iterations:
-    - tableName: "dim_date"
