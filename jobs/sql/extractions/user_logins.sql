@@ -14,7 +14,7 @@ CREATE TEMPORARY TABLE temp_user_logins (
 -- Right now, we are only interested in successful logins.
 -- Once we introduce Multi-Factor authentication, this may or may not change for this table
 INSERT INTO temp_user_logins(session_id, username, date_logged_in)
-SELECT  authentication_session_id, username, event_datetime
+SELECT  if(authentication_session_id = '', uuid(), authentication_session_id), username, event_datetime
 FROM    authentication_event_log
 WHERE   event_type = 'AUTHENTICATION_LOGIN_SUCCEEDED'
 ;
