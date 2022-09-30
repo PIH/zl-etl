@@ -1,13 +1,34 @@
-type: "job-pipeline"
-description: "Refreshing data from all sites"
+type: "iterating-job"
+description: "Refreshing OpenMRS Data for all sites"
 schedule:
   cron: "${executeCron.refreshZlWarehouse}"
 configuration:
+  maxConcurrentJobs: 5  # Import into up to 5 sites concurrently
   errorHandling:
     maxAttempts: 3
     retryInterval: 60
     retryIntervalUnit: "MINUTES"
-  jobs:
-    - path: "load-from-openmrs-all-sites.yml"
-    - path: "load-warehouse-reference-tables.yml"
-    - path: "load-warehouse-analysis-tables.yml"
+  iterations:
+    - siteName: "cange"
+      partitionNum: "1"
+      dataset: "common-data"
+    - siteName: "hinche"
+      partitionNum: "2"
+      dataset: "common-data"
+    - siteName: "saint_marc_hsn"
+      partitionNum: "3"
+      dataset: "common-data"
+    - siteName: "lacolline"
+      partitionNum: "4"
+      dataset: "common-data"
+    - siteName: "thomonde"
+      partitionNum: "5"
+      dataset: "common-data"
+    - siteName: "mirebalais"
+      partitionNum: "6"
+      dataset: "common-data"
+    - siteName: "hiv"
+      partitionNum: "8"
+      dataset: "hiv-data"
+  jobTemplate:
+    path: "load-${dataset}-from-openmrs.yml"

@@ -1,0 +1,10 @@
+# Template that takes in the following parameters
+# ${tableName}
+# The purpose of this job is to execute a script named ${tableName}.sql in the sql/derivations directory against the warehouse DB
+type: "sql-execution"
+description: "Creating derived warehouse table: ${tableName}"
+configuration:
+  datasource: "warehouse.yml"
+  delimiter: ";"
+  scripts:
+    - "sql/derivations/${tableName}.sql"
