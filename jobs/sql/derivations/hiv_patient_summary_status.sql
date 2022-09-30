@@ -1,3 +1,5 @@
+drop table if exists hiv_patient_summary_status;
+
 CREATE TABLE hiv_patient_summary_status
 (
 emr_id                            varchar(255),

@@ -1,3 +1,6 @@
+
+DROP TABLE IF EXISTS hiv_monthly_reporting;
+
 create table hiv_monthly_reporting
 (
 emr_id				                  VARCHAR(20),
