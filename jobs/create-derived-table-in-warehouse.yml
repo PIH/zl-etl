@@ -5,6 +5,6 @@ type: "sql-execution"
 description: "Creating derived warehouse table: ${tableName}"
 configuration:
   datasource: "warehouse.yml"
-  extract:
-    scripts:
-      - "sql/derivations/${tableName}.sql"
+  delimiter: ";"
+  scripts:
+    - "sql/derivations/${tableName}.sql"
