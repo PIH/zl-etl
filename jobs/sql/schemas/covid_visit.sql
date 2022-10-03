@@ -1,6 +1,6 @@
 CREATE TABLE covid_visit
 (
---    emr_id                   VARCHAR(25),
+    emr_id                   VARCHAR(25),
     encounter_id             VARCHAR(25),
     encounter_date           DATE,
     location                 TEXT,
