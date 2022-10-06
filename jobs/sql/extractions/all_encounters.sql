@@ -36,6 +36,12 @@ CREATE INDEX temp_all_encounters_encounterType ON temp_all_encounters(encounter_
 CREATE INDEX temp_all_encounters_encounterLoc ON temp_all_encounters(location_id);
 CREATE INDEX temp_all_encountersCreator ON temp_all_encounters(creator);
 
+-- delete encounters for voided patients
+delete t 
+from temp_all_encounters t
+inner join patient p on p.patient_id = t.patient_id
+where p.voided = 1;
+
 -- location name
 update temp_all_encounters t set encounter_location = location_name(t.location_id);  
 
