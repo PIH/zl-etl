@@ -1,7 +1,7 @@
 create table all_encounters
 (
 emr_id              varchar(50),
-encounter_id        int,
+encounter_id        varchar(25),
 visit_id            int,   
 encounter_type_name varchar(50),
 encounter_location  varchar(255),  
