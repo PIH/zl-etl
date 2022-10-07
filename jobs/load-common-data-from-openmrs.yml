@@ -4,6 +4,8 @@
 # The purpose of this job is to refresh all of the DW table that are shared across multiple servers
 type: "job-pipeline"
 description: "Refreshing ${dataset} for ${siteName} using partition ${partitionNum}"
+parameters:
+  conditional: ""
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
@@ -45,3 +47,4 @@ configuration:
           - tableName: "users"
           - tableName: "user_roles"
           - tableName: "user_logins"
+            conditional: "select table_exists('authentication_event_log')"

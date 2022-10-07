@@ -3,6 +3,7 @@
 # ${tableName}
 # ${siteName}
 # ${partitionNum}
+# ${conditional}
 
 # The purpose of this job is to batch load the result of the given query into a specific partition in the target table
 # This adds columns to the target toble to support partitioning and to identify the source of the data in the merged table
@@ -14,6 +15,7 @@ configuration:
     datasource: "openmrs-${siteName}.yml"
     query:  "sql/extractions/${tableName}.sql"
     context: "sql/utils/context.sql"
+    conditional: "${conditional}"
   load:
     datasource: "warehouse.yml"
     table: "${tableName}"

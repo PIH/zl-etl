@@ -51,24 +51,10 @@ SET
     ur.created_by = username(u.creator)
 ;
 
-UPDATE temp_user_roles ur INNER JOIN (
-    SELECT      e.username, max(e.event_datetime) as last_login_date, count(e.event_datetime) as num_logins
-    FROM        authentication_event_log e
-    GROUP BY    e.user_id
-    ) l ON ur.username = l.username
-SET ur.last_login_date = l.last_login_date, ur.num_logins_recorded = l.num_logins
-;
+UPDATE temp_user_roles ur SET ur.last_login_date = user_latest_login(ur.user_id);
+UPDATE temp_user_roles ur SET ur.num_logins_recorded = user_num_logins(ur.user_id);
+
+ALTER TABLE temp_user_roles DROP COLUMN user_id;
 
 -- Select all out of table
-SELECT  username,
-        first_name,
-        last_name,
-        role_type,
-        role_value,
-        account_enabled,
-        created_date,
-        created_by,
-        last_login_date,
-        num_logins_recorded
-FROM    temp_user_roles
-;
+SELECT * FROM temp_user_roles;
