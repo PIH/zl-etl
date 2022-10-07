@@ -1,9 +1,10 @@
 type: "job-pipeline"
 description: "Refresh HIV Data for ${siteName}"
+parameters:
+  conditional: ""
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
-
     - type: "iterating-job"
       description: "Importing from ${dataset} to ${siteName} using partition ${partitionNum}"
       configuration:
@@ -32,6 +33,7 @@ configuration:
           - tableName: "users"
           - tableName: "user_roles"
           - tableName: "user_logins"
+            conditional: "select table_exists('authentication_event_log')"
 
     - type: "job-pipeline"
       description: "Derive HIV analysis tables"
