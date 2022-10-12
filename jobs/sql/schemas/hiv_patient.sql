@@ -5,6 +5,7 @@ create table hiv_patient
     hiv_dossier_id                 VARCHAR(255),
     given_name                     VARCHAR(50),
     family_name                    VARCHAR(50),
+    nickname                       VARCHAR(50),
     gender                         VARCHAR(50),
     birthdate                      DATE,
     age                            FLOAT,
