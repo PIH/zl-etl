@@ -10,21 +10,22 @@ configuration:
       description: "Refreshing OpenMRS Data for HUM-CI"
       schedule:
         cron: "${executeCron.refreshHumciWarehouse}"
-        configuration:
-          maxConcurrentJobs: 1  # Import one at a time
-          errorHandling:
-            maxAttempts: 3
-            retryInterval: 60
-            retryIntervalUnit: "MINUTES"
-          iterations:
-            - siteName: "humci"
-              partitionNum: "1"
-              dataset: "common-data"
-            - siteName: "humci"
-              partitionNum: "1"
-              dataset: "hiv-data"
-          jobTemplate:
-            path: "load-${dataset}-from-openmrs.yml"
+      configuration:
+        maxConcurrentJobs: 1  # Import one at a time
+        errorHandling:
+          maxAttempts: 3
+          retryInterval: 60
+          retryIntervalUnit: "MINUTES"
+        iterations:
+          - siteName: "humci"
+            partitionNum: "1"
+            dataset: "common-data"
+          - siteName: "humci"
+            partitionNum: "1"
+            dataset: "hiv-data"
+        jobTemplate:
+          path: "load-${dataset}-from-openmrs.yml"
+          
     - type: "iterating-job"
       description: "Create final derived tables"
       configuration:
