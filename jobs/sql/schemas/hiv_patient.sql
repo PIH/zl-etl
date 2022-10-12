@@ -39,6 +39,7 @@ create table hiv_patient
     parent_firstname               VARCHAR(255),
     parent_lastname                VARCHAR(255),
     parent_relationship            VARCHAR(50),
+    partner_hiv_status             VARCHAR(255),
     socio_people_in_house          INT,
     socio_rooms_in_house           INT,
     socio_roof_type                VARCHAR(20),
