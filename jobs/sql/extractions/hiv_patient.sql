@@ -56,7 +56,8 @@ CREATE TEMPORARY TABLE temp_patient
     section_communal            VARCHAR(100),
     locality                    VARCHAR(100),
     street_landmark             TEXT,
-    age                         DOUBLE
+    age                         DOUBLE,
+    partner_hiv_status			VARCHAR(255)
 );
 
 CREATE INDEX temp_patient_patient_id ON temp_patient (patient_id);
@@ -112,8 +113,7 @@ SET gender = GENDER(patient_id),
     birthdate = BIRTHDATE(patient_id),
     given_name = PERSON_GIVEN_NAME(patient_id),
     family_name = PERSON_FAMILY_NAME(patient_id),
-   	nickname = PERSON_MIDDLE_NAME(patient_id);
-
+	nickname = PERSON_MIDDLE_NAME(patient_id);
 
 UPDATE temp_patient t set department = person_address_state_province(patient_id);
 UPDATE temp_patient t set commune = person_address_city_village(patient_id);
@@ -686,6 +686,67 @@ UPDATE temp_hiv_art t SET months_on_art = TIMESTAMPDIFF(MONTH, t.art_start_date,
 
 UPDATE temp_hiv_art t set art_regimen = ActiveDrugConceptNameList(t.patient_id, 'CIEL','138405','en');
 
+-- 
+-- partner's HIV status
+-- 
+drop temporary table if exists temp_partner_status;
+create temporary table temp_partner_status
+(tps_id							int(11) auto_increment,
+patient_id						int(11),
+status_datetime					datetime,
+status							varchar(255),
+contact_construct_obs_group_id	int(11),
+PRIMARY KEY (tps_id)
+);
+
+-- add Partner HIV status observations (currently captured on HIV CT Form)
+-- note that an answer of 'Partner Confirmed HIV+' is translated to 'positive' to match results from other observations below
+insert into temp_partner_status(patient_id, status, status_datetime)
+select person_id,
+	CASE 
+		when o.value_coded = concept_from_mapping('PIH','PARTNER CONFIRMED HIV+') then concept_name(concept_from_mapping('PIH','POSITIVE'), @locale)
+		else concept_name(o.value_coded,@locale)
+	END,
+	o.obs_datetime  
+from obs o 
+where concept_id = concept_from_mapping('CIEL','1436')
+and voided = 0
+;
+
+-- add contact constructs where contact = partner/spouse
+insert into temp_partner_status(contact_construct_obs_group_id)
+select obs_group_id from obs o
+where concept_id = concept_from_mapping('PIH','13265')
+and o.value_coded = concept_from_mapping('PIH','5617')
+and voided = 0
+;
+
+-- update partner contact constructs for HIV result
+update temp_partner_status t
+inner join obs o on o.obs_group_id = t.contact_construct_obs_group_id
+	and o.concept_id = concept_from_mapping('PIH','2169')
+	and o.voided = 0
+set t.patient_id = o.person_id,
+	t.status_datetime = o.obs_datetime ,
+	t.status = concept_name(o.value_coded,@locale)
+;	
+
+
+	-- join in most recent result into main patient temp table
+drop temporary table if exists temp_partner_status2;
+create temporary table temp_partner_status2
+select tps_id, patient_id, status_datetime, status from temp_partner_status;
+
+create index temp_partner_status2_c1 on temp_partner_status2(patient_id, status_datetime);
+
+update temp_patient t 
+inner join temp_partner_status tps on tps_id =
+	(select tps2.tps_id from temp_partner_status2 tps2
+	where tps2.patient_id = t.patient_id 
+	order by tps2.status_datetime desc limit 1)
+set t.partner_hiv_status = tps.status;
+ 
+
 ### Final Query
 SELECT 
 t.zl_emr_id,
@@ -727,6 +788,7 @@ t.patient_idu,
 t.parent_firstname,
 t.parent_lastname,
 t.parent_relationship,
+t.partner_hiv_status,
 tse.socio_people_in_house,
 tse.socio_rooms_in_house,
 tse.socio_roof_type,
@@ -776,4 +838,5 @@ LEFT JOIN temp_hiv_last_viral tsl ON t.patient_id = tsl.person_id
 LEFT JOIN temp_hiv_next_visit_date tsd ON t.patient_id = tsd.person_id
 LEFT JOIN temp_hiv_diagnosis_date thd ON t.patient_id = thd.person_id
 LEFT JOIN temp_hiv_dispensing tehd ON tehd.person_id = t.patient_id
-LEFT JOIN temp_hiv_art tha ON tha.patient_id = t.patient_id;
+LEFT JOIN temp_hiv_art tha ON tha.patient_id = t.patient_id
+;
