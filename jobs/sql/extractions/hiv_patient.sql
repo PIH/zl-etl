@@ -23,6 +23,7 @@ CREATE TEMPORARY TABLE temp_patient
     hiv_dossier_id              VARCHAR(255),
     given_name                  VARCHAR(50),
     family_name                 VARCHAR(50),
+    nickname					VARCHAR(50),
     gender                      VARCHAR(50),
     birthdate                   DATE,
     birthplace_commune          VARCHAR(100),
@@ -110,7 +111,8 @@ UPDATE temp_patient
 SET gender = GENDER(patient_id),
     birthdate = BIRTHDATE(patient_id),
     given_name = PERSON_GIVEN_NAME(patient_id),
-    family_name = PERSON_FAMILY_NAME(patient_id);
+    family_name = PERSON_FAMILY_NAME(patient_id),
+   	nickname = PERSON_MIDDLE_NAME(patient_id);
 
 
 UPDATE temp_patient t set department = person_address_state_province(patient_id);
@@ -691,6 +693,7 @@ t.hivemr_v1_id,
 t.hiv_dossier_id,
 t.given_name,
 t.family_name,
+t.nickname,
 t.gender,
 t.birthdate,
 t.age,
