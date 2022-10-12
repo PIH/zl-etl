@@ -1,34 +1,46 @@
-type: "iterating-job"
-description: "Refreshing OpenMRS Data for all sites"
-schedule:
-  cron: "${executeCron.refreshZlWarehouse}"
+type: "job-pipeline"
+description: "Refreshing ZL data"
 configuration:
-  maxConcurrentJobs: 5  # Import into up to 5 sites concurrently
-  errorHandling:
-    maxAttempts: 3
-    retryInterval: 60
-    retryIntervalUnit: "MINUTES"
-  iterations:
-    - siteName: "cange"
-      partitionNum: "1"
-      dataset: "common-data"
-    - siteName: "hinche"
-      partitionNum: "2"
-      dataset: "common-data"
-    - siteName: "saint_marc_hsn"
-      partitionNum: "3"
-      dataset: "common-data"
-    - siteName: "lacolline"
-      partitionNum: "4"
-      dataset: "common-data"
-    - siteName: "thomonde"
-      partitionNum: "5"
-      dataset: "common-data"
-    - siteName: "mirebalais"
-      partitionNum: "6"
-      dataset: "common-data"
-    - siteName: "hiv"
-      partitionNum: "8"
-      dataset: "hiv-data"
-  jobTemplate:
-    path: "load-${dataset}-from-openmrs.yml"
+  jobs:
+    - type: "iterating-job"
+      description: "Refreshing OpenMRS Data for all sites"
+      schedule:
+        cron: "${executeCron.refreshZlWarehouse}"
+      configuration:
+        maxConcurrentJobs: 5  # Import into up to 5 sites concurrently
+        errorHandling:
+          maxAttempts: 3
+          retryInterval: 60
+          retryIntervalUnit: "MINUTES"
+        iterations:
+          - siteName: "cange"
+            partitionNum: "1"
+            dataset: "common-data"
+          - siteName: "hinche"
+            partitionNum: "2"
+            dataset: "common-data"
+          - siteName: "saint_marc_hsn"
+            partitionNum: "3"
+            dataset: "common-data"
+          - siteName: "lacolline"
+            partitionNum: "4"
+            dataset: "common-data"
+          - siteName: "thomonde"
+            partitionNum: "5"
+            dataset: "common-data"
+          - siteName: "mirebalais"
+            partitionNum: "6"
+            dataset: "common-data"
+          - siteName: "hiv"
+            partitionNum: "8"
+            dataset: "hiv-data"
+        jobTemplate:
+          path: "load-${dataset}-from-openmrs.yml"
+
+    - type: "iterating-job"
+      description: "Create final derived tables"
+      configuration:
+        jobTemplate:
+          path: "create-derived-table-in-warehouse.yml"
+        iterations:
+          - tableName: "visit_entry_dates"
