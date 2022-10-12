@@ -334,9 +334,8 @@ INNER JOIN hiv_status h on h.status_id  =
     (select top 1 h2.status_id
     from hiv_status h2
     where h2.emr_id = t1.emr_id
-    and h2.status_outcome is not null
     and h2.start_date  <= t1.reporting_date
-    order by h2.start_date desc);
+    order by h2.start_date desc, COALESCE(end_date,cast('9999-12-31' as date)) desc);
 
 -- ################################## combined status #########################################################################
 -- note that "pregnant" statuses are ignored with this combined status
