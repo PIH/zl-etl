@@ -83,7 +83,7 @@ select
    entered_datetime,
    user_entered,
    next_appt_date,
-   null, -- index_asc 
-   null -- index desc
+   null "index_asc", -- index_asc 
+   null "index_desc" -- index desc
 from temp_all_encounters t
 ORDER BY t.patient_id, t.encounter_id;
