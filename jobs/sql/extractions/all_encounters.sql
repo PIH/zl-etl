@@ -38,30 +38,6 @@ from temp_all_encounters t
 inner join patient p on p.patient_id = t.patient_id
 where p.voided = 1;
 
-/*
--- creator 
--- unique creators loaded to temp table before looking up person_name and joining back in to the temp_all_encounters table
-drop temporary table if exists temp_creators;
-create temporary table temp_creators
-(creator		int(11),
-person_name		varchar(50));
-
-insert into temp_creators(creator)
-select DISTINCT creator
-from temp_all_encounters
-;
-create index temp_creators_ci on temp_creators(creator);
-
-
-update temp_creators t
-inner join users u on u.user_id = t.creator 
-set person_name = person_name(u.person_id);
-
-update temp_all_encounters t
-inner join temp_creators tc on tc.creator = t.creator 
-set t.user_entered = tc.person_name;
-*/
-
 -- next visit date
 -- all next appt date obs loaded to temp table before looking up for each encounter
 -- this avoids having to access the full obs table for each encounter
@@ -79,6 +55,10 @@ inner join temp_next_appt_obs tvo on tvo.encounter_id = te.encounter_id
 set te.next_appt_date = tvo.next_appt_date;
 
 -- NOTE:  the index_asc, index_desc will be calculated in a later job in the pipeline
+
+update temp_all_encounters
+set index_asc = 1,
+	index_desc = 1;
 
 -- final query
 select 
