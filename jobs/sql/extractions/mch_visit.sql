@@ -86,6 +86,7 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     fp_end_date		DATETIME,
     implant_date	DATETIME,
     condoms_provided VARCHAR(5),
+    location_of_delivery	VARCHAR(255),
     index_asc          INT,
     index_desc         INT
 );
@@ -889,6 +890,10 @@ inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id =
 set t.condoms_provided = concept_name(o.value_coded,'en');
 
 update temp_obgyn_visit t 
+inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11348')
+set t.location_of_delivery = concept_name(o.value_coded,'en');
+
+update temp_obgyn_visit t 
 inner join temp_mch_obs o on o.encounter_id =  t.encounter_id and o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11466')
 set t.fp_start_date = o.value_datetime;
 
@@ -968,6 +973,7 @@ SELECT
     fp_end_date,
     implant_date,
     condoms_provided,
+    location_of_delivery,
     risk_factors,
     index_asc,
     index_desc
