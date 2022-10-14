@@ -4,12 +4,12 @@
 
 type: "job-pipeline"
 description: "Refreshing HUMCI data"
+schedule:
+  cron: "${executeCron.refreshHumciWarehouse}"
 configuration:
   jobs:
     - type: "iterating-job"
       description: "Refreshing OpenMRS Data for HUM-CI"
-      schedule:
-        cron: "${executeCron.refreshHumciWarehouse}"
       configuration:
         maxConcurrentJobs: 1  # Import one at a time
         errorHandling:
