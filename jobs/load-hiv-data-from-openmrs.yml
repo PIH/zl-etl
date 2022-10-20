@@ -30,9 +30,11 @@ configuration:
           - tableName: "pmtct_pregnancy"
           - tableName: "tb_lab_results"
           - tableName: "tb_screening"
+          - tableName: "data_warnings"
           - tableName: "users"
           - tableName: "user_roles"
           - tableName: "user_logins"
+          - tableName: "summary_db_restore"
             conditional: "select table_exists('authentication_event_log')"
 
     - type: "job-pipeline"
