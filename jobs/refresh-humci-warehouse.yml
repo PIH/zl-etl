@@ -33,3 +33,4 @@ configuration:
           path: "create-derived-table-in-warehouse.yml"
         iterations:
           - tableName: "visit_entry_dates"
+          - tableName: "update_index_numbers"
