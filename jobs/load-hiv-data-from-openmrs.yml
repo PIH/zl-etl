@@ -14,6 +14,7 @@ configuration:
           - tableName: "all_lab_orders"
           - tableName: "all_lab_results"
           - tableName: "all_vitals"
+          - tableName: "all_visits"
           - tableName: "hiv_dispensing"
           - tableName: "hiv_patient"
           - tableName: "hiv_patient_program"
