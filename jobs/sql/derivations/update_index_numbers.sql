@@ -10,4 +10,4 @@ update  av
 set av.index_asc = avi.index_asc,
 	av.index_desc = avi.index_desc 
 from all_visits av	
-inner join 	#all_visits_indexes avi on avi.visit_id = av.visit_id ; 
+inner join #all_visits_indexes avi on avi.visit_id = av.visit_id ; 
