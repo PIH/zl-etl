@@ -176,6 +176,14 @@
                                     <sourceFile>${dataExportSqlDir}/labResultsExport.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/all_lab_results.sql</destinationFile>
                                 </fileSet>
+                                <fileSet>
+                                    <sourceFile>${dataExportSqlDir}/users.sql</sourceFile>
+                                    <destinationFile>${petlJobExtractionSqlDir}/users.sql</destinationFile>
+                                </fileSet>
+                                <fileSet>
+                                    <sourceFile>${dataExportSqlDir}/user_roles.sql</sourceFile>
+                                    <destinationFile>${petlJobExtractionSqlDir}/user_roles.sql</destinationFile>
+                                </fileSet>
                             </fileSets>
                         </configuration>
                     </execution>
