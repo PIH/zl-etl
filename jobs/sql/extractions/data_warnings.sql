@@ -95,7 +95,7 @@ group by zlemr(patient_id), patient_id ;
 insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
 select patient_id, zlemr(patient_id), 
 'HIV initial encounter without any HIV or exposed infant enrollment' , 
-concat('HIV intake encounter: ',min(e.encounter_datetime))
+concat('first HIV intake: ',min(e.encounter_datetime))
 from encounter e 
 where e.voided = 0
 and e.encounter_type = @hiv_initial
@@ -110,7 +110,7 @@ group by e.patient_id;
 insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
 select patient_id, zlemr(patient_id), 
 'HIV followup encounter without any HIV or exposed infant enrollment' , 
-concat('HIV followup encounter: ',min(e.encounter_datetime))
+concat('first HIV followup: ',min(e.encounter_datetime))
 from encounter e 
 where e.voided = 0
 and e.encounter_type = @hiv_followup
@@ -125,7 +125,7 @@ group by e.patient_id;
 insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
 select patient_id, zlemr(patient_id), 
 'HIV exposed infant followup without any HIV or exposed infant enrollment' ,
-concat('HIV exposed infant followup encounter: ',min(e.encounter_datetime))
+concat('first HIV exposed infant followup: ',min(e.encounter_datetime))
 from encounter e 
 where e.voided = 0
 and e.encounter_type = @exposed_infant_followup
@@ -140,7 +140,7 @@ group by e.patient_id;
 insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
 select patient_id, zlemr(patient_id), 
 'HIV dispensing encounter without any HIV or exposed infant enrollment' ,
-concat('HIV dispensing encounter: ',min(e.encounter_datetime))
+concat('first HIV dispensing: ',min(e.encounter_datetime))
 from encounter e 
 where e.voided = 0
 and e.encounter_type = @hiv_dispensing
