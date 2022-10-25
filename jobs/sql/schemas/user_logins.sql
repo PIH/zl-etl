@@ -1,6 +1,6 @@
 CREATE TABLE user_logins
 (
-    session_id              char(36),
+    login_id                char(36),
     username                varchar(50),
     date_logged_in          datetime,
     date_logged_out         datetime,
