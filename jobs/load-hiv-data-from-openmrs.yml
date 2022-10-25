@@ -34,9 +34,9 @@ configuration:
           - tableName: "data_warnings"
           - tableName: "users"
           - tableName: "user_roles"
-#          - tableName: "user_logins"
-          - tableName: "summary_db_restore"
+          - tableName: "user_logins"
             conditional: "select table_exists('authentication_event_log')"
+          - tableName: "summary_db_restore"
 
     - type: "job-pipeline"
       description: "Derive HIV analysis tables"
