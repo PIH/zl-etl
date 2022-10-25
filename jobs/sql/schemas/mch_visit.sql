@@ -69,6 +69,14 @@ CREATE TABLE mch_visit
     condoms_provided                 TEXT,
     location_of_delivery             TEXT,
     risk_factors                     TEXT,
+    sti_treatment                    BIT,
+    chlamydia                        BIT,
+    gonorrhea                        BIT,
+    genital_herpes                   BIT,
+    hep_b                            BIT,
+    hpv                              BIT,
+    trichomoniasis                   BIT,
+    bacterial_vaginosis              BIT,
     index_asc                        INT,
     index_desc                       INT
 );
