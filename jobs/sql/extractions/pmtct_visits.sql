@@ -20,7 +20,8 @@ CREATE TEMPORARY TABLE temp_pmtct_visit (
     tb_screening_date 		DATE,
     has_provided_contact 	BIT,
     breastfeeding_status	VARCHAR(255),
-   last_breastfeeding_date	DATETIME,
+   	last_breastfeeding_date	DATETIME,
+	next_visit_date			DATETIME,
     -- hiv_test_result varchar(255),
     -- maternity_clinic_type varchar(100),
     index_asc               	INT,
@@ -149,6 +150,12 @@ UPDATE temp_pmtct_tb_visits t SET tb_screening_date = IF(cough_result_concept = 
 
 UPDATE temp_pmtct_visit t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id);
 
+-- next visit date
+set @next_visit_concept_id = concept_from_mapping('PIH','5096');
+UPDATE temp_pmtct_visit t
+INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND o.concept_id = @next_visit_concept_id
+SET next_visit_date = o.value_datetime;
+
 -- breastfeeding data
 UPDATE 	temp_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','13642') and o.voided = 0
@@ -221,6 +228,7 @@ tb_screening_date,
 has_provided_contact,
 breastfeeding_status,
 last_breastfeeding_date,
+next_visit_date,
 index_asc,
 index_desc
 FROM temp_pmtct_visit ORDER BY patient_id, visit_date, visit_id;
