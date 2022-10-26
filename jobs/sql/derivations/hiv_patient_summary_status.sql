@@ -174,12 +174,22 @@ inner join
 	FROM hiv_regimens AS r2
 	GROUP BY emr_id) reg on reg.emr_id = t.emr_id;
 
-
+-- last_visit_date and next_visit_date should consider hiv and pmtct notes
+-- TO DO:  need to also consider eid notes when eid_followup table is added
 update t
-set last_visit_date = hv.visit_date,
-    next_visit_date = hv.next_visit_date
+set last_visit_date = 
+		CASE
+			when ISNULL(hv.visit_date, '1900-01-01') > ISNULL(pv.visit_date,'1900-01-01') then hv.visit_date
+			else pv.visit_date
+		END,
+    next_visit_date = 
+		CASE
+			when ISNULL(hv.next_visit_date, '9999-12-31') < ISNULL(pv.next_visit_date,'9999-12-31') then hv.next_visit_date
+			else pv.next_visit_date
+		END
     from hiv_patient_summary_status_staging t
-inner join hiv_visit hv on hv.emr_id = t.emr_id and hv.index_desc = 1;
+inner join hiv_visit hv on hv.emr_id = t.emr_id and hv.index_desc = 1
+inner join pmtct_visits pv on pv.emr_id = t.emr_id and pv.index_desc = 1;
 
 update t
 set last_med_pickup_date = hd.dispense_date,
