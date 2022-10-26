@@ -13,7 +13,7 @@ CREATE TABLE pmtct_visits
     has_provided_contact    BIT,
     breastfeeding_status	VARCHAR(255),
     last_breastfeeding_date	DATETIME,
-    next_visit_date		DATETIME
+    next_visit_date		DATETIME,
     index_asc               INT,
     index_desc              INT
 );
