@@ -12,7 +12,7 @@ DROP TEMPORARY TABLE IF EXISTS ovc_encounters;
 DROP TABLE IF EXISTS temp_ovc_patient_program;
 
 ## patient program table
-CREATE TABLE temp_ovc_patient_program
+CREATE TEMPORARY TABLE temp_ovc_patient_program
 (
     patient_id                      INT,
     patient_program_id              INT,
