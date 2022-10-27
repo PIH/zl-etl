@@ -9,7 +9,7 @@ SET @ovc_initial_encounter_type = ENCOUNTER_TYPE('OVC Intake');
 
 ## temp tables
 DROP TEMPORARY TABLE IF EXISTS ovc_encounters;
-DROP TABLE IF EXISTS temp_ovc_patient_program;
+DROP TEMPORARY TABLE IF EXISTS temp_ovc_patient_program;
 
 ## patient program table
 CREATE TEMPORARY TABLE temp_ovc_patient_program
