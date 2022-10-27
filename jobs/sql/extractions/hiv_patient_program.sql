@@ -1,6 +1,6 @@
 DROP TABLE IF EXISTS temp_hiv_patient_program;
 
-CREATE TABLE temp_hiv_patient_program
+CREATE TEMPORARY TABLE temp_hiv_patient_program
 (
   patient_program_id int(11),
   patient_id int(11),
