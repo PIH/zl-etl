@@ -5,8 +5,8 @@ SET @mch_patient_program_id = (SELECT program_id FROM program WHERE uuid = '41a2
 SET @obgyn_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'd83e98fd-dc7b-420f-aa3f-36f648b4483d');
 
 ## patient
-DROP TABLE IF EXISTS temp_mch_status;
-CREATE TABLE temp_mch_status
+DROP TEMPORARY TABLE IF EXISTS temp_mch_status;
+CREATE TEMPORARY TABLE temp_mch_status
 (
     patient_id                  INT(11),
     patient_program_id          INT(11),

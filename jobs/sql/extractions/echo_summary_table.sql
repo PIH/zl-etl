@@ -51,8 +51,8 @@ SELECT DISTINCT  p.patient_id, pi2.identifier emr_id
 FROM patient p INNER JOIN patient_identifier pi2 ON p.patient_id =pi2.patient_id
 GROUP BY p.patient_id ;
 
-DROP TABLE IF EXISTS patient_echo_encounters;
-CREATE TABLE  patient_echo_encounters AS 
+DROP TEMPORARY TABLE IF EXISTS patient_echo_encounters;
+CREATE TEMPORARY TABLE  patient_echo_encounters AS 
 SELECT patient_id, encounter_id , encounter_datetime , encounter_type 
 FROM encounter e 
 WHERE encounter_type = @encounter_type_id
