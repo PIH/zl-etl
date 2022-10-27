@@ -1,4 +1,4 @@
-DROP TABLE IF EXISTS temp_hiv_patient_program;
+DROP TEMPORARY TABLE IF EXISTS temp_hiv_patient_program;
 
 CREATE TEMPORARY TABLE temp_hiv_patient_program
 (
