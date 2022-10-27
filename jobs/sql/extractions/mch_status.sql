@@ -6,7 +6,7 @@ SET @obgyn_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid 
 
 ## patient
 DROP TABLE IF EXISTS temp_mch_status;
-CREATE TABLE temp_mch_status
+CREATE TEMPORARY TABLE temp_mch_status
 (
     patient_id                  INT(11),
     patient_program_id          INT(11),
