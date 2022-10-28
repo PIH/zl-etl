@@ -20,7 +20,7 @@ configuration:
           - tableName: "all_lab_results"
           - tableName: "all_vitals"
 #         - tableName: "all_encounters"  - commented out until performance issues are resolved 
-          - tableName: "all_visits"
+#         - tableName: "all_visits"
           - tableName: "covid_admission"
           - tableName: "covid_diagnoses"
           - tableName: "covid_discharge"
