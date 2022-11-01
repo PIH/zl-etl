@@ -29,7 +29,6 @@ where (date_created > @lastloadtime or
 	date_changed > @lastloadtime or 
 	date_voided > @lastloadtime or 
 	@lastloadtime is null);
-;
 
 -- update last loaded time for encounter domain
 delete from petl_load_times 
