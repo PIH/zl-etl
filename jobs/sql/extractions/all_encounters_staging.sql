@@ -27,6 +27,7 @@ select encounter_id, encounter_datetime, encounter_type_name_from_id(encounter_t
 from encounter 
 where (date_created > @lastloadtime or 
 	date_changed > @lastloadtime or 
+	date_voided > @lastloadtime or 
 	@lastloadtime is null);
 ;
 
