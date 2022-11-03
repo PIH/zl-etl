@@ -174,22 +174,26 @@ inner join
 	FROM hiv_regimens AS r2
 	GROUP BY emr_id) reg on reg.emr_id = t.emr_id;
 
--- last_visit_date and next_visit_date should consider hiv and pmtct notes
--- TO DO:  need to also consider eid notes when eid_followup table is added
+
+-- last_visit_date and next_visit_date should consider hiv, eid and pmtct notes
 update t
 set last_visit_date = 
 		CASE
-			when ISNULL(hv.visit_date, '1900-01-01') > ISNULL(pv.visit_date,'1900-01-01') then hv.visit_date
-			else pv.visit_date
-		END,
+			when ISNULL(hv.visit_date, '1900-01-01') > ISNULL(pv.visit_date,'1900-01-01') and ISNULL(hv.visit_date, '1900-01-01') > ISNULL(ev.visit_date,'1900-01-01')  then hv.visit_date
+			when ISNULL(pv.visit_date, '1900-01-01') > ISNULL(hv.visit_date,'1900-01-01') and ISNULL(pv.visit_date, '1900-01-01') > ISNULL(ev.visit_date,'1900-01-01')  then pv.visit_date
+			else ev.visit_date
+			END,
     next_visit_date = 
 		CASE
-			when ISNULL(hv.next_visit_date, '9999-12-31') < ISNULL(pv.next_visit_date,'9999-12-31') then hv.next_visit_date
-			else pv.next_visit_date
+			when ISNULL(hv.next_visit_date, '9999-12-31') < ISNULL(pv.next_visit_date,'9999-12-31') and ISNULL(hv.next_visit_date, '9999-12-31') < ISNULL(ev.next_visit_date,'9999-12-31')  then hv.next_visit_date
+			when ISNULL(pv.next_visit_date, '9999-12-31') < ISNULL(hv.next_visit_date,'9999-12-31') and ISNULL(pv.next_visit_date, '9999-12-31') < ISNULL(ev.next_visit_date,'9999-12-31')  then hv.next_visit_date
+			else ev.next_visit_date
 		END
     from hiv_patient_summary_status_staging t
-inner join hiv_visit hv on hv.emr_id = t.emr_id and hv.index_desc = 1
-inner join pmtct_visits pv on pv.emr_id = t.emr_id and pv.index_desc = 1;
+left outer join hiv_visit hv on hv.emr_id = t.emr_id and hv.index_desc = 1
+left outer join pmtct_visits pv on pv.emr_id = t.emr_id and pv.index_desc = 1
+left outer join eid_visit ev on ev.emr_id = t.emr_id and ev.index_desc = 1
+;
 
 update t
 set last_med_pickup_date = hd.dispense_date,
