@@ -1,4 +1,4 @@
-create table all_encounters
+create table all_encounters_staging
 (
 emr_id              varchar(50),
 encounter_id        varchar(25),
@@ -9,6 +9,5 @@ encounter_datetime  datetime,
 entered_datetime    datetime,
 user_entered        varchar(255),
 next_appt_date      date,
-index_asc           int,
-index_desc          int		
+voided              bit
 );

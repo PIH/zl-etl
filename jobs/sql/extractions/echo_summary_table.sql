@@ -44,24 +44,30 @@ sickle_cell bit,
 copd bit
 );
 
--- ################# Views Defintions ##############################################################3
+-- ################# Temp table Defintions ##############################################################3
 
-CREATE OR REPLACE VIEW patient_list AS
+DROP TEMPORARY TABLE IF EXISTS patient_list;
+CREATE TEMPORARY TABLE patient_list AS
 SELECT DISTINCT  p.patient_id, pi2.identifier emr_id
 FROM patient p INNER JOIN patient_identifier pi2 ON p.patient_id =pi2.patient_id
 GROUP BY p.patient_id ;
 
-DROP TABLE IF EXISTS patient_echo_encounters;
-CREATE TABLE  patient_echo_encounters AS 
+DROP TEMPORARY TABLE IF EXISTS patient_echo_encounters;
+CREATE TEMPORARY TABLE  patient_echo_encounters AS 
 SELECT patient_id, encounter_id , encounter_datetime , encounter_type 
 FROM encounter e 
 WHERE encounter_type = @encounter_type_id
 ORDER BY patient_id , encounter_datetime DESC;
 
-CREATE OR REPLACE VIEW v_encounter_rank AS 
+DROP TEMPORARY TABLE IF EXISTS patient_echo_encounters2;
+CREATE TEMPORARY TABLE  patient_echo_encounters2 AS
+select * from patient_echo_encounters;
+
+DROP TEMPORARY TABLE IF EXISTS t_encounter_rank;
+CREATE TEMPORARY TABLE t_encounter_rank AS 
 SELECT t.*,(
     SELECT COUNT(*)
-    FROM patient_echo_encounters AS x
+    FROM patient_echo_encounters2 AS x
     WHERE x.patient_id = t.patient_id
     AND x.encounter_datetime > t.encounter_datetime
 ) + 1 AS erank
@@ -87,14 +93,14 @@ WHERE latestEnc(patient_id , @encounter_type_name,null) IS NOT NULL;
 
 UPDATE echo_summary_table t
 SET t.echo_date_most_recent = (
-SELECT cast(encounter_datetime AS date) FROM v_encounter_rank 
+SELECT cast(encounter_datetime AS date) FROM t_encounter_rank 
 WHERE erank=1
 AND patient_id = t.patient_id 
 );
 
 UPDATE echo_summary_table t
 SET t.echo_date_prior = (
-SELECT cast(encounter_datetime AS date) FROM v_encounter_rank 
+SELECT cast(encounter_datetime AS date) FROM t_encounter_rank 
 WHERE erank=2
 AND patient_id = t.patient_id 
 LIMIT 1
@@ -102,7 +108,7 @@ LIMIT 1
 
 UPDATE echo_summary_table t
 SET t.total_echos = (
-SELECT count(*) AS total_echos FROM v_encounter_rank 
+SELECT count(*) AS total_echos FROM t_encounter_rank 
 WHERE  patient_id = t.patient_id 
 GROUP BY patient_id 
 );
@@ -112,14 +118,14 @@ GROUP BY patient_id
 UPDATE echo_summary_table t 
 SET t.lvsf_most_recent =(
 SELECT obs_value_coded_list(encounter_id, 'PIH','11994','en')
-FROM v_encounter_rank ver  
+FROM t_encounter_rank ver  
 WHERE erank = 1
 AND patient_id=t.patient_id);
 
 UPDATE echo_summary_table t 
 SET t.lvsf_prior =(
 SELECT obs_value_coded_list(encounter_id, 'PIH','11994','en')
-FROM v_encounter_rank ver  
+FROM t_encounter_rank ver  
 WHERE erank = 2
 AND patient_id=t.patient_id
 LIMIT 1);
@@ -149,7 +155,7 @@ SET t.mitral_stenosis = CASE WHEN answerEverExists(t.patient_id,'PIH','11998','P
 UPDATE echo_summary_table t 
 SET t.nyha_class_most_recent =(
 SELECT obs_value_coded_list(encounter_id, 'PIH','3139','en')
-FROM v_encounter_rank ver  
+FROM t_encounter_rank ver  
 WHERE erank=1
 AND patient_id=t.patient_id);
 
@@ -334,7 +340,7 @@ SET t.follow_up_echo = CASE WHEN period_diff(date_format(echo_date_most_recent ,
 UPDATE echo_summary_table t 
 SET t.bp_systolic_most_recent =(
 SELECT obs_value_numeric(encounter_id, 'PIH','5085')
-FROM v_encounter_rank ver  
+FROM t_encounter_rank ver  
 WHERE erank=1
 AND patient_id=t.patient_id);
 
@@ -342,7 +348,7 @@ AND patient_id=t.patient_id);
 UPDATE echo_summary_table t 
 SET t.bp_diastolic_most_recent  =(
 SELECT obs_value_numeric(encounter_id, 'PIH','5086')
-FROM v_encounter_rank ver  
+FROM t_encounter_rank ver  
 WHERE erank=1
 AND patient_id=t.patient_id);
 

@@ -19,8 +19,8 @@ configuration:
           - tableName: "all_lab_orders"
           - tableName: "all_lab_results"
           - tableName: "all_vitals"
-#         - tableName: "all_encounters"  - commented out until performance issues are resolved 
-          - tableName: "all_visits"
+          - tableName: "all_encounters_staging" 
+#         - tableName: "all_visits"
           - tableName: "covid_admission"
           - tableName: "covid_diagnoses"
           - tableName: "covid_discharge"
@@ -47,5 +47,5 @@ configuration:
           - tableName: "data_warnings"
           - tableName: "users"
           - tableName: "user_roles"
-   #       - tableName: "user_logins"
+          - tableName: "user_logins"
             conditional: "select table_exists('authentication_event_log')"
