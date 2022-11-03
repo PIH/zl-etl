@@ -1,3 +1,5 @@
+set @partition = '${partitionNum}';
+
 drop temporary table if exists temp_eid_visit;
 create temporary table temp_eid_visit as
 select
@@ -16,8 +18,8 @@ from encounter e where encounter_type = encounter_type('HIV-exposed Infant Follo
 DROP TEMPORARY TABLE IF EXISTS temp_eid_enc_index_asc;
 CREATE TEMPORARY TABLE temp_eid_enc_index_asc
 (
-    SELECT  
-			patient_id,
+    SELECT
+            patient_id,
             emr_id,
             encounter_id,
             encounter_type,
@@ -48,8 +50,8 @@ CREATE TEMPORARY TABLE temp_eid_enc_index_asc
 DROP TEMPORARY TABLE IF EXISTS temp_eid_enc_index_desc;
 CREATE TEMPORARY TABLE temp_eid_enc_index_desc
 (
-    SELECT  
-			patient_id,
+    SELECT
+            patient_id,
             emr_id,
             encounter_id,
             encounter_type,
@@ -79,9 +81,9 @@ CREATE TEMPORARY TABLE temp_eid_enc_index_desc
         ) index_descending );
 
 -- final query 
-SELECT 
+SELECT
+    concat(@partition, '-', encounter_id),
     emr_id,
-    encounter_id,
     encounter_type,
     visit_date,
     visit_location,

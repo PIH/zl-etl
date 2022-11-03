@@ -1,7 +1,7 @@
 CREATE TABLE eid_visit
 (
+    encounter_id    VARCHAR(25),
     emr_id          VARCHAR(25),
-    encounter_id    INT,
     encounter_type  VARCHAR(50),
     visit_date      DATE,
     visit_location  VARCHAR(100),
