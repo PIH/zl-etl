@@ -7,6 +7,10 @@ type: "job-pipeline"
 description: "Refreshing HUMCI data"
 schedule:
   cron: "${executeCron.refreshHumciWarehouse}"
+parameters:
+  siteName: "humci"
+  partitionNum: "1"
+  conditional: ""
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
