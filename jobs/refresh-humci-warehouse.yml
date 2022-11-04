@@ -11,8 +11,9 @@ configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
     - type: "iterating-job"
-      siteName: "humci"
-      partitionNum: "1"
+      parameters: 
+        siteName: "humci"
+        partitionNum: "1"
       description: "Importing from ${siteName} using partition ${partitionNum}"
       configuration:
         maxConcurrentJobs: 1 # Import into up to 1 tables concurrently
