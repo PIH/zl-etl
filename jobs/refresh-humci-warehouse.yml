@@ -14,9 +14,6 @@ parameters:
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
-      parameters:
-        siteName: "humci"
-        partitionNum: "1"
     - type: "iterating-job"
       description: "Importing from ${siteName} using partition ${partitionNum}"
       configuration:
