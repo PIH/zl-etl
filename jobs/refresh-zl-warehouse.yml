@@ -45,4 +45,47 @@ configuration:
         iterations:
           - tableName: "visit_entry_dates"
           - tableName: "all_encounters_update"
-          - tableName: "update_index_numbers"          
+          - tableName: "update_index_numbers"    
+          
+    - type: "sql-execution"
+      description: "Update petl_load_times table for Cange"
+      configuration:
+        datasource: "openmrs-cange.yml"
+        scripts: 
+          -"sql/extractions/update_petl_load_times.sql"
+    - type: "sql-execution"
+      description: "Update petl_load_times table for Hinche"
+      configuration:
+        datasource: "openmrs-hinche.yml"
+        scripts: 
+          -"sql/extractions/update_petl_load_times.sql"          
+    - type: "sql-execution"
+      description: "Update petl_load_times table for Saint_marc_hsn"
+      configuration:
+        datasource: "openmrs-saint_marc_hsn.yml"
+        scripts: 
+          -"sql/extractions/update_petl_load_times.sql"
+    - type: "sql-execution"
+      description: "Update petl_load_times table for Lacolline"
+      configuration:
+        datasource: "openmrs-lacolline.yml"
+        scripts: 
+          -"sql/extractions/update_petl_load_times.sql"       
+    - type: "sql-execution"
+      description: "Update petl_load_times table for Thomonde"
+      configuration:
+        datasource: "openmrs-thomonde.yml"
+        scripts: 
+          -"sql/extractions/update_petl_load_times.sql"  
+    - type: "sql-execution"
+      description: "Update petl_load_times table for Mirebalais"
+      configuration:
+        datasource: "openmrs-mirebalais.yml"
+        scripts: 
+          -"sql/extractions/update_petl_load_times.sql"  
+    - type: "sql-execution"
+      description: "Update petl_load_times table for HIV"
+      configuration:
+        datasource: "openmrs-hiv.yml"
+        scripts: 
+          -"sql/extractions/update_petl_load_times.sql"  
