@@ -100,4 +100,11 @@ configuration:
               iterations:
                 - tableName: "visit_entry_dates"
                 - tableName: "all_encounters_update"                
-                - tableName: "update_index_numbers"                      
+                - tableName: "update_index_numbers"     
+
+          - type: "sql-execution"
+            description: "Update petl_load_times table for HUMCI"
+            configuration:
+              datasource: "openmrs-humci.yml"
+              scripts: 
+                -"sql/extractions/update_petl_load_times.sql"          

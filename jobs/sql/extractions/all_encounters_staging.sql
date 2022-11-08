@@ -5,7 +5,7 @@ set @next_appt_date_concept_id = CONCEPT_FROM_MAPPING('PIH', 5096);
 drop temporary table if exists temp_all_encounters;
 create temporary table temp_all_encounters
 (
-encounter_id        int,
+encounter_id        int unique,
 encounter_datetime	datetime, 
 patient_id          int, 
 visit_id            int, 
@@ -14,48 +14,53 @@ user_entered        varchar(255),
 encounter_location  varchar(255),
 encounter_type_name varchar(50),
 entered_datetime    datetime,
+combined_date_changed	datetime,
 emr_id              varchar(15),
 next_appt_date      date,
 voided				bit
 );
 
-select last_loaded_time into @lastloadtime from petl_load_times where loaded_domain = 'encounter';
+set @last_loaded_max_time = null;
+select max(loaded_max_datetime) into @last_loaded_max_time from petl_load_times where loaded_domain = 'encounter' and status = 'complete';
 
-Insert into temp_all_encounters (
+insert into temp_all_encounters (
+encounter_id, encounter_datetime, encounter_type_name, encounter_location, patient_id, visit_id, user_entered, entered_datetime, voided, combined_date_changed)
+select encounter_id, encounter_datetime, encounter_type_name_from_id(encounter_type), location_name(location_id), patient_id, visit_id, person_name_of_user(creator), date_created, voided,
+CASE 
+	when ifnull(date_created,'1000-01-01') >= ifnull(date_changed,'1000-01-01') and ifnull(date_created,'1000-01-01') >= ifnull(date_voided,'1000-01-01') then date_created
+	when ifnull(date_changed,'1000-01-01') >= ifnull(date_created,'1000-01-01') and ifnull(date_changed,'1000-01-01') >= ifnull(date_voided,'1000-01-01') then date_changed
+	else date_voided
+END 
+from encounter 
+where (ifnull(date_created,'1000-01-01') > @last_loaded_max_time or 
+	 ifnull(date_changed,'1000-01-01') > @last_loaded_max_time or 
+	 ifnull(date_voided,'1000-01-01') > @last_loaded_max_time or 
+	@last_loaded_max_time is null)
+order by 
+CASE 
+	when ifnull(date_created,'1000-01-01') >= ifnull(date_changed,'1000-01-01') and ifnull(date_created,'1000-01-01') >= ifnull(date_voided,'1000-01-01') then date_created
+	when ifnull(date_changed,'1000-01-01') >= ifnull(date_created,'1000-01-01') and ifnull(date_changed,'1000-01-01') >= ifnull(date_voided,'1000-01-01') then date_changed
+	else date_voided
+END asc	
+ limit 5000 -- <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<< change
+;
+
+select now() into @current_loaded_time;
+select max(combined_date_changed) into @loaded_max_time from temp_all_encounters;
+select min(combined_date_changed) into @loaded_min_time from temp_all_encounters;
+select count(*) into @number_updated_rows from temp_all_encounters;
+
+-- insert ALL rows with the max load time (ignoring duplicates) to ensure that all rows with that datetime are loaded
+insert ignore into temp_all_encounters (
 encounter_id, encounter_datetime, encounter_type_name, encounter_location, patient_id, visit_id, user_entered, entered_datetime, voided)
 select encounter_id, encounter_datetime, encounter_type_name_from_id(encounter_type), location_name(location_id), patient_id, visit_id, person_name_of_user(creator), date_created, voided 
-from encounter 
-where (date_created > @lastloadtime or 
-	date_changed > @lastloadtime or 
-	date_voided > @lastloadtime or 
-	@lastloadtime is null);
+from encounter
+where encounter_datetime = @max_loaded_time
+;
 
--- update last loaded time for encounter domain
-delete from petl_load_times 
-where loaded_domain = 'encounter';
-insert into petl_load_times(loaded_domain, last_loaded_time)
-values ('encounter',now());
-
--- index
+-- indexes
 CREATE INDEX temp_all_encounters_patientId ON temp_all_encounters(patient_id);
 CREATE INDEX temp_all_encounters_encounterId ON temp_all_encounters(encounter_id);
-
--- next visit date
--- all next appt date obs loaded to temp table before looking up for each encounter
--- this avoids having to access the full obs table for each encounter
-DROP TABLE IF EXISTS temp_next_appt_obs;
-CREATE TEMPORARY TABLE temp_next_appt_obs
-select encounter_id, max(value_datetime) "next_appt_date"
-from obs where concept_id = @next_appt_date_concept_id
-and voided = 0
-group by encounter_id;
-
-create index temp_next_appt_obs_ei on temp_next_appt_obs(encounter_id);
-
-update temp_all_encounters te 
-inner join temp_next_appt_obs tvo on tvo.encounter_id = te.encounter_id
-set te.next_appt_date = tvo.next_appt_date
-where te.voided = 0;
 
 -- emr_id
 -- unique patients loaded to temp table before looking up emr_id and joining back in to the temp_all_encounters table
@@ -86,7 +91,21 @@ select
    encounter_datetime,
    entered_datetime,
    user_entered,
-   next_appt_date,
    voided	
 from temp_all_encounters t
 ORDER BY t.patient_id, t.encounter_id;
+
+-- remove past pending rows to petl_load_times
+delete from petl_load_times 
+where loaded_domain = 'encounter'
+and status = 'pending';
+
+-- insert new pending row to petl_load_time
+insert into petl_load_times(load_datetime, loaded_domain, loaded_min_datetime,loaded_max_datetime,number_updated_rows,status )
+values (
+@current_loaded_time,
+'encounter',
+@loaded_min_time,
+@loaded_max_time,
+@number_updated_rows,
+'pending');
