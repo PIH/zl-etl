@@ -1,51 +1,51 @@
 DROP TABLE IF EXISTS hiv_patient_summary_status_staging;
 CREATE TABLE hiv_patient_summary_status_staging
 (
-    emr_id								varchar(255),
-    legacy_emr_id						varchar(255),
-    first_name							varchar(255),
-    last_name							varchar(255),
-    gender								varchar(255),
-    birthdate							date,
-    age									int,
+    emr_id					varchar(255),
+    legacy_emr_id				varchar(255),
+    first_name					varchar(255),
+    last_name					varchar(255),
+    gender					varchar(255),
+    birthdate					date,
+    age						int,
     last_pickup_accompagnateur			varchar(255),
-    hiv_note_accompagnateur				varchar(255),
-    address 							varchar(1000),
-    locality							varchar(255),
-    phone_number 						varchar(255),
+    hiv_note_accompagnateur			varchar(255),
+    address					varchar(1000),
+    locality					varchar(255),
+    phone_number				varchar(255),
     dispense_before_prescription		bit,
-    arv_start_date						date,
-    initial_arv_regimen 				varchar(255),
-    arv_regimen							varchar(255),
-    months_on_art 						int,
-    site								varchar(255),
-    last_visit_date 					date,
-    last_med_pickup_date 				date,
-    last_med_pickup_months_dispensed 	int,
-    last_med_pickup_treatment_line 		varchar(255),
-    next_visit_date 					date,
-    next_med_pickup_date 				date,
-    days_late_for_next_visit 			int,
-    days_late_for_next_med_pickup 		int,
-    last_viral_load_date 				date,
-    last_viral_load_numeric 			int,
-    last_viral_load_undetected 			varchar(255),
-    months_since_last_viral_load 		int,
+    arv_start_date				date,
+    initial_arv_regimen				varchar(255),
+    arv_regimen					varchar(255),
+    months_on_art 				int,
+    site					varchar(255),
+    last_visit_date				date,
+    last_med_pickup_date			date,
+    last_med_pickup_months_dispensed		int,
+    last_med_pickup_treatment_line		varchar(255),
+    next_visit_date				date,
+    next_med_pickup_date			date,
+    days_late_for_next_visit			int,
+    days_late_for_next_med_pickup		int,
+    last_viral_load_date			date,
+    last_viral_load_numeric			int,
+    last_viral_load_undetected			varchar(255),
+    months_since_last_viral_load		int,
     last_tb_coinfection_date			date,
-    last_weight							float,
-    last_weight_date					date,
-    last_height							float,
-    last_height_date					date,
-    enrollment_date						date,
+    last_weight					float,
+    last_weight_date				date,
+    last_height					float,
+    last_height_date				date,
+    enrollment_date				date,
     current_treatment_status			varchar(255),
     current_treatment_status_date		date,
-    current_outcome						varchar(255),
-    current_outcome_date				date,
+    current_outcome				varchar(255),
+    current_outcome_date			date,
     latest_next_dispense_date			date,
-    med_pickup_status					varchar(255),
-    med_pickup_status_date				date,
-    status						        varchar(255),
-    status_date				            date
+    med_pickup_status				varchar(255),
+    med_pickup_status_date			date,
+    status					varchar(255),
+    status_date					date
 );
 
 insert into hiv_patient_summary_status_staging (emr_id)
@@ -288,7 +288,7 @@ inner join hiv_patient_program pp on pp.patient_program_id  =
     (select top 1 patient_program_id from hiv_patient_program pp2
     where pp2.emr_id = t.emr_id
     and pp2.date_enrolled <= GETDATE()
-    order by pp2.date_enrolled desc, pp2.date_completed  desc)
+    order by pp2.date_enrolled desc,  isnull(pp2.date_completed,'9999-12-31')  desc)
 where pp.date_completed is not null;
 
 update t
@@ -298,7 +298,7 @@ inner join hiv_patient_program pp on pp.patient_program_id  =
     (select top 1 patient_program_id from hiv_patient_program pp2
     where pp2.emr_id = t.emr_id
     and pp2.date_enrolled <= GETDATE()
-    order by pp2.date_enrolled desc, pp2.date_completed  desc)
+    order by pp2.date_enrolled desc,  isnull(pp2.date_completed,'9999-12-31')  desc)
 ;
 
 update t
