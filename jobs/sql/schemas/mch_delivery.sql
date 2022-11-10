@@ -6,6 +6,7 @@ create table mch_delivery
     encounter_datetime                   datetime,
     encounter_location                   varchar(255),
     encounter_type                       varchar(255),
+    date_entered                         datetime,
     provider                             varchar(255),
     encounter_id                         varchar(25),
     delivery_datetime                    datetime,
