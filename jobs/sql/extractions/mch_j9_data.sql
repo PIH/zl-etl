@@ -82,7 +82,7 @@ and voided = 0
 create index temp_j9_pi on temp_j9(patient_id);
 
 update temp_j9 t
-set patient_program_id = patientProgramId(t.patient_id,@mchProgram, CURRENT_DATE());
+set patient_program_id = mostRecentPatientProgramId(t.patient_id,@mchProgram);
 
 update temp_j9 t 
 inner join patient_program pp on pp.patient_program_id = t.patient_program_id
