@@ -24,7 +24,7 @@ configuration:
           - tableName: "all_lab_orders"
           - tableName: "all_lab_results"
           - tableName: "all_vitals"
-          - tableName: "all_encounters_staging" 
+#         - tableName: "all_encounters_staging" 
 #         - tableName: "all_visits"          
           - tableName: "eid_visit"
           - tableName: "hiv_dispensing"
