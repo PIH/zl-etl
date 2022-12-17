@@ -57,7 +57,15 @@ CREATE TEMPORARY TABLE temp_patient
     locality                    VARCHAR(100),
     street_landmark             TEXT,
     age                         DOUBLE,
-    partner_hiv_status			VARCHAR(255)
+    partner_hiv_status			VARCHAR(255),
+	art_dispensing_start_date	DATETIME,
+	first_art_dispensing_regimen VARCHAR(1000),
+	art_order_start_date		DATETIME,
+	months_on_art				INT,
+	initial_art_regimen_order	VARCHAR(1000),
+	initial_art_regimen			VARCHAR(1000),
+	art_regimen					VARCHAR(1000),
+	art_start_date				DATETIME
 );
 
 CREATE INDEX temp_patient_patient_id ON temp_patient (patient_id);
@@ -77,15 +85,8 @@ patient_id IN (
 
 -- ZL EMR ID
 UPDATE temp_patient t
-INNER JOIN
-   (SELECT patient_id, GROUP_CONCAT(identifier) 'ids'
-    FROM patient_identifier pid
-    WHERE pid.voided = 0
-    AND pid.identifier_type = @zl_emr_id
-    GROUP BY patient_id
-   ) ids ON ids.patient_id = t.patient_id
-SET t.zl_emr_id = ids.ids;    
-
+set zl_emr_id = zlemr(t.patient_id);             
+              
 -- HIV EMR V1
 UPDATE temp_patient t
 INNER JOIN
@@ -143,7 +144,10 @@ SET birthplace_locality = o.value_text;
 UPDATE temp_patient t JOIN obs o ON t.patient_id = o.person_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'State Province')
 SET birthplace_province = o.value_text;
 
-UPDATE temp_patient t set patient_registration_date = registration_date(t.patient_id);
+select encounter_type_id into @regEncId from encounter_type where uuid = '873f968a-73a8-4f9c-ac78-9f4778b751b6';
+update temp_patient t 
+set patient_registration_date =
+	(select min(date(encounter_datetime)) from encounter e where e.patient_id = t.patient_id and e.voided = 0 and e.encounter_type = @regEncId limit 1);
 
 set @civil_status = CONCEPT_FROM_MAPPING('PIH','CIVIL STATUS');
 set @occupation = CONCEPT_FROM_MAPPING('PIH','Occupation');
@@ -484,16 +488,6 @@ inner join temp_hiv_intake_obs o on o.encounter_id = t.encounter_id
 	and o.concept_id = concept_from_mapping('PIH', 'NUMBER OF DAYS PER WEEK ALCOHOL IS USED')
 set socio_alcohol_days_per_week = o.value_numeric;
 
-/*
--- UPDATE temp_socio_hiv_intake t SET socio_smoker  = OBS_VALUE_CODED_LIST(t.encounter_id, 'PIH', 'HISTORY OF TOBACCO USE', 'en');
-UPDATE temp_socio_hiv_intake t SET socio_smoker_years = OBS_VALUE_NUMERIC(t.encounter_id, 'CIEL', '159931');
-UPDATE temp_socio_hiv_intake t SET socio_smoker_cigarette_per_day = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH', '11949');
-UPDATE temp_socio_hiv_intake t SET socio_alcohol = OBS_VALUE_CODED_LIST(t.encounter_id, 'PIH', 'HISTORY OF ALCOHOL USE', 'en');
-UPDATE temp_socio_hiv_intake t SET socio_alcohol_type = OBS_COMMENTS(t.encounter_id, 'PIH', '3342', 'PIH', 'OTHER');
-UPDATE temp_socio_hiv_intake t SET socio_alcohol_drinks_per_day = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH', 'ALCOHOLIC DRINKS PER DAY');
-UPDATE temp_socio_hiv_intake t SET socio_alcohol_days_per_week = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH','NUMBER OF DAYS PER WEEK ALCOHOL IS USED');
-*/
-
 DROP TEMPORARY TABLE IF EXISTS temp_hiv_vitals_weight;
 CREATE TEMPORARY TABLE temp_hiv_vitals_weight (
 person_id INT,
@@ -657,13 +651,94 @@ UPDATE temp_hiv_dispensing t SET days_late_to_pickup = TIMESTAMPDIFF(DAY, next_p
 
 UPDATE temp_hiv_dispensing t SET agent = OBS_VALUE_TEXT(t.latest_encounter, 'CIEL', '164141');
 
+-- initial art dispensing info
+set @arv1 = CONCEPT_FROM_MAPPING('PIH', '3013');
+set @arv2 = CONCEPT_FROM_MAPPING('PIH', '2848');
+set @arv3 = CONCEPT_FROM_MAPPING('PIH', '13960');
+-- INSERT INTO temp_art_dispensing (person_id, art_dispensing_obs_id)
+-- will be one row per dispensing construct 
+DROP TEMPORARY TABLE IF EXISTS temp_art_obs;
+create temporary table temp_art_obs
+SELECT person_id, obs_group_id, value_coded ,obs_datetime FROM 
+obs WHERE voided = 0 AND
+concept_id = CONCEPT_FROM_MAPPING('PIH', '1535') AND encounter_id IN (SELECT encounter_id FROM encounter
+WHERE voided = 0 AND encounter_type = @hiv_dispensing_encounter)
+ AND value_coded IN (@arv1, @arv2, @arv3)
+;
+
+DROP TEMPORARY TABLE IF EXISTS temp_min_art_obs_dates;
+CREATE TEMPORARY TABLE temp_min_art_obs_dates
+select person_id, value_coded, min(obs_datetime) "min_obs_datetime"
+from temp_art_obs
+group by person_id,value_coded;
+
+DROP TEMPORARY TABLE IF EXISTS temp_art_summary;
+CREATE TEMPORARY TABLE temp_art_summary
+(patient_id 		INT(11),
+arv1_obs_group_id	INT(11),
+arv1_obs_date		datetime,
+arv1_drug			varchar(255),
+arv2_obs_group_id	INT(11),
+arv2_obs_date		datetime,
+arv2_drug			varchar(255),
+arv3_obs_group_id	INT(11),
+arv3_obs_date		datetime,
+arv3_drug			varchar(255)
+);
+
+insert into temp_art_summary(patient_id)
+select distinct person_id from temp_min_art_obs_dates;
+
+create index temp_min_art_obs_dates1 on temp_min_art_obs_dates(person_id, value_coded);
+create index temp_art_obs1 on temp_art_obs(person_id, obs_datetime, value_coded);
+
+update temp_art_summary t 
+inner join temp_min_art_obs_dates mo on mo.person_id = t.patient_id and mo.value_coded = @arv1
+inner join temp_art_obs o on t.patient_id = o.person_id 
+	and o.obs_datetime = mo.min_obs_datetime
+	and o.value_coded = @arv1
+set t.arv1_obs_group_id = o.obs_group_id,
+	t.arv1_obs_date = o.obs_datetime;
+
+update temp_art_summary t 
+inner join temp_min_art_obs_dates mo on mo.person_id = t.patient_id and mo.value_coded = @arv2
+inner join temp_art_obs o on t.patient_id = o.person_id 
+	and o.obs_datetime = mo.min_obs_datetime
+	and o.value_coded = @arv2
+set t.arv2_obs_group_id = o.obs_group_id,
+	t.arv2_obs_date = o.obs_datetime;
+
+update temp_art_summary t 
+inner join temp_min_art_obs_dates mo on mo.person_id = t.patient_id and mo.value_coded = @arv3
+inner join temp_art_obs o on t.patient_id = o.person_id 
+	and o.obs_datetime = mo.min_obs_datetime
+	and o.value_coded = @arv3
+set t.arv3_obs_group_id = o.obs_group_id,
+	t.arv3_obs_date = o.obs_datetime;
+
+update temp_art_summary t 
+set arv1_drug = obs_from_group_id_value_coded_list(arv1_obs_group_id, 'PIH','1282',@locale);
+
+update temp_art_summary t 
+set arv2_drug = obs_from_group_id_value_coded_list(arv2_obs_group_id, 'PIH','1282',@locale);
+
+update temp_art_summary t 
+set arv3_drug = obs_from_group_id_value_coded_list(arv3_obs_group_id, 'PIH','1282',@locale);
+
+update temp_patient t 
+inner join temp_art_summary tas on tas.patient_id = t.patient_id
+set art_dispensing_start_date = COALESCE(arv1_obs_date, arv2_obs_date, arv3_obs_date),
+	first_art_dispensing_regimen = CONCAT(ifnull(tas.arv1_drug,''),if(tas.arv2_drug is null, '',concat(',',tas.arv2_drug)),if(tas.arv3_drug is null, '',concat(',',tas.arv3_drug))) ;
+
+
+
+-- hiv art orders
 DROP TABLE IF EXISTS temp_hiv_art;
 CREATE TEMPORARY TABLE temp_hiv_art
 (
 patient_id INT,
 order_id INT,
 art_start_date DATE,
-months_on_art DOUBLE,
 initial_art_regimen TEXT,
 art_regimen TEXT
 );
@@ -682,9 +757,30 @@ INSERT INTO temp_hiv_art (patient_id,order_id,art_start_date,initial_art_regimen
 	ORDER BY patient_id 
 ;
 
-UPDATE temp_hiv_art t SET months_on_art = TIMESTAMPDIFF(MONTH, t.art_start_date, NOW());
 
 UPDATE temp_hiv_art t set art_regimen = ActiveDrugConceptNameList(t.patient_id, 'CIEL','138405','en');
+
+update temp_patient t 
+inner join temp_hiv_art tha on tha.patient_id = t.patient_id 
+set t.art_order_start_date = tha.art_start_date,
+	t.initial_art_regimen_order = tha.initial_art_regimen,
+	t.art_regimen = tha.art_regimen;
+
+update temp_patient t
+set art_start_date = 
+	CASE WHEN art_order_start_date <= art_dispensing_start_date THEN art_order_start_date
+		ELSE art_dispensing_start_date
+	END ;
+
+UPDATE temp_patient  t SET t.months_on_art = TIMESTAMPDIFF(MONTH, t.art_start_date, NOW());
+
+update temp_patient t
+set t.initial_art_regimen = 
+	CASE WHEN art_order_start_date <= art_dispensing_start_date THEN initial_art_regimen_order
+		ELSE first_art_dispensing_regimen
+	END ;
+
+
 
 -- 
 -- partner's HIV status
@@ -819,10 +915,14 @@ tsl.last_viral_load_numeric,
 tsl.last_viral_load_undetectable,
 tsl.months_since_last_vl,
 thd.hiv_diagnosis_date,
-tha.art_start_date,
-tha.months_on_art,
-tha.initial_art_regimen,
-tha.art_regimen,
+t.art_dispensing_start_date,
+t.first_art_dispensing_regimen,
+t.art_order_start_date,
+t.initial_art_regimen_order,
+t.art_start_date,
+t.months_on_art,
+t.initial_art_regimen,
+t.art_regimen,
 tehd.last_pickup_date,
 tehd.last_pickup_months_dispensed,
 tehd.last_pickup_treatment_line,
@@ -838,5 +938,4 @@ LEFT JOIN temp_hiv_last_viral tsl ON t.patient_id = tsl.person_id
 LEFT JOIN temp_hiv_next_visit_date tsd ON t.patient_id = tsd.person_id
 LEFT JOIN temp_hiv_diagnosis_date thd ON t.patient_id = thd.person_id
 LEFT JOIN temp_hiv_dispensing tehd ON tehd.person_id = t.patient_id
-LEFT JOIN temp_hiv_art tha ON tha.patient_id = t.patient_id
 ;
