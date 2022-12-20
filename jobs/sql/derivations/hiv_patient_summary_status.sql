@@ -179,14 +179,14 @@ inner join
 update t
 set last_visit_date = 
 		CASE
-			when ISNULL(hv.visit_date, '1900-01-01') > ISNULL(pv.visit_date,'1900-01-01') and ISNULL(hv.visit_date, '1900-01-01') > ISNULL(ev.visit_date,'1900-01-01')  then hv.visit_date
-			when ISNULL(pv.visit_date, '1900-01-01') > ISNULL(hv.visit_date,'1900-01-01') and ISNULL(pv.visit_date, '1900-01-01') > ISNULL(ev.visit_date,'1900-01-01')  then pv.visit_date
+			when ISNULL(hv.visit_date, '1900-01-01') >= ISNULL(pv.visit_date,'1900-01-01') and ISNULL(hv.visit_date, '1900-01-01') >= ISNULL(ev.visit_date,'1900-01-01')  then hv.visit_date
+			when ISNULL(pv.visit_date, '1900-01-01') >= ISNULL(hv.visit_date,'1900-01-01') and ISNULL(pv.visit_date, '1900-01-01') >= ISNULL(ev.visit_date,'1900-01-01')  then pv.visit_date
 			else ev.visit_date
 			END,
     next_visit_date = 
 		CASE
-			when ISNULL(hv.next_visit_date, '9999-12-31') < ISNULL(pv.next_visit_date,'9999-12-31') and ISNULL(hv.next_visit_date, '9999-12-31') < ISNULL(ev.next_visit_date,'9999-12-31')  then hv.next_visit_date
-			when ISNULL(pv.next_visit_date, '9999-12-31') < ISNULL(hv.next_visit_date,'9999-12-31') and ISNULL(pv.next_visit_date, '9999-12-31') < ISNULL(ev.next_visit_date,'9999-12-31')  then hv.next_visit_date
+			when ISNULL(hv.next_visit_date, '9999-12-31') <= ISNULL(pv.next_visit_date,'9999-12-31') and ISNULL(hv.next_visit_date, '9999-12-31') <= ISNULL(ev.next_visit_date,'9999-12-31')  then hv.next_visit_date
+			when ISNULL(pv.next_visit_date, '9999-12-31') <= ISNULL(hv.next_visit_date,'9999-12-31') and ISNULL(pv.next_visit_date, '9999-12-31') <= ISNULL(ev.next_visit_date,'9999-12-31')  then hv.next_visit_date
 			else ev.next_visit_date
 		END
     from hiv_patient_summary_status_staging t
@@ -317,7 +317,6 @@ set med_pickup_status =
     from hiv_patient_summary_status_staging t;
 
 
--- need to fix this:
 update t
 set med_pickup_status_date =
         CASE
