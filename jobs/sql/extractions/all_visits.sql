@@ -52,8 +52,23 @@ inner join visit_type vt on vt.visit_type_id = t.visit_type_id
 set t.visit_type = vt.name;
 
 -- locations
+DROP TEMPORARY TABLE IF EXISTS temp_locations;
+CREATE TEMPORARY TABLE temp_locations
+(
+location_id						INT(11),
+location_name					VARCHAR(255)
+);
+
+INSERT INTO temp_locations(location_id)
+select distinct location_id from temp_visits;
+
+update temp_locations t set location_name =  location_name(location_id);	
+
+CREATE INDEX temp_locations_li ON temp_locations (location_id);
+
 update temp_visits tv 
-set tv.visit_location = location_name(location_id);
+inner join temp_locations tl on tl.location_id = tv.location_id
+set tv.visit_location = tl.location_name;
 
 -- user entered
 DROP TEMPORARY TABLE IF EXISTS temp_users;
@@ -73,17 +88,6 @@ update temp_users t set creator_name  = person_name_of_user(creator);
 update temp_visits tv 
 inner join temp_users tu on tu.creator = tv.visit_creator
 set tv.visit_user_entered = tu.creator_name;
-
--- checkin information
--- leaving commented out for performance reasons for now
-/*
-select name into @checkin_type_name from encounter_type where UUID = '55a0d3ea-a4d7-4e88-8f01-5aceb2d3c61b'; 
-update temp_visits t 
-set t.checkin_encounter_id = latestEncOfTypeInVisit(visit_id, @checkin_type_name);
-
-update temp_visits t 
-set visit_reason = obs_value_coded_list(checkin_encounter_id, 'PIH','8879',@locale );
-*/
 
 select 
 emr_id,
