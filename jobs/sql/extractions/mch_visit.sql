@@ -87,6 +87,8 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     implant_date	DATETIME,
     condoms_provided VARCHAR(5),
     location_of_delivery	VARCHAR(255),
+    delivery_datetime DATETIME,
+    partogram BIT,
     chlamydia BIT,
     gonorrhea BIT,
     genital_herpes BIT,
@@ -900,6 +902,12 @@ UPDATE temp_obgyn_visit t
 INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11348')
 SET t.location_of_delivery = CONCEPT_NAME(o.value_coded,'en');
 
+UPDATE temp_obgyn_visit t
+INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '5599')
+SET t.delivery_datetime = o.value_datetime;
+
+UPDATE temp_obgyn_visit t SET partogram = obs_value_coded_as_boolean(t.encounter_id, 'PIH', '13964');
+
 UPDATE temp_obgyn_visit t 
 INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11466')
 SET t.fp_start_date = o.value_datetime;
@@ -1015,6 +1023,8 @@ SELECT
     implant_date,
     condoms_provided,
     location_of_delivery,
+    delivery_datetime,
+    partogram,
     risk_factors,
     sti_treatment,
     chlamydia,
