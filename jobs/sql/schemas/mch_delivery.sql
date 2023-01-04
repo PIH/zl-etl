@@ -10,6 +10,7 @@ create table mch_delivery
     provider                             varchar(255),
     encounter_id                         varchar(25),
     delivery_datetime                    datetime,
+    partogram_completed                  bit,
     dystocia                             varchar(255),
     prolapsed_cord                       varchar(255),
     Postpartum_hemorrhage                varchar(10),

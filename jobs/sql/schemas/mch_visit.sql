@@ -69,7 +69,6 @@ CREATE TABLE mch_visit
     condoms_provided                 TEXT,
     location_of_delivery             TEXT,
     delivery_datetime                DATETIME,
-    partogram                        BIT,
     risk_factors                     TEXT,
     sti_treatment                    BIT,
     chlamydia                        BIT,
