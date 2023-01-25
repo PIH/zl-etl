@@ -16,7 +16,7 @@ CREATE TABLE hiv_patient_summary_status_staging
     dispense_before_prescription		bit,
     arv_start_date				date,
     initial_arv_regimen				varchar(255),
-    arv_regimen					varchar(255),
+    latest_arv_dispensed		varchar(1000),
     months_on_art 				int,
     site					varchar(255),
     last_visit_date				date,
@@ -156,24 +156,16 @@ set initial_arv_regimen = tmd.initial_dispensed_regimen
 inner join #temp_min_dispensing tmd on tmd.emr_id = t.emr_id
 where t.dispense_before_prescription = 1;
 
-
+-- latest arvs dispensed
 update t
-set arv_regimen = reg.drugs
+set t.latest_arv_dispensed = isnull(hd.arv_1_med,'') + iif(hd.arv_2_med is null, '',','+hd.arv_2_med) + iif(hd.arv_3_med is null, '',','+hd.arv_3_med) 
     from hiv_patient_summary_status_staging t
-inner join
-	(SELECT emr_id, STUFF(
-	         (SELECT DISTINCT ',' + drug_short_name
-	          FROM hiv_regimens r
---   	          inner join hiv_patient_summary_status_staging t on t.emr_id = r.emr_id and t.arv_start_date = r.start_date
-	          WHERE r.emr_id = r2.emr_id
-	          and order_action = 'NEW'
-			  and drug_category = 'ART'
-			  and end_date is null
-	          FOR XML PATH (''))
-	          , 1, 1, '')  AS drugs
-	FROM hiv_regimens AS r2
-	GROUP BY emr_id) reg on reg.emr_id = t.emr_id;
-
+inner join hiv_dispensing hd on hd.encounter_id =
+	(select top 1 hd2.encounter_id from hiv_dispensing hd2
+	where hd2.emr_id = t.emr_id 
+	and (hd2.arv_1_med is not null or hd2.arv_2_med is not null or hd2.arv_3_med is not null)
+	order by hd2.dispense_date desc, hd2.encounter_id desc) 
+	
 
 -- last_visit_date and next_visit_date should consider hiv, eid and pmtct notes
 update t
