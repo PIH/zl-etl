@@ -1,0 +1,26 @@
+CREATE TABLE all_medication_prescribed
+(
+emr_id varchar(25),
+encounter_id int,
+visit_id int,
+order_id int,
+order_location varchar(255),
+order_created_date date,
+order_date_activated date,
+user_entered varchar(255),
+prescriber varchar(255),
+order_drug varchar(255),
+order_formulation text,
+product_code varchar(50),
+order_quantity int,
+order_quantity_units varchar(50),
+order_quantity_num_refills int,
+order_dose int,
+order_dose_unit varchar(50),
+order_route varchar(50),
+order_frequency varchar(50),
+order_duration int,
+order_duration_units varchar(50),
+order_reason text,
+order_comments text
+);

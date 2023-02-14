@@ -18,6 +18,7 @@ configuration:
         iterations:
           - tableName: "all_lab_orders"
           - tableName: "all_lab_results"
+          - tableName: "all_medication_prescribed"
           - tableName: "all_vitals"
 #          - tableName: "all_encounters_staging" 
           - tableName: "all_visits"
