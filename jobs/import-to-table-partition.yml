@@ -31,3 +31,6 @@ configuration:
       scheme: "psSite"
       column: "partition_num"
       value: "${partitionNum}"
+    bulkCopy:
+      batchSize: 400
+      timeout: 7200
