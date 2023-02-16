@@ -58,6 +58,7 @@ AND date_completed IS NOT NULL
 AND voided = 0;
 
 ### program index ascending
+/*
 -- The ascending/descending indexes are calculated ordering on the dispense date
 -- new temp tables are used to build them and then joined into the main temp table.
 -- index resets at each new patient program
@@ -108,7 +109,8 @@ FROM (SELECT
 UPDATE temp_status t
 INNER JOIN temp_status_index_desc tsid ON tsid.status_id = t.status_id
 SET index_program_descending = tsid.index_desc;
-
+*/
+/*
 ### patient index ascending
 -- The ascending/descending indexes are calculated ordering on the dispense date
 -- new temp tables are used to build them and then joined into the main temp table.
@@ -177,7 +179,7 @@ WHERE t.index_program_descending <> 1;
 
 CREATE INDEX temp_patient_index_asc_patient_id ON temp_patient_index_asc (patient_id);
 CREATE INDEX temp_patient_index_asc_index ON temp_patient_index_asc (index_asc);
-
+*/
 ## return to care
 -- on any rows that are not outcomes, if any of the previous rows are LTFU, then set to 1
 UPDATE temp_status t

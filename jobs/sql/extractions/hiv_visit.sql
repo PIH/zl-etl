@@ -226,7 +226,7 @@ set @weanDate = concept_from_mapping('PIH','6889');
 UPDATE 	temp_hiv_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @weanDate and o.voided = 0
 set last_breastfeeding_date = o.value_datetime;
-
+/*
 -- The ascending/descending indexes are calculated ordering on the dispense date
 -- new temp tables are used to build them and then joined into the main temp table.
 ### index ascending
@@ -281,7 +281,7 @@ FROM (SELECT
 update temp_hiv_visit t
 inner join temp_visit_index_desc tvid on tvid.encounter_id = t.encounter_id
 set t.index_desc = tvid.index_desc;
-
+*/
 SELECT
 	concat(@partition, '-', encounter_id),
 	emr_id,

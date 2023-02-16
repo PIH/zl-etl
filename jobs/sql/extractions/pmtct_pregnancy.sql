@@ -165,6 +165,7 @@ SET @hiv_known_before_current_pregnancy_concept_id = CONCEPT_FROM_MAPPING('PIH',
 UPDATE temp_pmtct_pregnancy t SET hiv_known_before_current_pregnancy_latest_obs = LATESTOBS(t.patient_id, @hiv_known_before_current_pregnancy_concept_id, t.start_date);
 UPDATE temp_pmtct_pregnancy t SET hiv_known_before_current_pregnancy = VALUE_CODED_AS_BOOLEAN(hiv_known_before_current_pregnancy_latest_obs);
 
+/*
 ## indexes
 ## This is based on the date when the pregnancy per woman is reported
 -- index asc
@@ -207,7 +208,7 @@ FROM (SELECT
 
 UPDATE temp_pmtct_pregnancy t SET index_asc = (SELECT index_asc FROM temp_pmtct_pregnancy_index_asc tp WHERE tp.patient_id = t.patient_id AND tp.pmtct_enrollment_date = t.pmtct_enrollment_date);
 UPDATE temp_pmtct_pregnancy t SET index_desc = (SELECT index_desc FROM temp_pmtct_pregnancy_index_desc tp WHERE tp.patient_id = t.patient_id AND tp.pmtct_enrollment_date = t.pmtct_enrollment_date);
-
+*/
 
 ## final query
 SELECT 

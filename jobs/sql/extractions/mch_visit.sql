@@ -583,7 +583,7 @@ SET
 UPDATE temp_obgyn_visit te 
 SET 
     age_at_visit = AGE_AT_ENC(te.patient_id, te.encounter_id);
-
+/*
 ### indexes
 -- index ascending
 DROP TEMPORARY TABLE IF EXISTS temp_mch_visit_index_asc;
@@ -641,6 +641,7 @@ UPDATE temp_obgyn_visit o
     temp_mch_visit_index_desc top ON o.encounter_id = top.encounter_id 
 SET 
     o.index_desc = top.index_desc;
+*/
 
 UPDATE temp_obgyn_visit te
         JOIN
@@ -1034,4 +1035,5 @@ SELECT
     index_desc
 FROM
     temp_obgyn_visit
-ORDER BY patient_id , index_asc;
+ORDER BY patient_id;
+-- , index_asc;

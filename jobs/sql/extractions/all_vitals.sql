@@ -215,6 +215,7 @@ inner join temp_obs o ON t.encounter_id = o.encounter_id
 SET chief_complaint = o.value_text;
 
 -- The indexes are calculated using the ecnounter_date
+/*
 ### index ascending
 DROP TEMPORARY TABLE IF EXISTS temp_vitals_index_asc;
 CREATE TEMPORARY TABLE temp_vitals_index_asc
@@ -272,7 +273,7 @@ create index temp_vitals_index_desc_avi on temp_vitals_index_desc(all_vitals_id)
 update temp_vitals t
 inner join temp_vitals_index_desc tvid on tvid.all_vitals_id = t.all_vitals_id
 set t.index_desc = tvid.index_desc;
-
+*/
 select 
 	all_vitals_id,
 	emr_id ,

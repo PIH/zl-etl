@@ -14,6 +14,7 @@ CREATE TABLE mch_status
     arv_status              VARCHAR(5),
     patient_disposition     VARCHAR(100),
     transfer                TEXT,
+    patient_program_id      INT,
     index_asc               INT,
     index_desc              INT
 );

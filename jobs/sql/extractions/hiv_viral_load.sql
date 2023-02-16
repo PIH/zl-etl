@@ -26,7 +26,9 @@ CREATE TEMPORARY TABLE temp_hiv_construct_encounters
     vl_result_detectable            INT,
     viral_load                      INT,
     ldl_value                       INT,
-    vl_type                         VARCHAR(50)
+    vl_type                         VARCHAR(50),
+    index_desc                      INT,
+    index_asc                       INT
 );
 
 -- patient and encounter IDs
@@ -84,6 +86,7 @@ SET ldl_value  =  o.value_numeric;
 UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('CIEL', '164126')
 SET vl_type = concept_name(o.value_coded, 'en');
 
+/*
 -- The indexes are calculated using the specimen collection date
 ### index ascending
 CREATE TEMPORARY TABLE temp_vl_index_asc
@@ -128,6 +131,7 @@ FROM (SELECT
                     (SELECT @u:= 0) AS u
             ORDER BY patient_id, vl_sample_taken_date DESC, date_entered DESC
         ) index_descending );
+*/
 
 ### Final query
 SELECT
@@ -149,7 +153,7 @@ SELECT
         index_asc
 FROM temp_hiv_construct_encounters tvl
 -- index descending
-JOIN temp_vl_index_desc tid ON tvl.encounter_id = tid.encounter_id
+-- JOIN temp_vl_index_desc tid ON tvl.encounter_id = tid.encounter_id
 -- index ascending
-JOIN temp_vl_index_asc tia ON tvl.encounter_id = tia.encounter_id
-ORDER BY tvl.patient_id, index_desc;
+-- JOIN temp_vl_index_asc tia ON tvl.encounter_id = tia.encounter_id
+ORDER BY tvl.patient_id;-- , index_desc;

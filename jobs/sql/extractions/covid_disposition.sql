@@ -18,7 +18,9 @@ CREATE TEMPORARY TABLE temp_covid_dispositon
     date_entered          DATETIME,
     user_entered          VARCHAR(50),
 	disposition				VARCHAR(255),
-	discharge_condition			VARCHAR(255)
+	discharge_condition			VARCHAR(255),
+		index_asc INT,
+	index_desc INT
 );
 
 -- insert into temp_covid_dispositon
@@ -68,7 +70,7 @@ UPDATE temp_covid_dispositon SET disposition = OBS_VALUE_CODED_LIST(encounter_id
 
 -- Discharge conditions
 UPDATE temp_covid_dispositon SET discharge_condition = OBS_VALUE_CODED_LIST(encounter_id, 'CIEL', '159640', 'en');
-
+/*
 -- index ascending
 DROP TEMPORARY TABLE IF EXISTS temp_index_asc;
 CREATE TEMPORARY TABLE temp_index_asc
@@ -106,6 +108,7 @@ FROM (SELECT
                     (SELECT @u:= 0) AS u
             ORDER BY patient_id, encounter_id DESC
         ) index_descending );
+*/
 
 SELECT
 	zlemr(tcd.patient_id) emr_id,
@@ -121,7 +124,7 @@ SELECT
 	index_desc
 FROM temp_covid_dispositon tcd
 -- index ascending
-LEFT JOIN temp_index_asc on tcd.encounter_id = temp_index_asc.encounter_id
+-- LEFT JOIN temp_index_asc on tcd.encounter_id = temp_index_asc.encounter_id
 -- index descending
-LEFT JOIN temp_index_desc on tcd.encounter_id = temp_index_desc.encounter_id
+-- LEFT JOIN temp_index_desc on tcd.encounter_id = temp_index_desc.encounter_id
 ORDER BY tcd.patient_id, tcd.encounter_id, tcd.encounter_date ASC;

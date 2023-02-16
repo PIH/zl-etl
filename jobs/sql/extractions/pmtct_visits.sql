@@ -165,6 +165,7 @@ UPDATE 	temp_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','6889') and o.voided = 0
 set last_breastfeeding_date = o.value_datetime;
 
+/*
 -- index asc
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit_index_asc;
 CREATE TEMPORARY TABLE temp_pmtct_visit_index_asc
@@ -213,6 +214,7 @@ CREATE TEMPORARY TABLE temp_pmtct_visit_index_desc
  
 UPDATE temp_pmtct_visit t SET t.index_asc = (SELECT index_asc FROM temp_pmtct_visit_index_asc a WHERE t.visit_id = a.visit_id AND t.encounter_id = a.encounter_id);
 UPDATE temp_pmtct_visit t SET t.index_desc = (SELECT index_desc FROM temp_pmtct_visit_index_desc b WHERE t.visit_id = b.visit_id AND t.encounter_id = b.encounter_id);
+*/
 
 SELECT 
 visit_id,
