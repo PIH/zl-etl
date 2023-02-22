@@ -132,7 +132,9 @@ CREATE TEMPORARY TABLE temp_covid_visit
 	nursing_note                  TEXT,
 	mh_referral                   VARCHAR(11),
 	mh_note_obs_group_id		  INT(11),
-	mh_note                       TEXT
+	mh_note                       TEXT,
+	index_asc INT,
+   index_desc INT
 );
 
 -- insert into temp_covid_visit
@@ -1024,6 +1026,7 @@ inner join temp_covid_obs o on o.encounter_id = t.encounter_id
 	and o.value_coded = concept_from_mapping('PIH', 'Abdomen (US)')
 set abdominal_ultrasound = if(o.concept_id is null, null,'1' )
 ;
+/*
 -- index ascending
 DROP TEMPORARY TABLE IF EXISTS temp_index_asc;
 CREATE TEMPORARY TABLE temp_index_asc
@@ -1064,7 +1067,7 @@ FROM (SELECT
        
 create index temp_index_asc_ei on temp_index_asc(encounter_id);
 create index temp_index_desc_ei on temp_index_desc(encounter_id);
-
+*/
 #### Final query
 SELECT
         zlemr(tcv.patient_id) emr_id,
@@ -1185,7 +1188,7 @@ SELECT
         index_desc
 FROM temp_covid_visit tcv
 -- index ascending
-LEFT JOIN temp_index_asc on tcv.encounter_id = temp_index_asc.encounter_id
+-- LEFT JOIN temp_index_asc on tcv.encounter_id = temp_index_asc.encounter_id
 -- index descending
-LEFT JOIN temp_index_desc on tcv.encounter_id = temp_index_desc.encounter_id
+-- LEFT JOIN temp_index_desc on tcv.encounter_id = temp_index_desc.encounter_id
 order by tcv.patient_id, tcv.encounter_id ASC;

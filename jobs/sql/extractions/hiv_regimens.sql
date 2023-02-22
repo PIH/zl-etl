@@ -157,6 +157,7 @@ set t.inh_start_date = tio.date_activated,
 -- indexes by patient/category
 -- The ascending/descending indexes are calculated ordering on start date
 -- new temp tables are used to build them and then joined into the main temp table. 
+/*
 ### index ascending
 drop temporary table if exists temp_HIV_regimens_index_asc;
 CREATE TEMPORARY TABLE temp_HIV_regimens_index_asc
@@ -218,10 +219,11 @@ CREATE INDEX tid_order_id ON temp_HIV_regimens_index_desc (order_id);
 update temp_HIV_regimens t
 inner join temp_HIV_regimens_index_desc thia on thia.order_id = t.order_id
 set index_descending_category = thia.index_desc;
-
+*/
 -- indexes by patient
 -- The ascending/descending indexes are calculated ordering on start date
 -- new temp tables are us
+/*
 ### index patient ascending
 drop temporary table if exists temp_patient_index_asc;
 CREATE TEMPORARY TABLE temp_patient_index_asc
@@ -278,7 +280,7 @@ CREATE INDEX tpid_order_id ON temp_patient_index_desc (order_id);
 update temp_HIV_regimens t
 inner join temp_patient_index_desc tpid on tpid.order_id = t.order_id
 set index_descending_patient = tpid.index_desc;
-
+*/
 -- regimen line original
 -- for the most current line (index_descending_category = 1) it uses the ART line from the first entry (index_ascending_category = 1)
 drop temporary table if exists dup_HIV_regimens;

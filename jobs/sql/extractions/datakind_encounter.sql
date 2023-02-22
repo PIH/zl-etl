@@ -29,6 +29,7 @@ WHERE
 CREATE INDEX temp_datakind_enc_patientid ON temp_datakind_enc(patient_id);
 CREATE INDEX temp_datakind_enc_encounterid ON temp_datakind_enc(encounter_id);
 
+/*
 -- index asc
 DROP TEMPORARY TABLE IF EXISTS temp_datakind_index_asc;
 CREATE TEMPORARY TABLE temp_datakind_index_asc
@@ -76,7 +77,7 @@ FROM (SELECT
 CREATE INDEX temp_datakind_index_desc_patientid ON temp_datakind_index_desc(patient_id);
 CREATE INDEX temp_datakind_index_desc_encounterid ON temp_datakind_index_desc(encounter_id);
 CREATE INDEX temp_datakind_index_desc_indexasc ON temp_datakind_index_desc(index_desc);
-
+*/
 SELECT 
 concat(@partition,'-',t.patient_id),
     concat(@partition,'-',t.encounter_id),
@@ -88,7 +89,9 @@ concat(@partition,'-',t.patient_id),
     t.user_entered,
     t.date_changed,
     t.obs_count,
-    index_asc,
-    index_desc
-FROM temp_datakind_enc t JOIN temp_datakind_index_asc td ON t.encounter_id = td.encounter_id
-JOIN temp_datakind_index_desc te ON t.encounter_id = te.encounter_id;
+    null as index_asc,
+    null as index_desc
+FROM temp_datakind_enc t 
+--JOIN temp_datakind_index_asc td ON t.encounter_id = td.encounter_id
+--JOIN temp_datakind_index_desc te ON t.encounter_id = te.encounter_id
+;

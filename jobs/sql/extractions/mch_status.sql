@@ -52,6 +52,7 @@ SET t.mch_emr_id = zlemr(t.patient_id);
 ######### index count
 ########## indexes
 # program indexes (note this is done on the temp_mch_status_program table since its a 1 row per patient program id)
+/*
 ### ascending
 DROP TEMPORARY TABLE IF EXISTS temp_mch_program_index_asc;
 CREATE TEMPORARY TABLE temp_mch_program_index_asc
@@ -106,6 +107,7 @@ SET o.index_asc = top.index_asc;
 
 UPDATE temp_mch_status o JOIN temp_mch_program_index_desc top ON o.patient_program_id = top.patient_program_id
 SET o.index_desc = top.index_desc;
+*/
 
 ## all mch encounters
 DROP TEMPORARY TABLE IF EXISTS temp_mch_all_encounters;
@@ -235,6 +237,7 @@ SELECT
     arv_status,
     patient_disposition,
     transfer,
+    patient_program_id,
     index_asc,
     index_desc
 FROM temp_mch_status order by patient_id;

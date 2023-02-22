@@ -89,7 +89,7 @@ from temp_hiv_lab_tests;
 
 update hiv_tests_final set hivemr_v1_id  = patient_identifier(person_id, '139766e8-15f5-102d-96e4-000c29c2a5d7');   
 update hiv_tests_final set encounter_type = encounter_type_name(encounter_id);
-
+/*
 # indexes
 # index_asc (ascending count of rows per patient, ordered by specimen date)
 # index_desc (descending count of the above)
@@ -152,7 +152,7 @@ SET tbf.index_asc = tbia.index_asc;
 
 UPDATE hiv_tests_final tbf JOIN temp_hiv_lab_index_desc tbia ON tbf.encounter_id = tbia.encounter_id AND tbf.test_type = tbia.test_type
 SET tbf.index_desc = tbia.index_desc;
-
+*/
 SELECT
     emr_id,
     hivemr_v1_id,
@@ -164,4 +164,6 @@ SELECT
     test_result,
     index_asc,
     index_desc
-FROM hiv_tests_final ORDER BY person_id, index_asc, index_desc;
+FROM hiv_tests_final 
+ORDER BY person_id -- , index_asc, index_desc
+;
