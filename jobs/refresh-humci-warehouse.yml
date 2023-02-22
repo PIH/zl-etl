@@ -52,6 +52,7 @@ configuration:
           - tableName: "covid_visit"
           - tableName: "echocardiogram_encounters"
           - tableName: "mch_birth"
+          - tableName: "mch_diagnoses"
           - tableName: "mch_delivery"
           - tableName: "mch_patient"
           - tableName: "mch_pregnancy"

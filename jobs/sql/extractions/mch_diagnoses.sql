@@ -1,9 +1,9 @@
-SET @locale =   if(@startDate is null, 'en', GLOBAL_PROPERTY_VALUE('default_locale', 'en'));
-SET @mch_encounter = (select encounter_type_id from encounter_type where uuid = '00e5ebb2-90ec-11e8-9eb6-529269fb1459');
-SET sql_safe_updates = 0;
+set @locale =   if(@startDate is null, 'en', global_property_value('default_locale', 'en'));
+set @mch_encounter = (select encounter_type_id from encounter_type where uuid = '00e5ebb2-90ec-11e8-9eb6-529269fb1459');
+set sql_safe_updates = 0;
 
-DROP TEMPORARY TABLE IF EXISTS temp_mch_diagnoses;
-CREATE TEMPORARY TABLE temp_mch_diagnoses
+drop temporary table if exists temp_mch_diagnoses;
+create temporary table temp_mch_diagnoses
 (
 	patient_id  int,
 	encounter_id int,
@@ -71,15 +71,15 @@ obs_datetime,
 encounter_type_name(encounter_id),
 date_created,
 value_coded,
-IF(o.value_coded is null, o.value_text, concept_name(o.value_coded,'en')),
+if(o.value_coded is null, o.value_text, concept_name(o.value_coded,'en')),
 concept_name(o.value_coded,'fr'),
-IF(o.value_coded is null, 0,1),
-IF(TIME_TO_SEC(date_created) - TIME_TO_SEC(obs_datetime) > 1800,1,0)
+if(o.value_coded is null, 0,1),
+if(time_to_sec(date_created) - time_to_sec(obs_datetime) > 1800,1,0)
 from obs o 
-WHERE 
+where 
 concept_id in (concept_from_mapping('PIH','DIAGNOSIS'), concept_from_mapping('PIH','Diagnosis or problem, non-coded'))
-AND obs_group_id in (select obs_id from obs o1 where voided = 0 and concept_id = concept_from_mapping('PIH','Visit Diagnoses'))
-AND encounter_id in (select encounter_id from encounter e where voided = 0 and encounter_type = @mch_encounter)
+and obs_group_id in (select obs_id from obs o1 where voided = 0 and concept_id = concept_from_mapping('PIH','Visit Diagnoses'))
+and encounter_id in (select encounter_id from encounter e where voided = 0 and encounter_type = @mch_encounter)
 ;
 
 update temp_mch_diagnoses tm set visit_id = (select visit_id from encounter e where e.voided = 0 and tm.encounter_id = e.encounter_id);
@@ -228,7 +228,7 @@ from obs o where voided = 0 and o.concept_id = concept_from_mapping( 'PIH','1379
 );
 
 
-update temp_mch_diagnoses set icd10_code = retrieveICD10(diagnosis_concept);
+update temp_mch_diagnoses set icd10_code = retrieveicd10(diagnosis_concept);
 
 update temp_mch_diagnoses tm set sti = if(diagnosis_concept in (
 concept_from_mapping('PIH', '893'), 
