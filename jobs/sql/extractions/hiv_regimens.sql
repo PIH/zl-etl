@@ -6,7 +6,7 @@ select concept_from_mapping('CIEL',160538) into @pmtct;
 select concept_from_mapping('CIEL',163768) into @prophylaxis;
 select concept_from_mapping('CIEL',112992) into @sti;
 select concept_from_mapping('CIEL',112141) into @tb;
-select concept_from_mapping('PIH',14256) into @tb_prophylaxis;a
+select concept_from_mapping('PIH',14256) into @tb_prophylaxis;
 select order_type_id into @drugOrder from order_type where uuid = '131168f4-15f5-102d-96e4-000c29c2a5d7';
 
 drop temporary table if exists temp_HIV_regimens;
