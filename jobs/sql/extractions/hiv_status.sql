@@ -110,7 +110,7 @@ UPDATE temp_status t
 INNER JOIN temp_status_index_desc tsid ON tsid.status_id = t.status_id
 SET index_program_descending = tsid.index_desc;
 */
-/*
+
 ### patient index ascending
 -- The ascending/descending indexes are calculated ordering on the dispense date
 -- new temp tables are used to build them and then joined into the main temp table.
@@ -136,7 +136,7 @@ FROM (SELECT
                     (SELECT @u:= 0) AS u
             ORDER BY patient_id ASC, start_date ASC, patient_program_id ASC,  status_id ASC
         ) index_program_ascending );
-
+/*
 UPDATE temp_status t
 INNER JOIN temp_patient_index_asc tpia ON tpia.status_id = t.status_id
 SET index_patient_ascending = tpia.index_asc;
