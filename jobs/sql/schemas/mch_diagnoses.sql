@@ -31,6 +31,7 @@ CREATE TABLE mch_diagnoses
 	hypertension bit,
 	incomplete_abortion bit,
 	induced_abortion bit,
+	intrapartum_hemorrhage bit,
 	postpartum_hemorrhage bit,
 	laceration_of_perineum bit,
 	malaria bit,
