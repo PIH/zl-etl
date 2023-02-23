@@ -3,9 +3,10 @@ set @partition = '${partitionNum}';
 
 select concept_from_mapping('CIEL',138405) into @HIV;
 select concept_from_mapping('CIEL',160538) into @pmtct;
-select concept_from_mapping('CIEL',1691) into @prophylaxis;
+select concept_from_mapping('CIEL',163768) into @prophylaxis;
 select concept_from_mapping('CIEL',112992) into @sti;
 select concept_from_mapping('CIEL',112141) into @tb;
+select concept_from_mapping('PIH',14256) into @tb_prophylaxis;a
 select order_type_id into @drugOrder from order_type where uuid = '131168f4-15f5-102d-96e4-000c29c2a5d7';
 
 drop temporary table if exists temp_HIV_regimens;
@@ -50,7 +51,7 @@ index_descending_category int
 insert into temp_HIV_regimens (order_id, patient_id, order_action, encounter_id,drug_short_name,start_date, end_date, order_reason )
 select order_id, patient_id, order_action, encounter_id, concept_name(concept_id, 'en'), date_activated, date_stopped, order_reason from orders o
 where order_type_id = @drugOrder 
-and order_reason in (@HIV, @pmtct, @prophylaxis, @sti, @tb)
+and order_reason in (@HIV, @pmtct, @prophylaxis, @sti, @tb, @tb_prophylaxis)
 and order_action in ('NEW')
 and voided = 0
 ;
@@ -60,7 +61,7 @@ insert into temp_HIV_regimens (order_id, patient_id, previous_order_id,order_act
 select o.order_id, o.patient_id, o.previous_order_id,o.order_action, o.encounter_id, concept_name(o.concept_id, 'en'), o.date_activated, o.date_stopped, o2.order_reason from orders o
 inner join orders o2 on o2.order_id = o.previous_order_id 
   and o2.order_type_id = @drugOrder 
-  and o2.order_reason in (@HIV, @pmtct, @prophylaxis, @sti, @tb)
+  and o2.order_reason in (@HIV, @pmtct, @prophylaxis, @sti, @tb,@tb_prophylaxis)
   and o2.order_action in ('NEW')
   and o2.voided = 0
 ;
@@ -115,6 +116,7 @@ set drug_category =
     WHEN @prophylaxis THEN 'Prophylaxis'
     WHEN @sti THEN 'STI'
     WHEN @tb THEN 'TB'
+    WHEN @tb_prophylaxis THEN 'TB Prophylaxis'
   END  ;
 
 -- ptme or prophylaxis column
