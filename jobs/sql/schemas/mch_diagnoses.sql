@@ -19,6 +19,7 @@ CREATE TABLE mch_diagnoses
 	retrospective		int,
 	date_created		datetime,
 	abortion bit,
+	abortion_with_complication bit,
 	abortion_with_sepsis bit,
 	anemia bit,
 	cervical_cancer bit,
