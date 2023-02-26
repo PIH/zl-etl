@@ -11,7 +11,8 @@ set @exposed_infant_followup = encounter_type('0f070640-279e-4ec0-9e6c-6ef1f6567
 
 
 DROP TABLE IF EXISTS data_quality_log_summary;
-CREATE TEMPORARY TABLE data_quality_log_summary(
+CREATE TEMPORARY TABLE data_quality_log_summary
+(
 quality_rule_id INT,
 source varchar(20),
 site varchar(20),
