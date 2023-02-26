@@ -25,8 +25,8 @@ configuration:
           - tableName: "all_lab_results"
           - tableName: "all_medication_prescribed"
           - tableName: "all_vitals"
-#         - tableName: "all_encounters_staging" 
-#         - tableName: "all_visits"          
+          #         - tableName: "all_encounters_staging"
+          #         - tableName: "all_visits"
           - tableName: "eid_visit"
           - tableName: "hiv_dispensing"
           - tableName: "hiv_patient"
@@ -43,7 +43,7 @@ configuration:
           - tableName: "pmtct_labs"
           - tableName: "pmtct_pregnancy"
           - tableName: "tb_lab_results"
-          - tableName: "tb_screening"          
+          - tableName: "tb_screening"
           - tableName: "covid_admission"
           - tableName: "covid_diagnoses"
           - tableName: "covid_discharge"
@@ -73,8 +73,9 @@ configuration:
           - tableName: "user_roles"
           - tableName: "user_logins"
             conditional: "select table_exists('authentication_event_log')"
-          - tableName: "summary_db_restore"          
-          
+          - tableName: "summary_db_restore"
+          - tableName: "data_quality_log_summary"
+
     - type: "job-pipeline"
       description: "Derive analysis tables"
       configuration:
@@ -101,5 +102,5 @@ configuration:
                 path: "create-derived-table-in-warehouse.yml"
               iterations:
                 - tableName: "visit_entry_dates"
-#               - tableName: "all_encounters_update"                
-                - tableName: "update_index_numbers"                      
+                #               - tableName: "all_encounters_update"
+                - tableName: "update_index_numbers"
