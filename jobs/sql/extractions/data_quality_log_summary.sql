@@ -41,12 +41,10 @@ where p.voided = 0 and zlemr(p.patient_id) is NULL;
 
 SELECT count(*) INTO @vCount FROM tmp_blank_emr;
 
-INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, 
-				quality_issue_desc, issue_start_date, last_checked_date, fixed, number_of_cases, modified_date)
+INSERT INTO data_quality_log_summary(quality_rule_id, source, issue_category, table_names, column_names, quality_issue_desc, issue_start_date, last_checked_date, fixed, number_of_cases, modified_date)
 values(
 		100,
 		'mysql' ,
-		@sitename,
 		'Completness' ,
 		'patient' ,
 		'emr_id' ,
