@@ -59,6 +59,16 @@ values(
 
 
 SELECT 
-quality_rule_id, source, site, issue_category, table_names, column_names, 
-				quality_issue_desc, issue_start_date, last_checked_date, fixed, number_of_cases, modified_date
+quality_rule_id,
+source,
+@sitename as site,
+issue_category,
+table_names,
+column_names,
+quality_issue_desc,
+issue_start_date,
+last_checked_date,
+fixed,
+number_of_cases,
+modified_date
 FROM data_quality_log_summary;
