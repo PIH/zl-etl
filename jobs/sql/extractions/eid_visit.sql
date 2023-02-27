@@ -11,7 +11,9 @@ date(encounter_datetime) visit_date,
 encounter_location_name(encounter_id) visit_location,
 date(date_created) date_entered,
 encounter_creator_name(encounter_id) user_entered,
-DATE(obs_value_datetime(encounter_id, 'CIEL', '5096')) next_visit_date
+DATE(obs_value_datetime(encounter_id, 'CIEL', '5096')) next_visit_date,
+null as index_asc,
+null as index_desc
 from encounter e where encounter_type = encounter_type('HIV-exposed Infant Followup') and e.voided = 0;
 
 /*
@@ -93,8 +95,8 @@ SELECT
     date_entered,
     user_entered,
     next_visit_date,
-    null as index_asc,
-    null as index_desc
+    index_asc,
+    index_desc
 FROM
     temp_eid_visit
 ORDER BY patient_id , encounter_id;
