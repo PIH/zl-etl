@@ -1,6 +1,5 @@
 CREATE TABLE data_quality_log_details
 (
-execution_id INT NOT NULL AUTO_INCREMENT,
 quality_rule_id INT,
 source varchar(20),
 issue_category varchar(50),

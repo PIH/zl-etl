@@ -65,7 +65,6 @@ FROM tmp_blank_emr p;
 
 
 SELECT 
-execution_id,
 quality_rule_id ,
 source ,
 issue_category ,
