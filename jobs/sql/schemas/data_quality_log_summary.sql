@@ -11,5 +11,4 @@ last_checked_date date,
 fixed bit,
 number_of_cases int,
 modified_date date,
-PRIMARY KEY (quality_rule_id,source,site)
 );
