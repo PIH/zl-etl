@@ -56,6 +56,35 @@ values(
 		CURRENT_DATE());
 
 
+-- blank birthdate
+DROP TABLE IF EXISTS tmp_blank_birthdate;
+CREATE TABLE tmp_blank_birthdate AS 
+select pt.patient_id ,
+zlemr(pt.patient_id),
+'blank birthdate'
+from patient pt
+inner join person p on p.person_id = pt.patient_id and p.birthdate  is null
+where pt.voided = 0
+and unknown_patient(patient_id) is not null;
+
+SELECT count(*) INTO @vCount FROM tmp_blank_birthdate;
+
+INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, 
+				quality_issue_desc, issue_start_date, last_checked_date, fixed, number_of_cases, modified_date)
+values(
+		200,
+		'mysql' ,
+		@sitename,
+		'Completness' ,
+		'patient, person' ,
+		'birthdate' ,
+		'birthdate is null' ,
+		CURRENT_DATE() ,
+		CURRENT_DATE() ,
+		FALSE ,
+		@vCount ,
+		CURRENT_DATE());
+
 SELECT 
 quality_rule_id,
 source,
