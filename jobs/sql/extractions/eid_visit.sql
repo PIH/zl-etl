@@ -92,7 +92,9 @@ SELECT
     visit_location,
     date_entered,
     user_entered,
-    next_visit_date
+    next_visit_date,
+    null as index_asc,
+    null as index_desc
 FROM
     temp_eid_visit
 ORDER BY patient_id , encounter_id;
