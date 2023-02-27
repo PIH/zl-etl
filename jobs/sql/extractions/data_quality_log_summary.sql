@@ -59,7 +59,6 @@ values(
 SELECT 
 quality_rule_id,
 source,
-@sitename as site,
 issue_category,
 table_names,
 column_names,
