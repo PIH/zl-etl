@@ -14,6 +14,7 @@ encounter_creator_name(encounter_id) user_entered,
 DATE(obs_value_datetime(encounter_id, 'CIEL', '5096')) next_visit_date
 from encounter e where encounter_type = encounter_type('HIV-exposed Infant Followup') and e.voided = 0;
 
+/*
 -- index asc
 DROP TEMPORARY TABLE IF EXISTS temp_eid_enc_index_asc;
 CREATE TEMPORARY TABLE temp_eid_enc_index_asc
@@ -80,6 +81,8 @@ CREATE TEMPORARY TABLE temp_eid_enc_index_desc
       ORDER BY patient_id, encounter_id DESC
         ) index_descending );
 
+        */
+
 -- final query 
 SELECT
     concat(@partition, '-', encounter_id),
@@ -90,8 +93,8 @@ SELECT
     date_entered,
     user_entered,
     next_visit_date,
-    index_asc,
-    index_desc
+    null as index_asc,
+    null as index_desc
 FROM
-    temp_eid_enc_index_desc
+    temp_eid_visit
 ORDER BY patient_id , encounter_id;
