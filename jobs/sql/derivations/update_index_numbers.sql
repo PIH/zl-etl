@@ -96,7 +96,7 @@ update  av
 set av.index_asc = avi.index_asc,
 	av.index_desc = avi.index_desc 
 from eid_visit av
-inner join #eid_visit_indexes avi on avi.patient_id = av.patient_id
+inner join #eid_visit_indexes avi on avi.emr_id = av.emr_id
 and avi.encounter_id = av.encounter_id; 
 
 
