@@ -98,5 +98,5 @@ SELECT
     index_asc,
     index_desc
 FROM
-    temp_eid_visit
+    temp_eid_visit 
 ORDER BY patient_id , encounter_id;
