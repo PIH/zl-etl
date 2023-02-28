@@ -43,9 +43,9 @@ index_ascending_category int,
 index_descending_category int
  );
 
- CREATE INDEX temp_HIV_regimens_patient_id ON temp_HIV_regimens (patient_id);
- CREATE INDEX temp_HIV_regimens_drug_category ON temp_HIV_regimens (drug_category);
- CREATE INDEX temp_HIV_regimens_date ON temp_HIV_regimens (start_date);
+CREATE INDEX temp_HIV_regimens_patient_id ON temp_HIV_regimens (patient_id);
+CREATE INDEX temp_HIV_regimens_drug_category ON temp_HIV_regimens (drug_category);
+CREATE INDEX temp_HIV_regimens_date ON temp_HIV_regimens (start_date);
  
 -- insert new orders
 insert into temp_HIV_regimens (order_id, patient_id, order_action, encounter_id,drug_short_name,start_date, end_date, order_reason )
