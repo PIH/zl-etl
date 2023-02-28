@@ -95,8 +95,8 @@ SELECT
     CAST(date_entered AS date) AS date_entered,
     CAST(user_entered AS char(255)) user_entered,
     CAST(next_visit_date AS date) next_visit_date,
-    null as index_asc,
-    null as index_desc
+    0 as index_asc,
+    0 as index_desc
 FROM
     temp_eid_visit 
 ORDER BY patient_id , encounter_id;
