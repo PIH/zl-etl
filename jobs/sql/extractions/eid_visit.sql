@@ -87,16 +87,16 @@ CREATE TEMPORARY TABLE temp_eid_enc_index_desc
 
 -- final query 
 SELECT
-    concat(@partition, '-', encounter_id),
-    emr_id,
-    encounter_type,
-    visit_date,
-    visit_location,
-    date_entered,
-    user_entered,
-    next_visit_date,
+    CAST(concat(@partition, '-', encounter_id) AS CHAR(25)) AS encounter_id,
+    CAST(emr_id AS CHAR(25)) AS emr_id,
+    CAST(encounter_type AS char(50)) AS encounter_type,
+    CAST(visit_date AS date) visit_date,
+    CAST(visit_location AS char(100)) visit_location,
+    CAST(date_entered AS date) AS date_entered,
+    CAST(user_entered AS char(255)) user_entered,
+    CAST(next_visit_date AS date) next_visit_date,
     index_asc,
     index_desc
 FROM
-    temp_eid_visit
+    temp_eid_visit 
 ORDER BY patient_id , encounter_id;
