@@ -86,7 +86,7 @@ and avi.encounter_id = av.encounter_id;  */
 
 
 -- update index asc/desc on eid_visit table
-/*select  emr_id, encounter_id, 
+select  emr_id, encounter_id, 
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id desc) "index_desc"
 into #eid_visit_indexes
@@ -98,7 +98,7 @@ set av.index_asc = avi.index_asc,
 from eid_visit av
 inner join #eid_visit_indexes avi on avi.emr_id = av.emr_id
 and avi.encounter_id = av.encounter_id; 
-*/
+
 
 
 -- update index asc/desc on hiv_regimens table
@@ -121,14 +121,14 @@ and avi.start_date = av.start_date;
 select  emr_id, order_id, start_date,
 ROW_NUMBER() over (PARTITION by emr_id order by order_id asc,start_date asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id  order by order_id desc, start_date desc) "index_desc"
-into #hiv_regimens_catg_indexes
+into #hiv_regimens_pat_indexes
 from hiv_regimens av ;
 
 update  av
 set av.index_ascending_patient = avi.index_asc,
 	av.index_descending_patient = avi.index_desc 
 from hiv_regimens av
-inner join #hiv_regimens_catg_indexes avi on avi.emr_id = av.emr_id
+inner join #hiv_regimens_pat_indexes avi on avi.emr_id = av.emr_id
 and avi.order_id = av.order_id
 and avi.start_date = av.start_date; 
 
