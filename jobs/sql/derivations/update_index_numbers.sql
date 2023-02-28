@@ -86,7 +86,7 @@ and avi.encounter_id = av.encounter_id;  */
 
 
 -- update index asc/desc on eid_visit table
-select  emr_id, encounter_id, 
+/*select  emr_id, encounter_id, 
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id desc) "index_desc"
 into #eid_visit_indexes
@@ -98,6 +98,7 @@ set av.index_asc = avi.index_asc,
 from eid_visit av
 inner join #eid_visit_indexes avi on avi.emr_id = av.emr_id
 and avi.encounter_id = av.encounter_id; 
+*/
 
 
 -- update index asc/desc on hiv_regimens table
