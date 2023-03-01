@@ -162,6 +162,7 @@ SELECT
     result_date,
     test_type,
     test_result,
+    date_created,
     index_asc,
     index_desc
 FROM hiv_tests_final 
