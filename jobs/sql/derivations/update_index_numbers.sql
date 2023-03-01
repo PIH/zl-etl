@@ -245,7 +245,7 @@ update av
 set av.index_asc = avi.index_asc,
 	av.index_desc = avi.index_desc 
 from mch_visit av
-inner join #mch_status_indexes avi on avi.emr_id = av.emr_id
+inner join #mch_visit_indexes avi on avi.emr_id = av.emr_id
 and avi.visit_date = av.visit_date
 and avi.encounter_id = av.encounter_id; 
 
