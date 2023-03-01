@@ -255,6 +255,7 @@ SELECT
     DATE(end_date),
     IFNULL(return_to_care,0) "return_to_care",
     IFNULL(currently_late_for_pickup,0) "currently_late_for_pickup",
+    patient_program_id,
     index_program_ascending,
     index_program_descending,
     index_patient_ascending,
