@@ -261,4 +261,5 @@ SELECT
     index_patient_ascending,
     index_patient_descending
 FROM temp_status
-ORDER BY patient_id,index_patient_ascending;
+ORDER BY patient_id;
+-- ,index_patient_ascending;
