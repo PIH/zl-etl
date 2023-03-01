@@ -1,4 +1,4 @@
-create table hiv_status_stg
+create table hiv_status
 (
     status_id                 int,
     emr_id                    varchar(255),
