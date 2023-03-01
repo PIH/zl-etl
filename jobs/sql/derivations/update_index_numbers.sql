@@ -174,7 +174,6 @@ select
     end_date,
     return_to_care,
     currently_late_for_pickup,
-    patient_program_id,
     index_program_ascending,
     index_program_descending,
     index_patient_ascending,
