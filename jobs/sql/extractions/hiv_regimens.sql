@@ -113,7 +113,7 @@ set drug_category =
   CASE order_reason
     WHEN @HIV THEN 'ART'
     WHEN @pmtct THEN 'PMTCT'
-    WHEN @prophylaxis THEN 'Prophylaxis'
+    WHEN @prophylaxis THEN 'HIV Prophylaxis'
     WHEN @sti THEN 'STI'
     WHEN @tb THEN 'TB'
     WHEN @tb_prophylaxis THEN 'TB Prophylaxis'
