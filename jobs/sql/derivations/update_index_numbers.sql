@@ -193,8 +193,8 @@ into #hiv_viral_load_indexes
 from hiv_viral_load av ;
 
 update av
-set av.index_asc = avi.index_asc,
-	av.index_desc = avi.index_desc 
+set av.order_asc = avi.index_asc,
+	av.order_desc = avi.index_desc 
 from hiv_viral_load av
 inner join #hiv_viral_load_indexes avi on avi.emr_id = av.emr_id
 and avi.encounter_id = av.encounter_id
