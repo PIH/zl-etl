@@ -32,7 +32,7 @@ configuration:
           - tableName: "hiv_patient"
           - tableName: "hiv_patient_program"
           - tableName: "hiv_regimens"
-          - tableName: "hiv_status"
+          - tableName: "hiv_status_stg"
           - tableName: "hiv_tests"
           - tableName: "hiv_viral_load"
           - tableName: "hiv_visit"
