@@ -23,8 +23,7 @@ emr_id varchar(50),
 table_names varchar(200),
 column_names varchar(200),
 quality_issue_desc text,
-issue_start_date date,
-updated_date date,
+issue_log_date date
 PRIMARY KEY (execution_id)
 );
 
@@ -43,7 +42,7 @@ AND column_names='emr_id'
 AND site=@sitename
 AND quality_rule_id=100;
 
-INSERT INTO data_quality_log_details(quality_rule_id, source, site, issue_category, patient_id, emr_id, table_names, column_names, quality_issue_desc, issue_start_date, updated_date)
+INSERT INTO data_quality_log_details(quality_rule_id, source, site, issue_category, patient_id, emr_id, table_names, column_names, quality_issue_desc, issue_log_date)
 SELECT  
 	100 quality_rule_id,
 	'mysql' source,
@@ -54,8 +53,7 @@ SELECT
 	'patient' table_names,
 	'emr_id' column_names,
 	'emr id is null' quality_issue_desc,
-	CURRENT_DATE() issue_start_date,
-	CURRENT_DATE() updated_date
+	CURRENT_DATE() issue_log_date
 FROM tmp_blank_emr p;
 
 -- blank birthdate
@@ -76,7 +74,7 @@ AND column_names='birthdate'
 AND site=@sitename
 AND quality_rule_id=200;
 
-INSERT INTO data_quality_log_details(quality_rule_id, source, site, issue_category, patient_id, emr_id, table_names, column_names, quality_issue_desc, issue_start_date, updated_date)
+INSERT INTO data_quality_log_details(quality_rule_id, source, site, issue_category, patient_id, emr_id, table_names, column_names, quality_issue_desc, issue_log_date)
 SELECT  
 	200 quality_rule_id,
 	'mysql' source,
@@ -87,8 +85,7 @@ SELECT
 	'patient, person' table_names,
 	'birthdate' column_names,
 	'birthdate is null' quality_issue_desc,
-	CURRENT_DATE() issue_start_date,
-	CURRENT_DATE() updated_date
+	CURRENT_DATE() issue_log_date
 FROM tmp_blank_birthdate p;
 
 SELECT 
@@ -100,6 +97,5 @@ emr_id ,
 table_names, 
 column_names ,
 quality_issue_desc ,
-issue_start_date ,
-modified_date 
+issue_log_date
 FROM data_quality_log_details;
