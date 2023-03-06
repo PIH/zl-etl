@@ -21,10 +21,8 @@ table_names varchar(200),
 column_names varchar(200),
 quality_issue_desc text,
 issue_start_date date,
-last_checked_date date,
-fixed bit,
 number_of_cases int,
-modified_date date,
+updated_date date,
 PRIMARY KEY (quality_rule_id,source,site)
 );
 
@@ -50,8 +48,6 @@ values(
 		'emr_id' ,
 		'emr id is null' ,
 		CURRENT_DATE() ,
-		CURRENT_DATE() ,
-		FALSE ,
 		@vCount ,
 		CURRENT_DATE());
 
@@ -80,8 +76,6 @@ values(
 		'birthdate' ,
 		'birthdate is null' ,
 		CURRENT_DATE() ,
-		CURRENT_DATE() ,
-		FALSE ,
 		@vCount ,
 		CURRENT_DATE());
 
@@ -96,5 +90,5 @@ issue_start_date,
 last_checked_date,
 fixed,
 number_of_cases,
-modified_date
+updated_date
 FROM data_quality_log_summary;
