@@ -20,9 +20,8 @@ issue_category varchar(50),
 table_names varchar(200),
 column_names varchar(200),
 quality_issue_desc text,
-issue_start_date date,
-number_of_cases int,
-updated_date date,
+issue_log_date date,
+number_of_cases int
 PRIMARY KEY (quality_rule_id,source,site)
 );
 
@@ -39,7 +38,7 @@ where p.voided = 0 and zlemr(p.patient_id) is NULL;
 
 SELECT count(*) INTO @vCount FROM tmp_blank_emr;
 
-INSERT INTO data_quality_log_summary(quality_rule_id, source, issue_category, table_names, column_names, quality_issue_desc, issue_start_date, number_of_cases, updated_date)
+INSERT INTO data_quality_log_summary(quality_rule_id, source, issue_category, table_names, column_names, quality_issue_desc, issue_log_date, number_of_cases)
 values(
 		100,
 		'mysql' ,
@@ -48,8 +47,7 @@ values(
 		'emr_id' ,
 		'emr id is null' ,
 		CURRENT_DATE() ,
-		@vCount ,
-		CURRENT_DATE());
+		@vCount);
 
 
 -- blank birthdate
@@ -65,7 +63,7 @@ and unknown_patient(patient_id) is not null;
 
 SELECT count(*) INTO @vCount FROM tmp_blank_birthdate;
 
-INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, quality_issue_desc, issue_start_date, number_of_cases, updated_date)
+INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, quality_issue_desc, issue_log_date, number_of_cases)
 values(
 		200,
 		'mysql' ,
@@ -75,8 +73,7 @@ values(
 		'birthdate' ,
 		'birthdate is null' ,
 		CURRENT_DATE() ,
-		@vCount ,
-		CURRENT_DATE());
+		@vCount);
 
 SELECT 
 quality_rule_id,
@@ -85,7 +82,6 @@ issue_category,
 table_names,
 column_names,
 quality_issue_desc,
-issue_start_date,
-number_of_cases,
-updated_date
+issue_log_date,
+number_of_cases
 FROM data_quality_log_summary;

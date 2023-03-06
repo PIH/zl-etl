@@ -74,8 +74,8 @@ configuration:
           - tableName: "user_logins"
             conditional: "select table_exists('authentication_event_log')"
           - tableName: "summary_db_restore"
-          - tableName: "data_quality_log_summary_staging"
-          - tableName: "data_quality_log_details_staging"
+          - tableName: "data_quality_log_summary"
+          - tableName: "data_quality_log_details"
 
     - type: "job-pipeline"
       description: "Derive analysis tables"

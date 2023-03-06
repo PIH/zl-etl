@@ -6,7 +6,6 @@ issue_category varchar(50),
 table_names varchar(200),
 column_names varchar(200),
 quality_issue_desc text,
-issue_start_date date,
-number_of_cases int,
-modified_date date
+issue_log_date date,
+number_of_cases int
 );
