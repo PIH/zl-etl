@@ -9,5 +9,5 @@ quality_issue_desc text,
 issue_log_date date,
 number_of_cases int,
 total_count int,
-percentage double
+percentage float
 );
