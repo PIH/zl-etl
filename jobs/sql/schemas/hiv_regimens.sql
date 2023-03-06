@@ -20,7 +20,6 @@ create table hiv_regimens
     ptme_or_prophylaxis       char(1),
     regimen_line_original     varchar(255),
     art_start_date            datetime,
-    inh_start_date            datetime,
     inh_completion_date       datetime,
     index_ascending_category  int,
     index_descending_category int,
