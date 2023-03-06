@@ -7,5 +7,7 @@ table_names varchar(200),
 column_names varchar(200),
 quality_issue_desc text,
 issue_log_date date,
-number_of_cases int
+number_of_cases int,
+total_count int,
+percentage double
 );

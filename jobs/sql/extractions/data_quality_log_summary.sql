@@ -22,6 +22,8 @@ column_names varchar(200),
 quality_issue_desc text,
 issue_log_date date,
 number_of_cases int,
+total_count int,
+percentage double,
 PRIMARY KEY (quality_rule_id,source,site)
 );
 
@@ -36,21 +38,30 @@ SELECT patient_id
 from patient p 
 where p.voided = 0 and zlemr(p.patient_id) is NULL;
 
+
+SELECT count(*) INTO @tCount 
+from patient p
+where p.voided = 0;
+
 SELECT count(*) INTO @vCount FROM tmp_blank_emr;
 
-INSERT INTO data_quality_log_summary(quality_rule_id, source, issue_category, table_names, column_names, quality_issue_desc, issue_log_date, number_of_cases)
+INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, 
+						quality_issue_desc, issue_log_date, number_of_cases,total_count , percentage)
 values(
 		1,
 		'mysql' ,
+		@sitename,
 		'Completness' ,
 		'patient' ,
 		'emr_id' ,
 		'emr id is null' ,
 		CURRENT_DATE() ,
-		@vCount);
+		@vCount,
+		@tCount,
+		(@vCount/@tCount)*100);
 
 
--- blank birthdate
+-- blank birthdate --------------------------------------
 DROP TABLE IF EXISTS tmp_blank_birthdate;
 CREATE TABLE tmp_blank_birthdate AS 
 select pt.patient_id ,
@@ -61,9 +72,15 @@ inner join person p on p.person_id = pt.patient_id and p.birthdate  is null
 where pt.voided = 0
 and unknown_patient(patient_id) is not null;
 
+select count(*) INTO @tCount
+from patient pt
+inner join person p on p.person_id = pt.patient_id
+where pt.voided = 0;
+
 SELECT count(*) INTO @vCount FROM tmp_blank_birthdate;
 
-INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, quality_issue_desc, issue_log_date, number_of_cases)
+INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, 
+						quality_issue_desc, issue_log_date, number_of_cases,total_count , percentage)
 values(
 		2,
 		'mysql' ,
@@ -72,10 +89,12 @@ values(
 		'patient, person' ,
 		'birthdate' ,
 		'birthdate is null' ,
-		CURRENT_DATE() ,
-		@vCount);
+		CURRENT_DATE(),
+		@vCount,
+		@tCount,
+		(@vCount/@tCount)*100);
 
--- blank gender --------
+-- blank gender ------------------------------------------
 DROP TABLE IF EXISTS tmp_blank_gender;
 CREATE TABLE tmp_blank_gender AS 
 select pt.patient_id ,
@@ -86,9 +105,15 @@ inner join person p on p.person_id = pt.patient_id and p.gender is null
 where pt.voided = 0
 and unknown_patient(patient_id) is not null;
 
+select  count(*) INTO @tCount
+from patient pt
+inner join person p on p.person_id = pt.patient_id
+where pt.voided = 0;
+
 SELECT count(*) INTO @vCount FROM tmp_blank_gender;
 
-INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, quality_issue_desc, issue_log_date, number_of_cases)
+INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, 
+quality_issue_desc, issue_log_date, number_of_cases,total_count,percentage)
 values(
 		3,
 		'mysql' ,
@@ -98,9 +123,11 @@ values(
 		'gender' ,
 		'gender is null' ,
 		CURRENT_DATE() ,
-		@vCount);
+		@vCount,
+		@tCount,
+		(@vCount/@tCount)*100);
 	
--- blank Family Name -------
+-- blank Family Name -----------------------------------------------------
 DROP TABLE IF EXISTS tmp_blank_family_name;
 CREATE TABLE tmp_blank_family_name AS 
 select pt.patient_id ,
@@ -110,9 +137,16 @@ inner join person_name pn on pn.person_id = pt.patient_id and (pn.given_name is 
 where pt.voided = 0
 and unknown_patient(patient_id) is not null;
 
+select count(*) INTO @tCount
+from patient pt
+inner join person_name pn on pn.person_id = pt.patient_id
+where pt.voided = 0;
+
+
 SELECT count(*) INTO @vCount FROM tmp_blank_family_name;
 
-INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, quality_issue_desc, issue_log_date, number_of_cases)
+INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, 
+quality_issue_desc, issue_log_date, number_of_cases,total_count,percentage)
 values(
 		4,
 		'mysql' ,
@@ -120,11 +154,13 @@ values(
 		'Completness' ,
 	    'patient, person_name' ,
 	    'given_name, family_name' ,
-	     'given_name is null or family_name is null' ,
+	    'given_name is null or family_name is null' ,
 		CURRENT_DATE() ,
-		@vCount);
+		@vCount,
+		@tCount,
+		(@vCount/@tCount)*100);
 
--- overlapping program segments
+-- overlapping program segments --------------------------- 
 DROP TABLE IF EXISTS tmp_overlap_segments;
 CREATE TABLE tmp_overlap_segments AS 
 select pp.patient_id ,zlemr(pp.patient_id)
@@ -137,9 +173,20 @@ inner join patient_program pp2 on pp2.voided = 0
 	and (pp.date_enrolled < pp2.date_enrolled and ifnull(pp.date_completed,'9999-12-31') >pp2.date_enrolled)
 where pp.voided = 0;
 
+select count(*) INTO @tCount
+from patient_program pp
+inner join program p on p.program_id  = pp.program_id 
+inner join patient_program pp2 on pp2.voided = 0 
+	and pp2.patient_id = pp.patient_id 
+	and pp2.program_id = pp.program_id
+	and pp2.patient_program_id <> pp.patient_program_id 
+where pp.voided = 0;
+
+
 SELECT count(*) INTO @vCount FROM tmp_overlap_segments;
 
-INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, quality_issue_desc, issue_log_date, number_of_cases)
+INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, 
+quality_issue_desc, issue_log_date, number_of_cases,total_count,percentage)
 values(
 		5,
 		'mysql' ,
@@ -149,9 +196,11 @@ values(
 		'date_enrolled, date_completed' ,
 		'overlapping program enrollments' ,
 		CURRENT_DATE() ,
-		@vCount);
+		@vCount,
+		@tCount,
+		(@vCount/@tCount)*100);
 
--- death date before birthdate
+-- death date before birthdate ----------------------------------
 DROP TABLE IF EXISTS tmp_overlap_death_birth_date;
 CREATE TABLE tmp_overlap_death_birth_date AS 
 select pt.patient_id ,
@@ -160,9 +209,15 @@ from patient pt
 inner join person p on p.person_id = pt.patient_id and p.death_date < p.birthdate  
 where p.voided = 0;
 
+select count(*) INTO @tCount
+from patient pt 
+inner join person p on p.person_id = pt.patient_id
+where p.voided = 0;
+
 SELECT count(*) INTO @vCount FROM tmp_overlap_death_birth_date;
 
-INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, quality_issue_desc, issue_log_date, number_of_cases)
+INSERT INTO data_quality_log_summary(quality_rule_id, source, site, issue_category, table_names, column_names, 
+quality_issue_desc, issue_log_date, number_of_cases,total_count,percentage)
 values(
 		6,
 		'mysql' ,
@@ -172,7 +227,9 @@ values(
 		'death_date, birthdate' ,
 		'death date before birthdate' ,
 		CURRENT_DATE() ,
-		@vCount);
+		@vCount,
+		@tCount,
+		(@vCount/@tCount)*100);
 
 SELECT 
 quality_rule_id,
@@ -182,6 +239,8 @@ table_names,
 column_names,
 quality_issue_desc,
 issue_log_date,
-number_of_cases
+number_of_cases,
+total_count ,
+percentage
 FROM data_quality_log_summary
 WHERE number_of_cases <> 0 ;
