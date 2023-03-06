@@ -1,4 +1,4 @@
-CREATE TABLE data_quality_log_details_staging
+CREATE TABLE data_quality_log_details
 (
 quality_rule_id INT,
 source varchar(20),
