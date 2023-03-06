@@ -23,7 +23,7 @@ emr_id varchar(50),
 table_names varchar(200),
 column_names varchar(200),
 quality_issue_desc text,
-issue_log_date date
+issue_log_date date,
 PRIMARY KEY (execution_id)
 );
 
