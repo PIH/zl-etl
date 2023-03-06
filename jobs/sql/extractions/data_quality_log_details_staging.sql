@@ -24,9 +24,7 @@ table_names varchar(200),
 column_names varchar(200),
 quality_issue_desc text,
 issue_start_date date,
-last_checked_date date,
-fixed bit,
-modified_date date,
+updated_date date,
 PRIMARY KEY (execution_id)
 );
 
@@ -58,9 +56,7 @@ SELECT
 	'emr_id' column_names,
 	'emr id is null' quality_issue_desc,
 	CURRENT_DATE() issue_start_date,
-	CURRENT_DATE() last_checked_date,
-	FALSE fixed,
-	CURRENT_DATE() modified_date
+	CURRENT_DATE() updated_date
 FROM tmp_blank_emr p;
 
 -- blank birthdate
@@ -94,9 +90,7 @@ SELECT
 	'birthdate' column_names,
 	'birthdate is null' quality_issue_desc,
 	CURRENT_DATE() issue_start_date,
-	CURRENT_DATE() last_checked_date,
-	FALSE fixed,
-	CURRENT_DATE() modified_date
+	CURRENT_DATE() updated_date
 FROM tmp_blank_birthdate p;
 
 SELECT 
