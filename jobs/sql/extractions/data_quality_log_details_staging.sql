@@ -43,8 +43,7 @@ AND column_names='emr_id'
 AND site=@sitename
 AND quality_rule_id=100;
 
-INSERT INTO data_quality_log_details(quality_rule_id, source, site, issue_category, patient_id,
-emr_id, table_names, column_names, quality_issue_desc, issue_start_date, last_checked_date, fixed, modified_date)
+INSERT INTO data_quality_log_details(quality_rule_id, source, site, issue_category, patient_id, emr_id, table_names, column_names, quality_issue_desc, issue_start_date, updated_date)
 SELECT  
 	100 quality_rule_id,
 	'mysql' source,
@@ -77,8 +76,7 @@ AND column_names='birthdate'
 AND site=@sitename
 AND quality_rule_id=200;
 
-INSERT INTO data_quality_log_details(quality_rule_id, source, site, issue_category, patient_id,
-emr_id, table_names, column_names, quality_issue_desc, issue_start_date, last_checked_date, fixed, modified_date)
+INSERT INTO data_quality_log_details(quality_rule_id, source, site, issue_category, patient_id, emr_id, table_names, column_names, quality_issue_desc, issue_start_date, updated_date)
 SELECT  
 	200 quality_rule_id,
 	'mysql' source,
@@ -103,7 +101,5 @@ table_names,
 column_names ,
 quality_issue_desc ,
 issue_start_date ,
-last_checked_date,
-fixed ,
 modified_date 
 FROM data_quality_log_details;
