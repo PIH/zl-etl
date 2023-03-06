@@ -1,51 +1,52 @@
 DROP TABLE IF EXISTS hiv_patient_summary_status_staging;
 CREATE TABLE hiv_patient_summary_status_staging
 (
-    emr_id					varchar(255),
-    legacy_emr_id				varchar(255),
-    first_name					varchar(255),
-    last_name					varchar(255),
-    gender					varchar(255),
-    birthdate					date,
-    age						int,
-    last_pickup_accompagnateur			varchar(255),
-    hiv_note_accompagnateur			varchar(255),
-    address					varchar(1000),
-    locality					varchar(255),
-    phone_number				varchar(255),
-    dispense_before_prescription		bit,
-    arv_start_date				date,
-    initial_arv_regimen				varchar(255),
-    latest_arv_dispensed		varchar(1000),
-    months_on_art 				int,
-    site					varchar(255),
-    last_visit_date				date,
-    last_med_pickup_date			date,
-    last_med_pickup_months_dispensed		int,
-    last_med_pickup_treatment_line		varchar(255),
-    next_visit_date				date,
-    next_med_pickup_date			date,
-    days_late_for_next_visit			int,
-    days_late_for_next_med_pickup		int,
-    last_viral_load_date			date,
-    last_viral_load_numeric			int,
-    last_viral_load_undetected			varchar(255),
-    months_since_last_viral_load		int,
-    last_tb_coinfection_date			date,
-    last_weight					float,
-    last_weight_date				date,
-    last_height					float,
-    last_height_date				date,
-    enrollment_date				date,
-    current_treatment_status			varchar(255),
-    current_treatment_status_date		date,
-    current_outcome				varchar(255),
-    current_outcome_date			date,
-    latest_next_dispense_date			date,
-    med_pickup_status				varchar(255),
-    med_pickup_status_date			date,
-    status					varchar(255),
-    status_date					date
+ emr_id                           varchar(255),  
+ legacy_emr_id                    varchar(255),  
+ first_name                       varchar(255),  
+ last_name                        varchar(255),  
+ gender                           varchar(255),  
+ birthdate                        date,          
+ age                              int,           
+ last_pickup_accompagnateur       varchar(255),  
+ hiv_note_accompagnateur          varchar(255),  
+ address                          varchar(1000), 
+ locality                         varchar(255),  
+ phone_number                     varchar(255),  
+ dispense_before_prescription     bit,           
+ arv_start_date                   date,          
+ initial_arv_regimen              varchar(255),  
+ latest_arv_dispensed             varchar(1000), 
+ months_on_art                    int,           
+ inh_start_date                   date,
+ site                             varchar(255),  
+ last_visit_date                  date,          
+ last_med_pickup_date             date,          
+ last_med_pickup_months_dispensed int,           
+ last_med_pickup_treatment_line   varchar(255),  
+ next_visit_date                  date,          
+ next_med_pickup_date             date,          
+ days_late_for_next_visit         int,           
+ days_late_for_next_med_pickup    int,           
+ last_viral_load_date             date,          
+ last_viral_load_numeric          int,           
+ last_viral_load_undetected       varchar(255),  
+ months_since_last_viral_load     int,           
+ last_tb_coinfection_date         date,          
+ last_weight                      float,         
+ last_weight_date                 date,          
+ last_height                      float,         
+ last_height_date                 date,          
+ enrollment_date                  date,          
+ current_treatment_status         varchar(255),  
+ current_treatment_status_date    date,          
+ current_outcome                  varchar(255),  
+ current_outcome_date             date,          
+ latest_next_dispense_date        date,          
+ med_pickup_status                varchar(255),  
+ med_pickup_status_date           date,          
+ status                           varchar(255),  
+ status_date                      date           
 );
 
 insert into hiv_patient_summary_status_staging (emr_id)
@@ -166,6 +167,14 @@ inner join hiv_dispensing hd on hd.encounter_id =
 	and (hd2.arv_1_med is not null or hd2.arv_2_med is not null or hd2.arv_3_med is not null)
 	order by hd2.dispense_date desc, hd2.encounter_id desc) 
 	
+-- inh_start_date
+update t
+set inh_start_date = 
+	(select min(start_date) from hiv_regimens hr
+	where hr.emr_id = t.emr_id
+	and hr.drug_category = 'TB Prophylaxis'
+    and hr.order_action  = 'NEW')
+from hiv_patient_summary_status_staging t;    
 
 -- last_visit_date and next_visit_date should consider hiv, eid and pmtct notes
 update t
@@ -373,6 +382,5 @@ alter table hiv_patient_summary_status_staging drop column med_pickup_status;
 alter table hiv_patient_summary_status_staging drop column med_pickup_status_date;
 
 -- ------------------------------------------------------------------------------------
-
 DROP TABLE IF EXISTS hiv_patient_summary_status;
 EXEC sp_rename 'hiv_patient_summary_status_staging', 'hiv_patient_summary_status';
