@@ -7,8 +7,6 @@ table_names varchar(200),
 column_names varchar(200),
 quality_issue_desc text,
 issue_start_date date,
-last_checked_date date,
-fixed bit,
 number_of_cases int,
 modified_date date
 );
