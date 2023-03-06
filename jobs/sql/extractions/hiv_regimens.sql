@@ -12,36 +12,35 @@ select order_type_id into @drugOrder from order_type where uuid = '131168f4-15f5
 drop temporary table if exists temp_HIV_regimens;
 create temporary table temp_HIV_regimens
 (
-patient_id int(11),
-order_id int(11),
-previous_order_id int(11),
-encounter_id int(11),
-order_action varchar(50),
-encounter_datetime datetime,
-visit_location varchar(255),
-date_entered DATETIME,
-user_entered VARCHAR(50),
-obs_group_id int(11),
-art_treatment_line varchar(255),
-drug_id int(11),
-order_reason int(11),
-drug_category varchar(20),
-drug_short_name varchar(255),
-drug_name varchar(255),
-start_date datetime,
-end_date datetime,
-end_reasons varchar(255),
-ptme_or_prophylaxis char(1),
-regimen_line_original varchar(255),
-art_start_date datetime,
-inh_primary_order_id int(11),
-inh_start_date datetime,
-inh_completion_date datetime,
-index_ascending_patient int,
-index_descending_patient int,
-index_ascending_category int,
-index_descending_category int
- );
+patient_id                int(11),      
+order_id                  int(11),      
+previous_order_id         int(11),      
+encounter_id              int(11),      
+order_action              varchar(50),  
+encounter_datetime        datetime,     
+visit_location            varchar(255), 
+date_entered              DATETIME,     
+user_entered              VARCHAR(50),  
+obs_group_id              int(11),      
+art_treatment_line        varchar(255), 
+drug_id                   int(11),      
+order_reason              int(11),      
+drug_category             varchar(20),  
+drug_short_name           varchar(255), 
+drug_name                 varchar(255), 
+start_date                datetime,     
+end_date                  datetime,     
+end_reasons               varchar(255), 
+ptme_or_prophylaxis       char(1),      
+regimen_line_original     varchar(255), 
+art_start_date            datetime,     
+inh_primary_order_id      int(11),      
+inh_completion_date       datetime,     
+index_ascending_patient   int,          
+index_descending_patient  int,          
+index_ascending_category  int,          
+index_descending_category int           
+);
 
 CREATE INDEX temp_HIV_regimens_patient_id ON temp_HIV_regimens (patient_id);
 CREATE INDEX temp_HIV_regimens_drug_category ON temp_HIV_regimens (drug_category);
@@ -150,12 +149,6 @@ select * from (
 group by patient_id  
 ;
 
-update temp_HIV_regimens t 
-inner join temp_inh_orders2 tio on tio.patient_id = t.patient_id
-set t.inh_start_date = tio.date_activated,
-	t.inh_completion_date = tio.date_stopped 
-;	
-
 -- indexes by patient/category
 -- The ascending/descending indexes are calculated ordering on start date
 -- new temp tables are used to build them and then joined into the main temp table. 
@@ -186,11 +179,9 @@ FROM (SELECT
         ) index_ascending_category );
         
 CREATE INDEX tia_order_id ON temp_HIV_regimens_index_asc (order_id);        
-
 update temp_HIV_regimens t
 inner join temp_HIV_regimens_index_asc thia on thia.order_id = t.order_id
 set index_ascending_category = thia.index_asc;
-
 ### index descending
 drop temporary table if exists temp_HIV_regimens_index_desc;
 CREATE TEMPORARY TABLE temp_HIV_regimens_index_desc
@@ -217,7 +208,6 @@ FROM (SELECT
         ) index_descending_category );
         
 CREATE INDEX tid_order_id ON temp_HIV_regimens_index_desc (order_id);    
-
 update temp_HIV_regimens t
 inner join temp_HIV_regimens_index_desc thia on thia.order_id = t.order_id
 set index_descending_category = thia.index_desc;
@@ -246,14 +236,10 @@ FROM (SELECT
                     (SELECT @u:= 0) AS u
             ORDER BY patient_id, start_date ASC, order_id ASC
         ) index_ascending_patient );
-
 CREATE INDEX tpia_order_id ON temp_patient_index_asc (order_id);   
-
 update temp_HIV_regimens t
 inner join temp_patient_index_asc tpia on tpia.order_id = t.order_id
 set index_ascending_patient = tpia.index_asc;
-
-
 -- The ascending/descending indexes are calculated ordering on the dispense date
 -- new temp tables are used to build them and then joined into the main temp table. 
 ### index patient ascending
@@ -276,9 +262,7 @@ FROM (SELECT
                     (SELECT @u:= 0) AS u
             ORDER BY patient_id, start_date DESC, order_id DESC
         ) index_descending_patient );
-
 CREATE INDEX tpid_order_id ON temp_patient_index_desc (order_id); 
-
 update temp_HIV_regimens t
 inner join temp_patient_index_desc tpid on tpid.order_id = t.order_id
 set index_descending_patient = tpid.index_desc;
@@ -316,7 +300,6 @@ end_reasons,
 ptme_or_prophylaxis,
 regimen_line_original,
 art_start_date,
-inh_start_date,
 inh_completion_date, 
 index_ascending_category,
 index_descending_category,
@@ -324,3 +307,4 @@ index_ascending_patient,
 index_descending_patient
 from temp_HIV_regimens
 order by patient_id,  drug_category, encounter_datetime;
+
