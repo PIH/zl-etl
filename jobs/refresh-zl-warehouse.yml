@@ -45,4 +45,4 @@ configuration:
         iterations:
           - tableName: "visit_entry_dates"
 #         - tableName: "all_encounters_update"
-#          - tableName: "update_index_numbers"          
+          - tableName: "update_index_numbers"          
