@@ -12,7 +12,8 @@ CREATE TABLE hiv_patient_summary_status_staging
  hiv_note_accompagnateur          varchar(255),  
  address                          varchar(1000), 
  locality                         varchar(255),  
- phone_number                     varchar(255),  
+ phone_number                     varchar(255),
+ initial_enrollment_date          date,
  dispense_before_prescription     bit,           
  arv_start_date                   date,          
  initial_arv_regimen              varchar(255),  
@@ -71,6 +72,12 @@ set first_name = p.given_name,
     site = p.latest_enrollment_location
     from hiv_patient_summary_status_staging t
 inner join hiv_patient p on p.emr_id = t.emr_id
+;
+
+update t
+set t.initial_enrollment_date = pp.min_date_enrolled
+from hiv_patient_summary_status_staging t
+inner join (select emr_id, min(date_enrolled) as min_date_enrolled from hiv_patient_program group by emr_id) pp on pp.emr_id = t.emr_id
 ;
 
 DROP TABLE IF EXISTS #temp_min_dispensing;
