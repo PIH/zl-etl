@@ -1,0 +1,31 @@
+# Template that takes in the following parameters
+
+# ${siteName}
+# ${partitionNum}
+
+type: "sqlserver-bulk-import"
+description: "Importing from ${siteName} to ${tableName} using partition ${partitionNum}"
+parameters:
+  tableName: "patient_last_update_date"
+configuration:
+  extract:
+    datasource: "openmrs-${siteName}.yml"
+    query: "sql/extractions/${tableName}.sql"
+  load:
+    datasource: "warehouse.yml"
+    table: "${tableName}"
+    schema: "sql/schemas/${tableName}.sql"
+    extraColumns:
+      - name: "site"
+        type: "VARCHAR(100)"
+        value: "'${siteName}'"
+      - name: "partition_num"
+        type: "INT"
+        value: "${partitionNum}"
+    partition:
+      scheme: "psSite"
+      column: "partition_num"
+      value: "${partitionNum}"
+    bulkCopy:
+      batchSize: 400
+      timeout: 7200

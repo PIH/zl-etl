@@ -1,7 +1,7 @@
 # Each iteration uses the same partition num and site name in order to ensure data is not duplicated across
 # multiple partitions if the same table is defined in multiple nested jobs (eg. lab and tb jobs)
 # This will result in the same ETLs running multiple times unnecessarily, but this is fine in a test environment
-# in the HUMCI run, all of the tables are specified here but in a produciton environment, child jobs will be called for HIV, non-HIV etc...
+# in the HUMCI run, all the tables are specified here but in a produciton environment, child jobs will be called for HIV, non-HIV etc...
 
 type: "job-pipeline"
 description: "Refreshing HUMCI data"
@@ -11,13 +11,15 @@ parameters:
   siteName: "humci"
   partitionNum: "1"
   conditional: ""
+  incrementalEnabled: "false"
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
+    - path: "import-to-patient-last-update-date.yml"
     - type: "iterating-job"
       description: "Importing from ${siteName} using partition ${partitionNum}"
       configuration:
-        maxConcurrentJobs: 1 # Import into up to 1 tables concurrently
+        maxConcurrentJobs: 1
         jobTemplate:
           path: "import-to-table-partition.yml"
         iterations:
@@ -25,7 +27,8 @@ configuration:
           - tableName: "all_lab_results"
           - tableName: "all_medication_prescribed"
           - tableName: "all_vitals"
-          #         - tableName: "all_encounters_staging"
+          - tableName: "all_encounters"
+            incrementalEnabled: "true"
           #         - tableName: "all_visits"
           - tableName: "eid_visit"
           - tableName: "hiv_dispensing"
