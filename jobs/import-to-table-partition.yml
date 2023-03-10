@@ -34,9 +34,10 @@ configuration:
       value: "${partitionNum}"
       incremental:
         enabled: "${incrementalEnabled}"
-        newWatermarkQuery: "sql/incremental/newWatermarkQuery.sql"
-        previousWatermarkQuery: "sql/incremental/previousWatermarkQuery.sql"
-        deleteQuery: "sql/incremental/deleteQuery.sql"
+        newWatermarkQuery: "sql/incremental/new-watermark-query.sql"
+        previousWatermarkQuery: "sql/incremental/previous-watermark-query.sql"
+        updateWatermarkStatement: "sql/incremental/update-watermark-statement.sql"
+        deleteStatement: "sql/incremental/delete-statement.sql"
     bulkCopy:
       batchSize: 400
       timeout: 7200

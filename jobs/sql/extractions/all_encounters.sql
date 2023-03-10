@@ -16,8 +16,7 @@ create temporary table temp_all_encounters
     entered_datetime     datetime,
     emr_id               varchar(15),
     next_appt_date       date,
-    voided               bit,
-    last_updated         datetime(3)
+    voided               bit
 );
 
 -- If there is not a previous watermark, initialize with all encounters
@@ -45,8 +44,7 @@ set t.encounter_datetime = e.encounter_datetime,
     t.visit_id = e.visit_id,
     t.user_entered = person_name_of_user(e.creator),
     t.entered_datetime = e.date_created,
-    t.voided = e.voided,
-    t.last_updated = @newWatermark
+    t.voided = e.voided
 ;
 
 CREATE INDEX temp_all_encounters_patientId ON temp_all_encounters (patient_id);
@@ -102,7 +100,6 @@ select emr_id,
        entered_datetime,
        user_entered,
        next_appt_date,
-       voided,
-       last_updated
+       voided
 from temp_all_encounters t
 ORDER BY t.patient_id, t.encounter_id;

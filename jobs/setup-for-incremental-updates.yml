@@ -1,0 +1,45 @@
+# Template that takes in the following parameters
+# ${siteName}
+# ${partitionNum}
+# The purpose of this job is to refresh all of the DW table that are shared across multiple servers
+type: "job-pipeline"
+description: "Setting up to support incremental updates for ${siteName} using partition ${partitionNum}"
+configuration:
+  jobs:
+    - type: "create-table"
+      description: "Creating ${tableName} to track incremental updates"
+      parameters:
+        tableName: "petl_incremental_update_log"
+      configuration:
+        source:
+          sqlFile: "sql/schemas/${tableName}.sql"
+        target:
+          datasource: "warehouse.yml"
+          tableName: "${tableName}"
+
+    - type: "sqlserver-bulk-import"
+      description: "Importing from ${siteName} to ${tableName} using partition ${partitionNum}"
+      parameters:
+        tableName: "patient_last_update_date"
+      configuration:
+        extract:
+          datasource: "openmrs-${siteName}.yml"
+          query: "sql/extractions/${tableName}.sql"
+        load:
+          datasource: "warehouse.yml"
+          table: "${tableName}"
+          schema: "sql/schemas/${tableName}.sql"
+          extraColumns:
+            - name: "site"
+              type: "VARCHAR(100)"
+              value: "'${siteName}'"
+            - name: "partition_num"
+              type: "INT"
+              value: "${partitionNum}"
+          partition:
+            scheme: "psSite"
+            column: "partition_num"
+            value: "${partitionNum}"
+          bulkCopy:
+            batchSize: 400
+            timeout: 7200

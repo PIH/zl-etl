@@ -15,7 +15,7 @@ parameters:
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
-    - path: "import-to-patient-last-update-date.yml"
+    - path: "setup-for-incremental-updates.yml"
     - type: "iterating-job"
       description: "Importing from ${siteName} using partition ${partitionNum}"
       configuration:
@@ -29,7 +29,7 @@ configuration:
           - tableName: "all_vitals"
           - tableName: "all_encounters"
             incrementalEnabled: "true"
-          #         - tableName: "all_visits"
+          - tableName: "all_visits"
           - tableName: "eid_visit"
           - tableName: "hiv_dispensing"
           - tableName: "hiv_patient"
@@ -106,5 +106,4 @@ configuration:
                 path: "create-derived-table-in-warehouse.yml"
               iterations:
                 - tableName: "visit_entry_dates"
-                #               - tableName: "all_encounters_update"
                 - tableName: "update_index_numbers"

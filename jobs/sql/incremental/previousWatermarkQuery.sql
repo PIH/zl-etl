@@ -1,1 +1,0 @@
-select max(last_updated) from ${tableName} where partition_num = ${partitionNum}
