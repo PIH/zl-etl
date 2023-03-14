@@ -10,7 +10,7 @@ parameters:
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
-    - path: "setup-for-incremental-updates.yml"
+    #- path: "setup-for-incremental-updates.yml"
     - type: "iterating-job"
       description: "Importing from ${siteName} using partition ${partitionNum}"
       configuration:
@@ -22,8 +22,8 @@ configuration:
           - tableName: "all_lab_results"
           - tableName: "all_medication_prescribed"
           - tableName: "all_vitals"
-          - tableName: "all_encounters"
-            incrementalEnabled: "true"
+          #- tableName: "all_encounters"
+          #  incrementalEnabled: "true"
           - tableName: "all_visits"
           - tableName: "covid_admission"
           - tableName: "covid_diagnoses"

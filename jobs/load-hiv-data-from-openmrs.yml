@@ -5,7 +5,7 @@ parameters:
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
-    - path: "setup-for-incremental-updates.yml"
+    #- path: "setup-for-incremental-updates.yml"
     - type: "iterating-job"
       description: "Importing from ${dataset} to ${siteName} using partition ${partitionNum}"
       configuration:
@@ -16,8 +16,8 @@ configuration:
           - tableName: "all_lab_results"
           - tableName: "all_medication_prescribed"
           - tableName: "all_vitals"
-          - tableName: "all_encounters"
-            incrementalEnabled: "true"
+          #- tableName: "all_encounters"
+          #  incrementalEnabled: "true"
           - tableName: "all_visits"
           - tableName: "eid_visit"
           - tableName: "hiv_dispensing"
