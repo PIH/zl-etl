@@ -1,3 +1,5 @@
+-- set @previousWatermark = null;  
+-- set @newWatermark = now();
 SET @partition = '${partitionNum}';
 set sql_safe_updates = 0;
 set @next_appt_date_concept_id = CONCEPT_FROM_MAPPING('PIH', 5096);
@@ -22,13 +24,15 @@ create temporary table temp_all_encounters
 -- If there is not a previous watermark, initialize with all encounters
 insert into temp_all_encounters (encounter_id)
 select encounter_id from encounter
-where @previousWatermark is null;
+where voided = 0
+and @previousWatermark is null;
 
 -- If there is a previous watermark, initialize with only those encounters since that watermark
 insert into temp_all_encounters (encounter_id)
 select encounter_id from encounter
 inner join dbevent_patient dp on encounter.patient_id = dp.patient_id
-where @previousWatermark is not null
+where voided = 0 
+and @previousWatermark is not null
 and dp.last_updated >= @previousWatermark
 and dp.last_updated <= @newWatermark;
 
@@ -84,10 +88,11 @@ create index temp_emrids_patient_id on temp_emrids (patient_id);
 
 update temp_emrids t
 set emr_id = patient_identifier(patient_id, 'ZL EMR ID');
+
 update temp_all_encounters t
     inner join temp_emrids te on te.patient_id = t.patient_id
 set t.emr_id = te.emr_id
-where t.voided = 0;
+;
 
 -- final query
 select emr_id,
