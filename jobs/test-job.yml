@@ -1,10 +1,22 @@
 type: "job-pipeline"
-description: "Test Import To Table Partition"
+description: "Refreshing HUMCI data"
+schedule:
+  cron: "${executeCron.refreshHumciWarehouse}"
 parameters:
-  siteName: "humci"
+  siteName: "mirebalais"
   partitionNum: "1"
-  tableName: "mch_patient"
+  conditional: ""
+  incrementalEnabled: "false"
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
-    - path: "import-to-table-partition.yml"
+    - path: "setup-for-incremental-updates.yml"
+    - type: "iterating-job"
+      description: "Importing from ${siteName} using partition ${partitionNum}"
+      configuration:
+        maxConcurrentJobs: 1
+        jobTemplate:
+          path: "import-to-table-partition.yml"
+        iterations:
+          - tableName: "all_encounters"
+            incrementalEnabled: "true"

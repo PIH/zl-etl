@@ -4,6 +4,7 @@
 # ${siteName}
 # ${partitionNum}
 # ${conditional}
+# ${incrementalEnabled}
 
 # The purpose of this job is to batch load the result of the given query into a specific partition in the target table
 # This adds columns to the target toble to support partitioning and to identify the source of the data in the merged table
@@ -31,6 +32,12 @@ configuration:
       scheme: "psSite"
       column: "partition_num"
       value: "${partitionNum}"
+      incremental:
+        enabled: "${incrementalEnabled}"
+        newWatermarkQuery: "sql/incremental/new-watermark-query.sql"
+        previousWatermarkQuery: "sql/incremental/previous-watermark-query.sql"
+        updateWatermarkStatement: "sql/incremental/update-watermark-statement.sql"
+        deleteStatement: "sql/incremental/delete-statement.sql"
     bulkCopy:
       batchSize: 400
       timeout: 7200
