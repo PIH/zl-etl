@@ -1,7 +1,5 @@
 type: "job-pipeline"
 description: "Refreshing HUMCI data"
-schedule:
-  cron: "${executeCron.refreshHumciWarehouse}"
 parameters:
   siteName: "mirebalais"
   partitionNum: "1"
