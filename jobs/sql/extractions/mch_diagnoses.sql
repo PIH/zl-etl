@@ -26,7 +26,7 @@ create temporary table temp_mch_diagnoses
 	dx_order			varchar(255),
 	certainty			varchar(255),
 	coded				varchar(255),
-	retrospective		bit,
+	retrospective		int,
 	date_created		datetime,
 	abortion bit,
     abortion_with_complication bit,
