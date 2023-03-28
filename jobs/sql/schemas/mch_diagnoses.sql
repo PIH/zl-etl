@@ -1,6 +1,6 @@
 CREATE TABLE mch_diagnoses
 (
-	patient_id  int,
+	emr_id  varchar(25),
 	encounter_id int,
 	encounter_location  varchar(255),
 	obs_id  int,
@@ -16,7 +16,7 @@ CREATE TABLE mch_diagnoses
 	dx_order			varchar(255),
 	certainty			varchar(255),
 	coded				varchar(255),
-	retrospective		int,
+	retrospective		bit,
 	date_created		datetime,
 	abortion bit,
 	abortion_with_complication bit,
@@ -25,7 +25,7 @@ CREATE TABLE mch_diagnoses
 	cervical_cancer bit,
 	cervical_laceration bit,
 	complete_abortion bit,
-	diabetes int,
+	diabetes bit,
 	dystocia bit,
 	eclampsia bit,
 	hemorrhage bit,
