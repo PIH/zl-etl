@@ -80,8 +80,8 @@ value_coded,
 if(o.value_coded is null, o.value_text, concept_name(o.value_coded,'en')),
 concept_name(o.value_coded,'fr'),
 if(o.value_coded is null, 0,1),
-if(time_to_sec(date_created) - time_to_sec(obs_datetime) > 1800,@yes,@non)
-from obs o 
+if(TIMESTAMPDIFF(MINUTE, obs_datetime, date_created) > 30, @yes, @non)
+from obs o
 where 
 concept_id in (concept_from_mapping('PIH','DIAGNOSIS'), concept_from_mapping('PIH','Diagnosis or problem, non-coded'))
 and obs_group_id in (select obs_id from obs o1 where voided = 0 and concept_id = concept_from_mapping('PIH','Visit Diagnoses'))
