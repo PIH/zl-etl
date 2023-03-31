@@ -1,6 +1,5 @@
 create table all_procedures
 (
-patient_id int,
 emr_id varchar(25),
 encounter_id int,
 obs_id int,
