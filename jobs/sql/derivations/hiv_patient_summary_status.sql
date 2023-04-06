@@ -388,6 +388,9 @@ alter table hiv_patient_summary_status_staging drop column latest_next_dispense_
 alter table hiv_patient_summary_status_staging drop column med_pickup_status;
 alter table hiv_patient_summary_status_staging drop column med_pickup_status_date;
 
+delete from hiv_patient_summary_status_staging
+where status in ('Patient pregnant', 'Not pregnant');
+
 -- ------------------------------------------------------------------------------------
 DROP TABLE IF EXISTS hiv_patient_summary_status;
 EXEC sp_rename 'hiv_patient_summary_status_staging', 'hiv_patient_summary_status';
