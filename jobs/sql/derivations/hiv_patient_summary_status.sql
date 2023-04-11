@@ -283,6 +283,7 @@ set current_treatment_status = s.status_outcome,
 inner join hiv_status s on s.status_id =
     (select top 1 status_id  from hiv_status s2
     where s2.emr_id = t.emr_id
+    and status_outcome not in ('Patient pregnant', 'Not pregnant')
     order by s2.start_date desc, s2.end_date  desc)
 where  s.start_date <= GETDATE()
   and (s.end_date >= GETDATE() or s.end_date is null);
@@ -388,8 +389,7 @@ alter table hiv_patient_summary_status_staging drop column latest_next_dispense_
 alter table hiv_patient_summary_status_staging drop column med_pickup_status;
 alter table hiv_patient_summary_status_staging drop column med_pickup_status_date;
 
-delete from hiv_patient_summary_status_staging
-where status in ('Patient pregnant', 'Not pregnant');
+
 
 -- ------------------------------------------------------------------------------------
 DROP TABLE IF EXISTS hiv_patient_summary_status;
