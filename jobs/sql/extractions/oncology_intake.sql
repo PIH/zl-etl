@@ -135,9 +135,9 @@ SET next_visit_date= cast(value_datetime AS date);
 -- ecog_status
 UPDATE oncology_intake oi INNER JOIN obs o 
 ON o.encounter_id =oi.encounter_id
-AND o.concept_id = concept_from_mapping('PIH','10358')
+-- AND o.concept_id = concept_from_mapping('PIH','10358')
 AND o.voided =0
-SET ecog_status = o.value_numeric;
+SET ecog_status = obs_from_group_id_value_numeric(1594231, 'PIH','10358');
 
 -- ecog_date
 UPDATE oncology_intake oi INNER JOIN obs o 
@@ -156,9 +156,9 @@ SET ecog_evaluated = obs_from_group_id_value_coded(1594231,'PIH','11778','en');
 -- zldsi_status
 UPDATE oncology_intake oi INNER JOIN obs o 
 ON o.encounter_id =oi.encounter_id
-AND o.concept_id = concept_from_mapping('PIH','10584')
+-- AND o.concept_id = concept_from_mapping('PIH','10584')
 AND o.voided =0
-SET zldsi_status = o.value_numeric;
+SET zldsi_status =  obs_from_group_id_value_numeric(1594235, 'PIH','10584');
 
 
 -- zldsi_date
