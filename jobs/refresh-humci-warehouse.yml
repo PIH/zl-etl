@@ -80,6 +80,7 @@ configuration:
           - tableName: "summary_db_restore"
           - tableName: "data_quality_log_summary"
           - tableName: "data_quality_log_details"
+          - tableName: "oncology_intake"
 
     - type: "job-pipeline"
       description: "Derive analysis tables"
