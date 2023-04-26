@@ -208,12 +208,14 @@ set @eligART = concept_from_mapping('PIH','11337');
 set @refTreat = concept_from_mapping('PIH','3580');
 set @treatPostponed = concept_from_mapping('PIH','7262');
 set @assignART = concept_from_mapping('PIH','2222');
+set @denial = concept_from_mapping('PIH','14666');
 UPDATE temp_hiv_visit t 
 	inner join temp_obs tobs on tobs.encounter_id = t.encounter_id and concept_id = @eligART
 	and tobs.value_coded in 
 		(@refTreat,
 		@treatPostponed,
-		@assignART)
+		@assignART,
+		@denial)
 set reason_not_on_ARV = concept_name(tobs.value_coded,@locale);
 
 set @feedPlan = concept_from_mapping('PIH','13642');
@@ -249,13 +251,10 @@ FROM (SELECT
                     (SELECT @u:= 0) AS u
             ORDER BY patient_id, visit_date ASC, encounter_id ASC
         ) index_ascending );
-
 CREATE INDEX tvia_e ON temp_visit_index_asc(encounter_id);
-
 update temp_hiv_visit t
 inner join temp_visit_index_asc tvia on tvia.encounter_id = t.encounter_id
 set t.index_asc = tvia.index_asc;
-
 drop temporary table if exists temp_visit_index_desc;
 CREATE TEMPORARY TABLE temp_visit_index_desc
 (
@@ -277,7 +276,6 @@ FROM (SELECT
         ) index_descending );
        
  CREATE INDEX tvid_e ON temp_visit_index_desc(encounter_id);      
-
 update temp_hiv_visit t
 inner join temp_visit_index_desc tvid on tvid.encounter_id = t.encounter_id
 set t.index_desc = tvid.index_desc;
