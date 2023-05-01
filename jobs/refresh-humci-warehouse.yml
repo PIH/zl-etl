@@ -81,6 +81,7 @@ configuration:
           - tableName: "data_quality_log_summary"
           - tableName: "data_quality_log_details"
           - tableName: "oncology_intake"
+          - tableName: "oncology_treatment_plan"
 
     - type: "job-pipeline"
       description: "Derive analysis tables"
