@@ -28,7 +28,8 @@ concept_name(outcome_concept_id,'en') outcome
 FROM patient_program pp 
 INNER JOIN patient_state ps ON pp.patient_program_id =ps.patient_program_id 
 INNER JOIN program_workflow_state pws ON pws.program_workflow_state_id =ps.state 
-WHERE pp.program_id = @prog_id;
+WHERE pp.program_id = @prog_id
+AND pp.voided = 0;
 
 SELECT 
 CONCAT(@partition,'-',emr_id) "emr_id",
