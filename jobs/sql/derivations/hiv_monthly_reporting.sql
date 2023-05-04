@@ -294,11 +294,7 @@ set monthly_arv_status =
 			(YEAR(arv_start_date) = YEAR(reporting_date) and  MONTH(arv_start_date) < MONTH(reporting_date)) then 'existing'
 		ELSE 'not on ART'	
 	END
-from hiv_monthly_reporting_staging t
-;	
-
-
-   
+from hiv_monthly_reporting_staging t;	
 
 -- ############################### TB screening data ##################################################################
 update t1
