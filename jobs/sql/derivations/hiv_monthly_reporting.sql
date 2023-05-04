@@ -1,4 +1,3 @@
-
 DROP TABLE IF EXISTS hiv_monthly_reporting_staging;
 
 create table hiv_monthly_reporting_staging
@@ -39,6 +38,8 @@ latest_tb_coinfection_date      DATE,
 date_of_last_breastfeeding_status	DATETIME,
 latest_breastfeeding_status		  VARCHAR(255),
 latest_breastfeeding_date		    DATETIME,
+arv_start_date					DATE,
+monthly_arv_status				VARCHAR(255),
 latest_status                   VARCHAR(255)
 );
 
@@ -256,6 +257,44 @@ LEFT OUTER JOIN all_reporting_dispense_arv ad
 ON t1.emr_id =  ad.emr_id
     AND t1.reporting_date=ad.reporting_date
     AND t1.latest_arv_dispensed_date=ad.dispense_date;
+   
+-- ############################### monthly_arv_status ##################################################################
+
+drop table if exists #temp_min_arv_date;
+select emr_id, min(hr.start_date) "min_arv_start_date"
+into #temp_min_arv_date
+from hiv_regimens hr
+where order_action = 'NEW'
+  and drug_category = 'ART'
+group by emr_id;
+
+drop table if exists #temp_min_dispensing;
+select emr_id, min(dispense_date) "min_dispense_date"
+into #temp_min_dispensing
+from hiv_dispensing hd
+where (arv_1_med is not null or arv_2_med is not null or arv_3_med is not NULL)
+group by emr_id;
+
+update t
+set arv_start_date =
+	CASE
+		WHEN ISNULL(min_dispense_date,'9999-12-31') < ISNULL(min_arv_start_date,'9999-12-31') THEN min_dispense_date
+		ELSE min_arv_start_date
+	END
+from hiv_monthly_reporting_staging t
+left outer join #temp_min_dispensing tmd on tmd.emr_id  = t.emr_id
+left outer join #temp_min_arv_date tad on tad.emr_id  = t.emr_id
+;
+
+update t 
+set monthly_arv_status =
+	CASE
+		WHEN YEAR(arv_start_date) = YEAR(reporting_date) and  MONTH(arv_start_date) = MONTH(reporting_date) then 'new'
+		WHEN (YEAR(arv_start_date) < YEAR(reporting_date)) OR 
+			(YEAR(arv_start_date) = YEAR(reporting_date) and  MONTH(arv_start_date) < MONTH(reporting_date)) then 'existing'
+		ELSE 'not on ART'	
+	END
+from hiv_monthly_reporting_staging t;	
 
 -- ############################### TB screening data ##################################################################
 update t1
