@@ -3,6 +3,7 @@ SET @partition = '${partitionNum}';
 
 DROP TABLE IF EXISTS oncology_intake;
 CREATE TEMPORARY TABLE oncology_intake (
+patient_id int,
 emr_id varchar(50),
 encounter_id int,
 encounter_datetime datetime,
@@ -15,12 +16,15 @@ alcohol varchar(30),
 drugs varchar(30),
 hiv_test boolean,
 hiv_test_date date,
+hiv_test_result varchar(50),
 diabetes boolean,
 type_1_diabetes boolean,
 type_2_diabetes boolean,
 hypertension boolean,
 asthma boolean,
 referal varchar(500),
+ecog_obs_group_id int, 
+zldsi_obs_group_id int, 
 ecog_status int,
 ecog_date datetime,
 ecog_evaluated varchar(50),
@@ -32,8 +36,9 @@ disposition varchar(100),
 comment text,
 next_visit_date date);
 
-INSERT INTO oncology_intake(emr_id,encounter_id,encounter_datetime,encounter_location,date_entered,user_entered,encounter_provider)
+INSERT INTO oncology_intake(patient_id,emr_id,encounter_id,encounter_datetime,encounter_location,date_entered,user_entered,encounter_provider)
 SELECT 
+patient_id,
 zlemr(patient_id),
 encounter_id,
 encounter_datetime ,
@@ -109,6 +114,15 @@ AND o.concept_id = concept_from_mapping('PIH','1837')
 AND o.voided =0
 SET hiv_test_date= cast(value_datetime AS date) ;
 
+-- hiv_test_result
+UPDATE oncology_intake oi INNER JOIN obs o 
+ON o.encounter_id =oi.encounter_id
+AND o.concept_id = concept_from_mapping('PIH','2169')
+AND o.voided =0
+SET hiv_test_result= value_coded_name(obs_id,'en') ;
+
+
+
 -- disposition
 UPDATE oncology_intake oi INNER JOIN obs o 
 ON o.encounter_id =oi.encounter_id
@@ -132,50 +146,75 @@ AND o.concept_id = concept_from_mapping('PIH','5096')
 AND o.voided =0
 SET next_visit_date= cast(value_datetime AS date);
 
+-- SELECT concept_from_mapping('PIH','10584') -- zldsi 2995
+-- SELECT concept_from_mapping('PIH','10358') -- ecog 2513
+
+UPDATE oncology_intake tgt
+SET ecog_obs_group_id = (
+	SELECT obs_group_id
+	FROM obs 
+	WHERE encounter_id = tgt.encounter_id
+	AND patient_id = tgt.patient_id
+	AND concept_id=concept_from_mapping('PIH','10358')
+	ORDER BY obs_id
+	LIMIT 1
+);
+
 -- ecog_status
 UPDATE oncology_intake oi INNER JOIN obs o 
 ON o.encounter_id =oi.encounter_id
 -- AND o.concept_id = concept_from_mapping('PIH','10358')
 AND o.voided =0
-SET ecog_status = obs_from_group_id_value_numeric(1594231, 'PIH','10358');
+SET ecog_status = obs_from_group_id_value_numeric(ecog_obs_group_id, 'PIH','10358');
+
 
 -- ecog_date
 UPDATE oncology_intake oi INNER JOIN obs o 
 ON o.encounter_id =oi.encounter_id
 AND o.voided =0
-SET ecog_date = obs_from_group_id_value_datetime(1594231,'PIH','11780');
+SET ecog_date = obs_from_group_id_value_datetime(ecog_obs_group_id,'PIH','11780');
 
 -- ecog_not_evaluated
 UPDATE oncology_intake oi INNER JOIN obs o 
 ON o.encounter_id =oi.encounter_id
 AND o.voided =0
-SET ecog_evaluated = obs_from_group_id_value_coded(1594231,'PIH','11778','en');
+SET ecog_evaluated = obs_from_group_id_value_coded(ecog_obs_group_id,'PIH','11778','en');
 
 
+UPDATE oncology_intake tgt
+SET zldsi_obs_group_id = (
+	SELECT obs_group_id
+	FROM obs 
+	WHERE encounter_id = tgt.encounter_id
+	AND patient_id = tgt.patient_id
+	AND concept_id=concept_from_mapping('PIH','10584')
+	ORDER BY obs_id
+	LIMIT 1
+);
 
 -- zldsi_status
 UPDATE oncology_intake oi INNER JOIN obs o 
 ON o.encounter_id =oi.encounter_id
 -- AND o.concept_id = concept_from_mapping('PIH','10584')
 AND o.voided =0
-SET zldsi_status =  obs_from_group_id_value_numeric(1594235, 'PIH','10584');
+SET zldsi_status =  obs_from_group_id_value_numeric(zldsi_obs_group_id, 'PIH','10584');
 
 
 -- zldsi_date
 UPDATE oncology_intake oi INNER JOIN obs o 
 ON o.encounter_id =oi.encounter_id
 AND o.voided =0
-SET zldsi_date = obs_from_group_id_value_datetime(1594235,'PIH','11780');
+SET zldsi_date = obs_from_group_id_value_datetime(zldsi_obs_group_id,'PIH','11780');
 
 -- ecog_not_evaluated
 UPDATE oncology_intake oi INNER JOIN obs o 
 ON o.encounter_id =oi.encounter_id
 AND o.voided =0
-SET zldsi_evaluated = obs_from_group_id_value_coded(1594235,'PIH','11778','en');
+SET zldsi_evaluated = obs_from_group_id_value_coded(zldsi_obs_group_id,'PIH','11778','en');
 
 SELECT 
 CONCAT(@partition,'-',emr_id) "emr_id",
-encounter_id ,
+CONCAT(@partition,'-',encounter_id) "encounter_id",
 encounter_datetime ,
 encounter_location ,
 date_entered ,
@@ -186,6 +225,7 @@ alcohol ,
 drugs ,
 hiv_test ,
 hiv_test_date ,
+hiv_test_result,
 diabetes ,
 type_1_diabetes ,
 type_2_diabetes ,
