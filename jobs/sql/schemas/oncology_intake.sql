@@ -1,7 +1,7 @@
 CREATE TABLE oncology_intake 
 (
 emr_id varchar(50),
-encounter_id int,
+encounter_id varchar(50),
 encounter_datetime datetime,
 encounter_location varchar(100),
 date_entered date,
@@ -12,6 +12,7 @@ alcohol varchar(30),
 drugs varchar(30),
 hiv_test bit,
 hiv_test_date date,
+hiv_test_result varchar(50),
 diabetes bit,
 type_1_diabetes bit,
 type_2_diabetes bit,
