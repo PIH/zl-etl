@@ -65,7 +65,7 @@ UPDATE oncology_treatment_plan SET treatment_intent=currentProgramState(patientP
 
 SELECT 
 CONCAT(@partition,'-',emr_id) "emr_id",
-encounter_id,
+CONCAT(@partition,'-',encounter_id) "encounter_id",
 encounter_datetime,
 encounter_location,
 date_entered,
