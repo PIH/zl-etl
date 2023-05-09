@@ -83,6 +83,7 @@ configuration:
           - tableName: "oncology_intake"
           - tableName: "oncology_treatment_plan"
           - tableName: "oncology_program"
+          - tableName: "oncology_diagnosis"
 
     - type: "job-pipeline"
       description: "Derive analysis tables"
