@@ -179,8 +179,8 @@ inner join hiv_dispensing hd on hd.encounter_id =
 update t
 set t.inh_start_date = l.inh_start_date
     from hiv_patient_summary_status_staging t
-inner join hiv_visits l on l.encounter_id =
-    (select top 1 l2.encounter_id from hiv_visits l2
+inner join hiv_visit l on l.encounter_id =
+    (select top 1 l2.encounter_id from hiv_visit l2
     where l2.emr_id = t.emr_id and inh_start_date is not null
     order by l2.inh_start_date desc, l2.index_desc );
   
@@ -188,8 +188,8 @@ inner join hiv_visits l on l.encounter_id =
 update t
 set t.inh_end_date = l.inh_end_date
     from hiv_patient_summary_status_staging t
-inner join hiv_visits l on l.encounter_id =
-    (select top 1 l2.encounter_id from hiv_visits l2
+inner join hiv_visit l on l.encounter_id =
+    (select top 1 l2.encounter_id from hiv_visit l2
     where l2.emr_id = t.emr_id and inh_end_date is not null
     order by l2.inh_end_date desc, l2.index_desc );
 
