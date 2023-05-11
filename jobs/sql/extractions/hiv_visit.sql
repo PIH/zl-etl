@@ -1,6 +1,6 @@
 SET sql_safe_updates = 0;
 set @partition = '${partitionNum}';
-	
+set @locale = 'en';
 SET @hiv_intake = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
 SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
 
@@ -36,6 +36,9 @@ last_breastfeeding_date					DATETIME,
 next_visit_date							DATE,
 encounter_location_id					INT(11),
 visit_location							VARCHAR(255),
+inh_line                                VARCHAR(50),
+inh_start_date                          DATE,
+inh_end_date                            DATE,
 index_asc								INT,
 index_desc								INT
 );
@@ -228,6 +231,40 @@ set @weanDate = concept_from_mapping('PIH','6889');
 UPDATE 	temp_hiv_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @weanDate and o.voided = 0
 set last_breastfeeding_date = o.value_datetime;
+
+-- inh
+drop temporary table if exists temp_hiv_inh;
+create temporary table temp_hiv_inh(obs_group_id int, encounter_id int, inh_line varchar(50), inh_start_date date, inh_end_date date);
+insert into temp_hiv_inh(obs_group_id, encounter_id)
+select obs_group_id, encounter_id from obs o where voided = 0 and 
+value_coded = concept_from_mapping('PIH','ISONIAZID')
+and o.obs_group_id in
+((select obs_id from obs where voided = 0 and concept_id in (
+concept_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
+concept_from_mapping('PIH', 'CURRENT PROPHYLAXIS TREATMENT CONSTRUCT'))
+))
+and encounter_id in (select encounter_id from temp_hiv_visit);
+
+
+update temp_hiv_inh i set inh_line = (select concept_name(value_coded, @locale) from obs o where o.obs_group_id = i.obs_group_id and voided = 0 
+and concept_id = concept_from_mapping('PIH', '13786'));
+update temp_hiv_inh i join obs o on i.encounter_id = o.encounter_id and o.obs_group_id = i.obs_group_id and concept_id in (
+concept_from_mapping('PIH', 'HISTORICAL DRUG START DATE'),
+concept_from_mapping('PIH', '11131'))
+set i.inh_start_date = date(value_datetime);
+
+update temp_hiv_inh i set inh_line = (select concept_name(value_coded, @locale) from obs o where o.obs_group_id = i.obs_group_id and voided = 0 
+and concept_id = concept_from_mapping('PIH', '13786'));
+update temp_hiv_inh i join obs o on i.encounter_id = o.encounter_id and o.obs_group_id = i.obs_group_id and concept_id in (
+concept_from_mapping('PIH', 'HISTORICAL DRUG STOP DATE'),
+concept_from_mapping('PIH', '12748'))
+set i.inh_end_date = date(value_datetime);
+
+update temp_hiv_visit t  join temp_hiv_inh i on t.encounter_id = i.encounter_id
+set t.inh_line = i.inh_line,
+	t.inh_start_date = i.inh_start_date,
+    t.inh_end_date = i.inh_end_date;
+
 /*
 -- The ascending/descending indexes are calculated ordering on the dispense date
 -- new temp tables are used to build them and then joined into the main temp table.
@@ -301,6 +338,9 @@ SELECT
 	reason_not_on_ARV,
 	breastfeeding_status,
 	last_breastfeeding_date,
+	inh_line,
+	inh_start_date,
+	inh_end_date,
 	DATE(visit_date),
 	next_visit_date,
 	visit_location,
