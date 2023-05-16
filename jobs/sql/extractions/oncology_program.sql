@@ -32,7 +32,7 @@ WHERE pp.program_id = @prog_id
 AND pp.voided = 0;
 
 SELECT 
-CONCAT(@partition,'-',emr_id) "emr_id",
+emr_id,
 date_started, 
 date_completed, 
 program_status, 

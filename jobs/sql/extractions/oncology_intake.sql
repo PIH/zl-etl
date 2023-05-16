@@ -213,7 +213,7 @@ AND o.voided =0
 SET zldsi_evaluated = obs_from_group_id_value_coded(zldsi_obs_group_id,'PIH','11778','en');
 
 SELECT 
-CONCAT(@partition,'-',emr_id) "emr_id",
+emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
 encounter_datetime ,
 encounter_location ,
