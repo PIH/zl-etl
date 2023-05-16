@@ -61,7 +61,7 @@ ORDER BY obs_id ASC;
 
 
 SELECT 
-CONCAT(@partition,'-',emr_id) "emr_id",
+emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
 encounter_datetime ,
 encounter_location ,
