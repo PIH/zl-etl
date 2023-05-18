@@ -182,7 +182,7 @@ set t.inh_start_date = l.inh_start_date
 inner join hiv_visit l on l.encounter_id =
     (select top 1 l2.encounter_id from hiv_visit l2
     where l2.emr_id = t.emr_id and inh_start_date is not null
-    order by l2.inh_start_date desc, l2.index_desc );
+    order by l2.visit_date desc, l2.index_desc );
   
 -- inh_end_date
 update t
@@ -191,7 +191,7 @@ set t.inh_end_date = l.inh_end_date
 inner join hiv_visit l on l.encounter_id =
     (select top 1 l2.encounter_id from hiv_visit l2
     where l2.emr_id = t.emr_id and inh_end_date is not null
-    order by l2.inh_end_date desc, l2.index_desc );
+    order by l2.visit_date desc, l2.index_desc );
 
 -- last_visit_date and next_visit_date should consider hiv, eid and pmtct notes
 update t
@@ -398,7 +398,6 @@ alter table hiv_patient_summary_status_staging drop column current_outcome_date;
 alter table hiv_patient_summary_status_staging drop column latest_next_dispense_date;
 alter table hiv_patient_summary_status_staging drop column med_pickup_status;
 alter table hiv_patient_summary_status_staging drop column med_pickup_status_date;
-
 
 
 -- ------------------------------------------------------------------------------------
