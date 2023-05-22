@@ -141,6 +141,7 @@ inner join temp_vitals t on t.encounter_id = o.encounter_id
 where o.voided = 0
 and o.concept_id in (
 @height,
+@weight,
 @temp,
 @hr,
 @rr,
