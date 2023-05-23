@@ -17,6 +17,7 @@ date_entered							DATETIME,
 creator									INT(11),
 user_entered							VARCHAR(50),
 chw										VARCHAR(255),
+who_stage                               VARCHAR(255),
 pregnant								BIT,
 visit_date								DATETIME,
 rt_in_obs_group_id						INT(11),
@@ -105,6 +106,11 @@ set @chw = concept_from_mapping('PIH','11631');
 update temp_hiv_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @chw  and o.voided = 0
 set	chw = o.value_text;
+
+set @who_stage = concept_from_mapping('PIH','5356');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @who_stage  and o.voided = 0
+set	who_stage = concept_name(o.value_coded,@locale);
 
 set @pregStatus = concept_from_mapping('PIH','PREGNANCY STATUS') ;
 set @yesID =concept_from_mapping('PIH','YES');
@@ -325,6 +331,7 @@ SELECT
 	date_entered,
 	user_entered,
 	chw,
+	who_stage,
 	pregnant,
 	referral_transfer_in,
 	internal_external_in,
