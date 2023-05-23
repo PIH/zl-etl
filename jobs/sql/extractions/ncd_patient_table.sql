@@ -57,13 +57,13 @@ UPDATE ncd_patient_table tt
 SET tt.birthdate= birthdate(tt.patient_id),
 tt.sex=gender(tt.patient_id),
 tt.department = person_address_state_province(tt.patient_id),
-tt.commune =person_address_city_village(tt.patient_id) ;
+tt.commune =person_address_city_village(tt.patient_id);
 
 -- -------------------------------------------------------- Enrolled date, location of enrollment -----------------------
 
 DROP TABLE IF EXISTS first_enc;
 CREATE TEMPORARY TABLE first_enc AS
-		SELECT patient_id , min(encounter_datetime) encounter_datetime
+		SELECT patient_id , min(encounter_id) encounter_id
 		FROM encounter e 
 		WHERE encounter_type IN (@ncd_init_enc, @ncd_follow_enc)
 		GROUP BY patient_id;
@@ -71,7 +71,8 @@ CREATE TEMPORARY TABLE first_enc AS
 DROP TABLE IF EXISTS first_enc_details;
 CREATE TEMPORARY TABLE  first_enc_details AS 
 	SELECT DISTINCT e.patient_id, e.encounter_datetime  , e.encounter_id,e.encounter_type
-        FROM encounter e INNER JOIN first_enc X ON X.patient_id =e.patient_id AND X.encounter_datetime=e.encounter_datetime;
+        FROM encounter e INNER JOIN first_enc X ON X.patient_id =e.patient_id AND X.encounter_id=e.encounter_id
+        WHERE encounter_type IN (@ncd_init_enc, @ncd_follow_enc);
 
 	
 UPDATE 
@@ -96,10 +97,9 @@ ncd_patient_table tt INNER JOIN (
 SET tt.ncd_enrollment_date=fe.date_enrolled
 	  WHERE tt.ncd_enrollment_date IS NULL;
 	 
-
 -- -------------------------------------------------------- death flag, death date -----------------------
 UPDATE ncd_patient_table tt INNER JOIN (
-SELECT person_id, dead , death_date FROM person p) st on  st.person_id =tt.patient_id 
+SELECT person_id, dead , death_date FROM person p WHERE voided=0) st on  st.person_id =tt.patient_id 
 SET tt.deceased = dead,
 	tt.date_of_death = CAST(st.death_date AS date);
 
@@ -283,6 +283,7 @@ SET  tt.cardiomyopathy =(
           
           
 SELECT
+patient_id,
 zlemr(patient_id) emr_id,
 birthdate ,
 sex,
