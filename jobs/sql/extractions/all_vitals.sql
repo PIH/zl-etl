@@ -10,6 +10,7 @@ CREATE TEMPORARY TABLE temp_vitals
 	patient_id			int(11),
 	emr_id          	VARCHAR(25),
     encounter_id		int(11),
+    visit_id			int(11),
     encounter_location_id	int(11),
     encounter_location	varchar(255),
     encounter_datetime	datetime,
@@ -32,8 +33,8 @@ CREATE TEMPORARY TABLE temp_vitals
     index_desc			int
     );
    
-insert into temp_vitals(patient_id, encounter_id, encounter_datetime, date_entered, creator, encounter_location_id)   
-select e.patient_id,  e.encounter_id, e.encounter_datetime, e.date_created, e.creator, e.location_id  from encounter e
+insert into temp_vitals(patient_id, encounter_id, visit_id, encounter_datetime, date_entered, creator, encounter_location_id)   
+select e.patient_id,  e.encounter_id, e.visit_id, e.encounter_datetime, e.date_created, e.creator, e.location_id  from encounter e
 where e.encounter_type = @vitals_encounter
 and e.voided = 0;
 
@@ -279,6 +280,7 @@ select
 	all_vitals_id,
 	emr_id ,
 	concat(@partition,'-',encounter_id),
+	concat(@partition,'-',visit_id),
 	encounter_location,
 	encounter_datetime,
 	encounter_provider,
