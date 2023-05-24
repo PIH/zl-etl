@@ -1,5 +1,6 @@
 create table ncd_patient_table
 (
+patient_id int,
 emr_id varchar(50),
 birthdate date,
 sex char(1),
@@ -8,6 +9,7 @@ commune varchar(50),
 ncd_enrollment_date date,
 ncd_first_encounter_date date,
 ncd_enrollment_location varchar(50),
+ncd_current_location varchar(50), 
 htn bit,
 diabetes bit,
 respiratory bit,
