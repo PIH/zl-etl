@@ -8,6 +8,7 @@ DROP TEMPORARY TABLE IF EXISTS temp_hiv_visit;
 CREATE TEMPORARY TABLE temp_hiv_visit
 (
 encounter_id							INT(11),
+visit_id								INT(11),
 patient_id								INT(11),
 emr_id									VARCHAR(25),
 hivemr_v1								VARCHAR(25),
@@ -44,8 +45,8 @@ index_asc								INT,
 index_desc								INT
 );
 
-INSERT INTO temp_hiv_visit(patient_id, encounter_id, visit_date, date_entered, creator, encounter_location_id, encounter_type_id)
-SELECT patient_id, encounter_id,  encounter_datetime, date_created, creator, location_id, encounter_type  FROM encounter  WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup)
+INSERT INTO temp_hiv_visit(patient_id, encounter_id, visit_id, visit_date, date_entered, creator, encounter_location_id, encounter_type_id)
+SELECT patient_id, encounter_id, visit_id, encounter_datetime, date_created, creator, location_id, encounter_type  FROM encounter  WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup)
 ;
 
 CREATE INDEX temp_hiv_visit_pid ON temp_hiv_visit (patient_id);
@@ -325,6 +326,7 @@ set t.index_desc = tvid.index_desc;
 */
 SELECT
 	concat(@partition, '-', encounter_id),
+	concat(@partition, '-', visit_id),
 	emr_id,
 	hivemr_v1,
 	encounter_type,

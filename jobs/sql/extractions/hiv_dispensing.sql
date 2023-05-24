@@ -6,6 +6,7 @@ create temporary table temp_HIV_dispensing
 (
 patient_id int(11),
 encounter_id int(11),
+visit_id int(11),
 dispense_date datetime,
 encounter_location_id  int(11),
 date_entered DATETIME,
@@ -56,8 +57,8 @@ regimen_match char(1)
  create index temp_HIV_dispensing_dispense_date on temp_HIV_dispensing (dispense_date);
  create index temp_HIV_dispensing_encounter_id on temp_HIV_dispensing (encounter_id);
 
- insert into temp_HIV_dispensing (patient_id, encounter_id, dispense_date, date_entered, user_entered, encounter_location_id)
- select patient_id, encounter_id,encounter_datetime, date_created, username(creator), e.location_id  from encounter e
+ insert into temp_HIV_dispensing (patient_id, encounter_id, visit_id, dispense_date, date_entered, user_entered, encounter_location_id)
+ select patient_id, encounter_id, visit_id, encounter_datetime, date_created, username(creator), e.location_id  from encounter e
  where encounter_type = @HIV_dispensing and voided = 0;
 
 DROP TEMPORARY TABLE IF EXISTS temp_obs;
@@ -359,6 +360,7 @@ where t.dispense_date_descending = 1;
 Select
 zlemr(t.patient_id),
 concat(@partition,'-',t.encounter_id),
+concat(@partition,'-',t.visit_id),
 t.dispense_date,
 t.dispense_site,
 t.date_entered,
