@@ -14,6 +14,7 @@ department varchar(50),
 commune varchar(50),
 ncd_enrollment_date date,
 ncd_first_encounter_date date,
+ncd_enrollment_location varchar(50),
 htn bit,
 diabetes bit,
 respiratory bit,
@@ -63,7 +64,7 @@ tt.commune =person_address_city_village(tt.patient_id);
 
 DROP TABLE IF EXISTS first_enc;
 CREATE TEMPORARY TABLE first_enc AS
-		SELECT patient_id , min(encounter_id) encounter_id
+		SELECT patient_id , min(encounter_id) encounter_id, location_id
 		FROM encounter e 
 		WHERE encounter_type IN (@ncd_init_enc, @ncd_follow_enc)
 		GROUP BY patient_id;
@@ -97,6 +98,9 @@ ncd_patient_table tt INNER JOIN (
 SET tt.ncd_enrollment_date=fe.date_enrolled
 	  WHERE tt.ncd_enrollment_date IS NULL;
 	 
+UPDATE ncd_patient_table tt JOIN first_enc fe 
+ON fe.patient_id = tt.patient_id SET ncd_enrollment_location = LOCATION_NAME(fe.location_id);
+
 -- -------------------------------------------------------- death flag, death date -----------------------
 UPDATE ncd_patient_table tt INNER JOIN (
 SELECT person_id, dead , death_date FROM person p WHERE voided=0) st on  st.person_id =tt.patient_id 
@@ -291,6 +295,7 @@ department,
 commune,
 ncd_enrollment_date,
 ncd_first_encounter_date,
+ncd_enrollment_location,
 htn ,
 diabetes ,
 respiratory ,
