@@ -1,6 +1,8 @@
 SELECT encounter_type_id  INTO @enc_type FROM encounter_type et WHERE uuid='8ff50dea-18a1-4609-b4c9-3f8f2d611b84';
 SET @partition = '${partitionNum}';
 
+
+
 DROP TABLE IF EXISTS all_medication_dispensing;
 CREATE TEMPORARY TABLE all_medication_dispensing
 (
@@ -100,4 +102,5 @@ dose_unit,
 frequency,
 quantity_dispensed,
 prescription
-FROM all_medication_dispensing;
+FROM all_medication_dispensing
+;
