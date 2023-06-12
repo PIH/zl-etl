@@ -86,7 +86,7 @@ configuration:
           - tableName: "oncology_diagnosis"
           - tableName: "all_medication_dispensing"
           - tableName: "new_medication_dispensing"
-            conditional: "select table_exists('authentication_event_log')"
+            conditional: "select table_exists('medication_dispense')"
 
     - type: "job-pipeline"
       description: "Derive analysis tables"
