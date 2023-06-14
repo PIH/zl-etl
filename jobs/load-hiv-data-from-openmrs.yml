@@ -43,22 +43,3 @@ configuration:
             conditional: "select table_exists('authentication_event_log')"
           - tableName: "summary_db_restore"
 
-    - type: "job-pipeline"
-      description: "Derive HIV analysis tables"
-      configuration:
-        jobs:
-          - type: "iterating-job"
-            description: "Create static tables"
-            configuration:
-              jobTemplate:
-                path: "create-derived-table-in-warehouse.yml"
-              iterations:
-                - tableName: "dim_date"
-          - type: "iterating-job"
-            description: "Create derived tables"
-            configuration:
-              jobTemplate:
-                path: "create-derived-table-in-warehouse.yml"
-              iterations:
-                - tableName: "hiv_monthly_reporting"
-                - tableName: "hiv_patient_summary_status"
