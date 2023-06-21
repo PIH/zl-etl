@@ -42,4 +42,24 @@ configuration:
           - tableName: "user_logins"
             conditional: "select table_exists('authentication_event_log')"
           - tableName: "summary_db_restore"
-
+          
+    # the following 2 jobs are to run these after the other hiv jobs are complete
+    # these will be rerun after/if the entire pipeline runs
+    # this is a temporary fix until we resolve issues in the pipeline 
+    - type: "iterating-job"
+      description: "Create derived setup tables"
+      configuration:
+        jobTemplate:
+          path: "create-derived-table-in-warehouse.yml"
+        iterations:
+          - tableName: "update_index_numbers"
+          - tableName: "dim_date"
+          
+    - type: "iterating-job"
+      description: "Create final derived tables"
+      configuration:
+        jobTemplate:
+          path: "create-derived-table-in-warehouse.yml"
+        iterations:
+          - tableName: "hiv_monthly_reporting"
+          - tableName: "hiv_patient_summary_status"      
