@@ -88,30 +88,21 @@ configuration:
           - tableName: "new_medication_dispensing"
             conditional: "select table_exists('medication_dispense')"
 
-    - type: "job-pipeline"
-      description: "Derive analysis tables"
+    - type: "iterating-job"
+      description: "Create derived setup tables"
       configuration:
-        jobs:
-          - type: "iterating-job"
-            description: "Create static tables"
-            configuration:
-              jobTemplate:
-                path: "create-derived-table-in-warehouse.yml"
-              iterations:
-                - tableName: "dim_date"
-          - type: "iterating-job"
-            description: "Create final derived tables"
-            configuration:
-              jobTemplate:
-                path: "create-derived-table-in-warehouse.yml"
-              iterations:
-                - tableName: "visit_entry_dates"
-                - tableName: "update_index_numbers"
-          - type: "iterating-job"
-            description: "Create derived HIV tables"
-            configuration:
-              jobTemplate:
-                path: "create-derived-table-in-warehouse.yml"
-              iterations:
-                - tableName: "hiv_monthly_reporting"
-                - tableName: "hiv_patient_summary_status"
+        jobTemplate:
+          path: "create-derived-table-in-warehouse.yml"
+        iterations:
+          - tableName: "update_index_numbers"
+          - tableName: "dim_date"
+          
+    - type: "iterating-job"
+      description: "Create final derived tables"
+      configuration:
+        jobTemplate:
+          path: "create-derived-table-in-warehouse.yml"
+        iterations:
+          - tableName: "visit_entry_dates"
+          - tableName: "hiv_monthly_reporting"
+          - tableName: "hiv_patient_summary_status"
