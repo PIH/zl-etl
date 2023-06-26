@@ -1,4 +1,5 @@
-CREATE TABLE oncology_program (
+CREATE TABLE oncology_program 
+(
 emr_id varchar(50),
 program_enrollment_date date,
 program_completion_date date,

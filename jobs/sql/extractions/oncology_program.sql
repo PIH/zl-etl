@@ -70,8 +70,6 @@ AND pws.concept_id IN (concept_from_mapping('PIH','10364'),concept_from_mapping(
 
 
 SELECT 
-oi.patient_id,
-oi.patient_program_id,
 CONCAT(@partition,'-',oi.emr_id) "emr_id",
 oi.program_enrollment_date ,
 oi.program_completion_date ,
