@@ -7,42 +7,61 @@ SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '
 DROP TEMPORARY TABLE IF EXISTS temp_hiv_visit;
 CREATE TEMPORARY TABLE temp_hiv_visit
 (
-encounter_id							INT(11),
-visit_id								INT(11),
-patient_id								INT(11),
-emr_id									VARCHAR(25),
-hivemr_v1								VARCHAR(25),
-encounter_type_id						INT(11),
-encounter_type							VARCHAR(255),
-date_entered							DATETIME,
-creator									INT(11),
-user_entered							VARCHAR(50),
-chw										VARCHAR(255),
-who_stage                               VARCHAR(255),
-pregnant								BIT,
-visit_date								DATETIME,
-rt_in_obs_group_id						INT(11),
-referral_transfer_in					VARCHAR(255),
-internal_external_in					VARCHAR(255),
-referral_transfer_location_in			VARCHAR(255),
-referred_by_womens_health_in			BIT,
-referral_transfer_pepfar_partner_in		BIT,
-rt_out_obs_group_id						INT(11),
-referral_transfer_out					VARCHAR(255),
-internal_external_out					VARCHAR(255),
-referral_transfer_location_out			VARCHAR(255),
-referral_transfer_pepfar_partner_out	BIT,
-reason_not_on_ARV						VARCHAR(255),
-breastfeeding_status					VARCHAR(255),
-last_breastfeeding_date					DATETIME,
-next_visit_date							DATE,
-encounter_location_id					INT(11),
-visit_location							VARCHAR(255),
-inh_line                                VARCHAR(50),
-inh_start_date                          DATE,
-inh_end_date                            DATE,
-index_asc								INT,
-index_desc								INT
+encounter_id                         INT(11),      
+visit_id                             INT(11),      
+patient_id                           INT(11),      
+emr_id                               VARCHAR(25),  
+hivemr_v1                            VARCHAR(25),  
+encounter_type_id                    INT(11),      
+encounter_type                       VARCHAR(255), 
+date_entered                         DATETIME,     
+creator                              INT(11),      
+user_entered                         VARCHAR(50),  
+chw                                  VARCHAR(255), 
+who_stage                            VARCHAR(255), 
+pregnant                             BIT,          
+visit_date                           DATETIME,     
+rt_in_obs_group_id                   INT(11),      
+referral_transfer_in                 VARCHAR(255), 
+internal_external_in                 VARCHAR(255), 
+referral_transfer_location_in        VARCHAR(255), 
+referred_by_womens_health_in         BIT,          
+referral_transfer_pepfar_partner_in  BIT,          
+rt_out_obs_group_id                  INT(11),      
+referral_transfer_out                VARCHAR(255), 
+internal_external_out                VARCHAR(255), 
+referral_transfer_location_out       VARCHAR(255), 
+referral_transfer_pepfar_partner_out BIT,          
+reason_not_on_ARV                    VARCHAR(255), 
+breastfeeding_status                 VARCHAR(255), 
+last_breastfeeding_date              DATETIME,     
+next_visit_date                      DATE,         
+encounter_location_id                INT(11),      
+visit_location                       VARCHAR(255), 
+inh_line                             VARCHAR(50),  
+inh_start_date                       DATE,         
+inh_end_date                         DATE,         
+sexually_active_with_men             BIT,          
+sexually_active_with_women           BIT,          
+intravenous_drug_use                 BIT,          
+blood_transfusion                    BIT,          
+maternal_to_fetal_transmission       BIT,          
+accidental_exposure_to_blood         BIT,          
+sex_with_infected                    BIT,          
+sex_with_drug_user                   BIT,          
+heterosexual_sex_bisexual            BIT,          
+heterosexual_sex_blood_transfusion   BIT,          
+other_mode_of_transmission           BIT,          
+history_of_syphilis                  BIT,          
+history_of_other_sti                 BIT,          
+victim_of_gbv                        BIT,          
+multiple_partners                    BIT,          
+without_condom                       BIT,          
+anal_sex                             BIT,          
+with_sex_worker                      BIT,          
+other_risk_factor                    BIT,          
+index_asc                            INT,          
+index_desc                           INT           
 );
 
 INSERT INTO temp_hiv_visit(patient_id, encounter_id, visit_id, visit_date, date_entered, creator, encounter_location_id, encounter_type_id)
@@ -271,6 +290,65 @@ update temp_hiv_visit t  join temp_hiv_inh i on t.encounter_id = i.encounter_id
 set t.inh_line = i.inh_line,
 	t.inh_start_date = i.inh_start_date,
     t.inh_end_date = i.inh_end_date;
+   
+update temp_hiv_visit t
+set sexually_active_with_men = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','10870') is null,null,1);
+
+update temp_hiv_visit t
+set sexually_active_with_women = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','10872') is null,null,1);
+
+update temp_hiv_visit t
+set intravenous_drug_use = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','105') is null,null,1);
+
+update temp_hiv_visit t
+set blood_transfusion = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','1063') is null,null,1);
+
+update temp_hiv_visit t
+set maternal_to_fetal_transmission = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11042') is null,null,1);
+
+update temp_hiv_visit t
+set accidental_exposure_to_blood = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11044') is null,null,1);
+
+update temp_hiv_visit t
+set sex_with_infected = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11060') is null,null,1);
+
+update temp_hiv_visit t
+set sex_with_drug_user = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11534') is null,null,1);
+
+update temp_hiv_visit t
+set heterosexual_sex_bisexual = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','13001') is null,null,1);
+
+update temp_hiv_visit t
+set heterosexual_sex_blood_transfusion = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','13000') is null,null,1);
+
+update temp_hiv_visit t
+set other_mode_of_transmission = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','5622') is null,null,1);
+
+
+update temp_hiv_visit t
+set history_of_syphilis = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11050');
+
+update temp_hiv_visit t
+set history_of_other_sti = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11047');
+
+update temp_hiv_visit t
+set victim_of_gbv = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11049');
+
+update temp_hiv_visit t
+set multiple_partners = obs_value_coded_as_boolean(t.encounter_id, 'PIH','5567');
+
+update temp_hiv_visit t
+set without_condom = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11048');
+
+update temp_hiv_visit t
+set anal_sex = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11051');
+
+update temp_hiv_visit t
+set with_sex_worker = obs_value_coded_as_boolean(t.encounter_id, 'CIEL','160580');
+
+update temp_hiv_visit t
+set other_risk_factor = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11406') is null,null,1);
+   
 
 /*
 -- The ascending/descending indexes are calculated ordering on the dispense date
@@ -353,6 +431,25 @@ SELECT
 	DATE(visit_date),
 	next_visit_date,
 	visit_location,
+	sexually_active_with_men,
+	sexually_active_with_women,
+	intravenous_drug_use,
+	blood_transfusion,
+	maternal_to_fetal_transmission,
+	accidental_exposure_to_blood,
+	sex_with_infected,
+	sex_with_drug_user,
+	heterosexual_sex_bisexual,
+	heterosexual_sex_blood_transfusion,
+	other_mode_of_transmission,
+	history_of_syphilis,
+	history_of_other_sti,
+	victim_of_gbv,
+	multiple_partners,
+	without_condom,
+	anal_sex,
+	with_sex_worker,
+	other_risk_factor,
 	index_asc,
 	index_desc
 FROM
