@@ -87,6 +87,7 @@ configuration:
           - tableName: "all_medication_dispensing"
           - tableName: "new_medication_dispensing"
             conditional: "select table_exists('medication_dispense')"
+          - tableName: "all_mh_patients"
 
     - type: "iterating-job"
       description: "Create derived setup tables"
@@ -96,7 +97,7 @@ configuration:
         iterations:
           - tableName: "update_index_numbers"
           - tableName: "dim_date"
-          
+
     - type: "iterating-job"
       description: "Create final derived tables"
       configuration:
