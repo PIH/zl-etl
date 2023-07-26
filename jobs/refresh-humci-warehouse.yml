@@ -88,6 +88,7 @@ configuration:
           - tableName: "new_medication_dispensing"
             conditional: "select table_exists('medication_dispense')"
           - tableName: "all_mh_patients"
+          - tableName: "all_mh_diagnosis"
 
     - type: "iterating-job"
       description: "Create derived setup tables"
