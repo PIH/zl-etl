@@ -89,6 +89,7 @@ configuration:
             conditional: "select table_exists('medication_dispense')"
           - tableName: "all_mh_patients"
           - tableName: "all_mh_diagnosis"
+          - tableName: "oncology_monthly_summary"
 
     - type: "iterating-job"
       description: "Create derived setup tables"
