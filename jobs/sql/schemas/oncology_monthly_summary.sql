@@ -1,4 +1,5 @@
-CREATE TEMPORARY TABLE oncology_monthly_summary (
+CREATE TABLE oncology_monthly_summary 
+(
 report_month date,
 emr_id varchar(50),
 enrollment_date date,
