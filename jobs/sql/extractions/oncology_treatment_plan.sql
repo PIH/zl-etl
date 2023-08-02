@@ -16,7 +16,7 @@ encounter_provider varchar(30),
 date_enrolled date,
 treatment_intent varchar(30),
 cancer_stage varchar(30),
-plan_details varchar(500));
+plan_details text);
 
 INSERT INTO oncology_treatment_plan(patient_id, emr_id,encounter_id,encounter_datetime,encounter_location,date_entered,user_entered,encounter_provider)
 SELECT 
