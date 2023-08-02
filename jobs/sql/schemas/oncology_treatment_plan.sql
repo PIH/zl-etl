@@ -9,5 +9,5 @@ user_entered varchar(30),
 encounter_provider varchar(30),
 treatment_intent varchar(30),
 cancer_stage varchar(30),
-plan_details varchar(500)
+plan_details text
 );
