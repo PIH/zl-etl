@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Hinche Data"
+configuration:
+  iterations:
+    - siteName: "hinche"
+      partitionNum: "2"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"

@@ -1,0 +1,21 @@
+type: "job-pipeline"
+description: "Refresh Derived Tables"
+configuration:
+  jobs:
+    - type: "iterating-job"
+      description: "Create derived setup tables"
+      configuration:
+        jobTemplate:
+          path: "create-derived-table-in-warehouse.yml"
+        iterations:
+          - tableName: "update_index_numbers"
+          - tableName: "dim_date"
+    - type: "iterating-job"
+      description: "Create final derived tables"
+      configuration:
+        jobTemplate:
+          path: "create-derived-table-in-warehouse.yml"
+        iterations:
+          - tableName: "visit_entry_dates"
+          - tableName: "hiv_monthly_reporting"
+          - tableName: "hiv_patient_summary_status"

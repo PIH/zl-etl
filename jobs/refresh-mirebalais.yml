@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Mirebalais Data"
+configuration:
+  iterations:
+    - siteName: "mirebalais"
+      partitionNum: "6"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"

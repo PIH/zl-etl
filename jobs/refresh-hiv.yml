@@ -1,0 +1,50 @@
+type: "job-pipeline"
+description: "Refresh HIV Data"
+parameters:
+  conditional: ""
+  siteName: "hiv"
+  partitionNum: "8"
+configuration:
+  jobs:
+    - path: "create-source-views-and-functions.yml"
+    #- path: "setup-for-incremental-updates.yml"
+    - type: "iterating-job"
+      description: "Importing data for hiv using partition ${partitionNum}"
+      configuration:
+        jobTemplate:
+          path: "import-to-table-partition.yml"
+        iterations:
+          - tableName: "all_lab_orders"
+          - tableName: "all_lab_results"
+          - tableName: "all_medication_prescribed"
+          - tableName: "all_vitals"
+          #- tableName: "all_encounters"
+          #  incrementalEnabled: "true"
+          - tableName: "all_visits"
+          - tableName: "eid_visit"
+          - tableName: "hiv_dispensing"
+          - tableName: "hiv_patient"
+          - tableName: "hiv_patient_program"
+          - tableName: "hiv_regimens"
+          - tableName: "hiv_status"
+          - tableName: "hiv_tests"
+          - tableName: "hiv_viral_load"
+          - tableName: "hiv_visit"
+          - tableName: "ovc_program_encounters"
+          - tableName: "pmtct_infant_delivery"
+          - tableName: "pmtct_contacts"
+          - tableName: "pmtct_visits"
+          - tableName: "pmtct_labs"
+          - tableName: "pmtct_pregnancy"
+          - tableName: "tb_lab_results"
+          - tableName: "tb_screening"
+          - tableName: "data_warnings"
+          - tableName: "users"
+          - tableName: "user_roles"
+          - tableName: "user_logins"
+            conditional: "select table_exists('authentication_event_log')"
+          - tableName: "summary_db_restore"
+
+    # Run the refresh-derived-tables job here to ensure these exist even if the rest of the pipeline fails.
+    # We can hopefully remove this if/when the pipeline overall is completing consistently.
+    - path: "refresh-derived-tables.yml"

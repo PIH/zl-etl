@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Lacolline Data"
+configuration:
+  iterations:
+    - siteName: "lacolline"
+      partitionNum: "4"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"

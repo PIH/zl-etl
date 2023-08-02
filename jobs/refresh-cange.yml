@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Cange Data"
+configuration:
+  iterations:
+    - siteName: "cange"
+      partitionNum: "1"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"

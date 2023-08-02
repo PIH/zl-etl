@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Saint Marc HSN Data"
+configuration:
+  iterations:
+    - siteName: "saint_marc_hsn"
+      partitionNum: "3"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"
