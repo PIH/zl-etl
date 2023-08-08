@@ -24,6 +24,11 @@ quantity_dispensed int,
 prescription varchar(500)
 );
 
+DROP TABLE IF EXISTS med_enc;
+CREATE TEMPORARY TABLE med_enc
+SELECT * FROM encounter e 
+WHERE e.encounter_type = @enc_type;
+
 
 INSERT INTO all_medication_dispensing(
 patient_id,
@@ -53,19 +58,50 @@ encounter_location_name(e.encounter_id),
 e.date_created,
 encounter_creator(e.encounter_id),
 provider(e.encounter_id),
-obs_from_group_id_value_numeric(o.obs_group_id,'PIH','9075')  duration,
-obs_from_group_id_value_coded(o.obs_group_id,'PIH','6412','en') duration_unit,
-obs_from_group_id_value_numeric(o.obs_group_id,'PIH','9073')  quantity_per_dose,
-obs_from_group_id_value_text(o.obs_group_id,'PIH','9074')  dose_unit,
-obs_from_group_id_value_coded(o.obs_group_id,'PIH','9363','en')  frequency,
-obs_from_group_id_value_numeric(o.obs_group_id,'PIH','9071') quantity_dispensed,
-obs_from_group_id_value_text(o.obs_group_id,'PIH','9072') prescription
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL,
+NULL
 FROM obs o
-INNER JOIN encounter e ON o.encounter_id = e.encounter_id AND e.encounter_type = @enc_type
+INNER JOIN med_enc e ON o.encounter_id = e.encounter_id -- AND e.encounter_type = @enc_type
 WHERE  o.concept_id = concept_from_mapping('PIH','1282')
 AND o.voided =0
 AND e.voided =0
 ORDER BY obs_id ASC;
+
+UPDATE all_medication_dispensing tgt 
+INNER JOIN obs o ON o.encounter_id = tgt.encounter_id AND o.obs_group_id=tgt.obs_group_id
+AND o.concept_id=concept_from_mapping('PIH','9075')
+SET duration= value_numeric;
+
+UPDATE all_medication_dispensing tgt 
+SET duration_unit= obs_from_group_id_value_coded(obs_group_id,'PIH','6412','en');
+
+UPDATE all_medication_dispensing tgt 
+INNER JOIN obs o ON o.encounter_id = tgt.encounter_id AND o.obs_group_id=tgt.obs_group_id
+AND o.concept_id=concept_from_mapping('PIH','9073')
+SET quantity_per_dose= value_numeric;
+
+UPDATE all_medication_dispensing tgt 
+INNER JOIN obs o ON o.encounter_id = tgt.encounter_id AND o.obs_group_id=tgt.obs_group_id
+AND o.concept_id=concept_from_mapping('PIH','9074')
+SET dose_unit= value_text;
+
+UPDATE all_medication_dispensing tgt 
+SET frequency= obs_from_group_id_value_coded(obs_group_id,'PIH','9363','en') ;
+
+UPDATE all_medication_dispensing tgt 
+INNER JOIN obs o ON o.encounter_id = tgt.encounter_id AND o.obs_group_id=tgt.obs_group_id
+AND o.concept_id=concept_from_mapping('PIH','9071')
+SET quantity_dispensed= value_numeric;
+
+UPDATE all_medication_dispensing tgt 
+INNER JOIN obs o ON o.encounter_id = tgt.encounter_id AND o.obs_group_id=tgt.obs_group_id
+AND o.concept_id=concept_from_mapping('PIH','9072')
+SET prescription= value_text;
 
 DROP TEMPORARY TABLE IF EXISTS drug_name;
 CREATE TEMPORARY TABLE drug_name AS 
