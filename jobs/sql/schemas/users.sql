@@ -8,10 +8,7 @@ CREATE TABLE users
     created_by          varchar(50),
     provider_type       varchar(50),
     last_login_date     datetime,
-    num_logins_recorded int
+    num_logins_recorded int,
+    mfa_status          varchar(50)
 )
 ;
-
-
-
-
