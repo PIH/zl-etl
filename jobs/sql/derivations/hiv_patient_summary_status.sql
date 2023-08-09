@@ -43,7 +43,10 @@ CREATE TABLE hiv_patient_summary_status_staging
  current_treatment_status         varchar(255),  
  current_treatment_status_date    date,          
  current_outcome                  varchar(255),  
- current_outcome_date             date,          
+ current_outcome_date             date,        
+ tb_diag_date                     date,
+ tb_tx_start_date                 date,
+ tb_tx_end_date                   date,
  latest_next_dispense_date        date,          
  med_pickup_status                varchar(255),  
  med_pickup_status_date           date,          
@@ -341,6 +344,31 @@ inner join hiv_patient_program pp on pp.patient_program_id  =
     and pp2.date_enrolled <= GETDATE()
     order by pp2.date_enrolled desc,  isnull(pp2.date_completed,'9999-12-31')  desc)
 ;
+
+update t
+set tb_diag_date =
+	(select min(COALESCE(tb.test_result_date, specimen_collection_date))
+	from tb_lab_results tb
+	where tb.emr_id  = t.emr_id
+	and ((tb.test_type = 'genxpert' and tb.test_result_text  = 'Detected')
+		or (tb.test_type = 'skin test' and tb.test_result_text  = 'Positive')
+		or (tb.test_type = 'smear' and tb.test_result_text  in ('1+','++','+++'))
+		or (tb.test_type = 'culture' and tb.test_result_text  in ('1+','++','+++'))))
+from hiv_patient_summary_status_staging t;
+		
+update t
+set tb_tx_start_date = 	
+	(select min(start_date) from hiv_regimens hr
+	where hr.emr_id = t.emr_id
+	and hr.drug_category = 'tb')
+from hiv_patient_summary_status_staging t;
+
+update t
+set tb_tx_end_date = 	
+	(select max(end_date) from hiv_regimens hr
+	where hr.emr_id = t.emr_id
+	and hr.drug_category = 'tb')
+from hiv_patient_summary_status_staging t;
 
 update t
 set latest_next_dispense_date = d.next_dispense_date
