@@ -187,11 +187,15 @@
                                 <fileSet>
                                     <sourceFile>${dataExportSqlDir}/user_logins.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/user_logins.sql</destinationFile>
-			    	</fileSet>
+             			    	</fileSet>
                                 <fileSet>
                                     <sourceFile>${dataExportSqlDir}/all_medication_prescribed.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/all_medication_prescribed.sql</destinationFile>
                                 </fileSet>
+                                <fileSet>
+                                    <sourceFile>${dataExportSqlDir}/all_medication_prescribed.sql</sourceFile>
+                                    <destinationFile>${petlJobExtractionSqlDir}/backup_restore_dates.sql</destinationFile>
+                                </fileSet>                                
                             </fileSets>
                         </configuration>
                     </execution>
