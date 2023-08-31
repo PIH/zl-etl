@@ -63,7 +63,7 @@ UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tv
 SET vl_sample_taken_date_estimated =  concept_name(o.value_coded , 'en');
 
 -- lab result date
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('PIH', 'DATE OF LABORATORY TEST')
+UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('PIH', 'Date of test results')
 SET vl_result_date =  DATE(o.value_datetime);
 
 -- specimen number
