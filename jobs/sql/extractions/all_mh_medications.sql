@@ -43,7 +43,7 @@ encounter_location_name(e.encounter_id) encounter_location_name,
 encounter_creator(e.encounter_id) encounter_creator,
 provider(e.encounter_id) provider
 FROM temp_encounter e INNER JOIN temp_obs o ON e.encounter_id=o.encounter_id
-AND o.obs_group_id IS NOT NULL;
+AND concept_id=concept_from_mapping('PIH','10742');
 
 
 
