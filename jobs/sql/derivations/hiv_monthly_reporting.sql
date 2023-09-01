@@ -381,9 +381,10 @@ INNER JOIN hiv_status h on h.status_id  =
 update t
 set latest_status =
         CASE
-            when latest_program_status_outcome is not null
-                and latest_program_status_outcome  not like '%pregnant%' then latest_program_status_outcome
+            when date_completed is not null then latest_program_status_outcome
             when dispensing_days_late <= 28  then 'active - on arvs'
+	        when latest_program_status_outcome is not null
+                and latest_program_status_outcome  not like '%pregnant%' then latest_program_status_outcome
             else 'Lost to followup'
             END
     from hiv_monthly_reporting_staging t;
