@@ -37,7 +37,7 @@ DISTINCT
 patient_id,
 zlemr(patient_id) emr_id,
 e.encounter_id,
-o.obs_group_id,
+o.obs_id AS obs_group_id,
 e.encounter_datetime ,
 encounter_location_name(e.encounter_id) encounter_location_name,
 encounter_creator(e.encounter_id) encounter_creator,
