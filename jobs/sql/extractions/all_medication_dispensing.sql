@@ -8,9 +8,8 @@ patient_id int,
 obs_group_id int,
 emr_id varchar(50),
 encounter_id int,
-encounter_datetime datetime,
+encounter_date date,
 encounter_location varchar(100),
-date_entered date,
 user_entered varchar(30),
 encounter_provider varchar(30),
 drug_name varchar(500),
@@ -39,50 +38,35 @@ select o.obs_id, o.voided, o.obs_group_id, o.encounter_id, o.person_id, o.concep
 from obs o inner join temp_encounter t on o.encounter_id = t.encounter_id
 where o.voided = 0;
 
-create index temp_obs_ci1 on temp_obs(obs_id, concept_id);
-create index temp_obs_ci2 on temp_obs(obs_id);
-create index temp_obs_ci3 on temp_obs(obs_group_id,concept_id);
+create index temp_obs_ci4 on temp_obs(encounter_id);
 
-
+-- load only groups to the main table 
 INSERT INTO all_medication_dispensing(
 patient_id,
-obs_group_id,
-emr_id,
 encounter_id,
-encounter_datetime,
-encounter_location,
-date_entered,
-user_entered,
-encounter_provider,
-duration,
-duration_unit,
-quantity_per_dose,
-dose_unit,
-frequency,
-quantity_dispensed,
-prescription
-)
+obs_group_id)
 SELECT 
-e.patient_id,
-o.obs_group_id,
-zlemr(e.patient_id),
-e.encounter_id,
-e.encounter_datetime ,
-encounter_location_name(e.encounter_id),
-e.date_created,
-encounter_creator(e.encounter_id),
-provider(e.encounter_id),
-NULL,
-NULL,
-NULL,
-NULL,
-NULL,
-NULL,
-NULL
-FROM temp_obs o
-INNER JOIN temp_encounter e ON o.encounter_id = e.encounter_id
-WHERE  o.concept_id = concept_from_mapping('PIH','1282')
-ORDER BY obs_id ASC;
+o.person_id,
+o.encounter_id,
+o.obs_group_id
+FROM temp_obs o;
+
+UPDATE all_medication_dispensing
+SET encounter_date=encounter_date_created(encounter_id);
+
+UPDATE all_medication_dispensing
+SET encounter_location=encounter_location_name(encounter_id);
+
+UPDATE all_medication_dispensing
+SET user_entered=encounter_creator(encounter_id);
+
+UPDATE all_medication_dispensing
+SET encounter_provider=provider(encounter_id);
+
+
+create index temp_obs_ci٢ on temp_obs(encounter_id, concept_id);
+create index temp_obs_ci5 on temp_obs(obs_group_id,concept_id);
+create index temp_obs_ci6 on temp_obs(encounter_id, obs_group_id);
 
 
 UPDATE all_medication_dispensing tgt 
@@ -94,7 +78,7 @@ UPDATE all_medication_dispensing tgt
 SET duration_unit= obs_from_group_id_value_coded(obs_group_id,'PIH','6412','en');
 
 UPDATE all_medication_dispensing tgt 
-INNER JOIN obs o ON o.encounter_id = tgt.encounter_id AND o.obs_group_id=tgt.obs_group_id
+INNER JOIN temp_obs o ON o.encounter_id = tgt.encounter_id AND o.obs_group_id=tgt.obs_group_id
 AND o.concept_id=concept_from_mapping('PIH','9073')
 SET quantity_per_dose= value_numeric;
 
@@ -106,7 +90,7 @@ UPDATE all_medication_dispensing tgt
 SET frequency= obs_from_group_id_value_coded(obs_group_id,'PIH','9363','en') ;
 
 UPDATE all_medication_dispensing tgt 
-INNER JOIN obs o ON o.encounter_id = tgt.encounter_id AND o.obs_group_id=tgt.obs_group_id
+INNER JOIN temp_obs o ON o.encounter_id = tgt.encounter_id AND o.obs_group_id=tgt.obs_group_id
 AND o.concept_id=concept_from_mapping('PIH','9071')
 SET quantity_dispensed= value_numeric;
 
@@ -146,9 +130,8 @@ AND am.obs_group_id=dn.obs_group_id
 SELECT 
 emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
-encounter_datetime,
+encounter_date,
 encounter_location,
-date_entered,
 user_entered,
 encounter_provider,
 drug_name,
