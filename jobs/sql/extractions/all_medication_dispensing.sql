@@ -38,7 +38,7 @@ select o.obs_id, o.voided, o.obs_group_id, o.encounter_id, o.person_id, o.concep
 from obs o inner join temp_encounter t on o.encounter_id = t.encounter_id
 where o.voided = 0;
 
-create index temp_obs_ci4 on temp_obs(encounter_id);
+create index temp_obs_ci1 on temp_obs(encounter_id);
 
 -- load only groups to the main table 
 INSERT INTO all_medication_dispensing(
@@ -64,9 +64,9 @@ UPDATE all_medication_dispensing
 SET encounter_provider=provider(encounter_id);
 
 
-create index temp_obs_ci٢ on temp_obs(encounter_id, concept_id);
-create index temp_obs_ci5 on temp_obs(obs_group_id,concept_id);
-create index temp_obs_ci6 on temp_obs(encounter_id, obs_group_id);
+create index temp_obs_ci2 on temp_obs(encounter_id, concept_id);
+create index temp_obs_ci3 on temp_obs(obs_group_id,concept_id);
+create index temp_obs_ci4 on temp_obs(encounter_id, obs_group_id);
 
 
 UPDATE all_medication_dispensing tgt 
