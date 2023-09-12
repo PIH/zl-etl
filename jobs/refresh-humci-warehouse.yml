@@ -91,6 +91,7 @@ configuration:
           - tableName: "all_mh_diagnosis"
           - tableName: "oncology_monthly_summary"
           - tableName: "all_mh_medications"
-          - tableName: "backup_restore_dates"          
+          - tableName: "all_mh_encounters"
+          - tableName: "backup_restore_dates"
 
     - path: "refresh-derived-tables.yml"
