@@ -2,7 +2,7 @@ CREATE TABLE all_medication_dispensing
 (
 emr_id varchar(50),
 encounter_id varchar(50),
-encounter_date datetime,
+encounter_datetime datetime,
 encounter_location varchar(100),
 creator varchar(30),
 encounter_provider varchar(30),
@@ -14,5 +14,5 @@ quantity_per_dose int,
 dose_unit varchar(50),
 frequency varchar(50),
 quantity_dispensed int,
-prescription varchar(500)
+instructions varchar(500)
 );
