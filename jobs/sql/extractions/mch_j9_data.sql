@@ -1,14 +1,13 @@
 -- set @locale = 'en';  -- uncomment for testing
 
 select program_id into @mchProgram from program where uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73';
-select name into @socioEncName from encounter_type where uuid = 'de844e58-11e1-11e8-b642-0ed5f89f718b' ;
 select encounter_type('d83e98fd-dc7b-420f-aa3f-36f648b4483d') into @ob_gyn_enc_id;
 select encounter_type('de844e58-11e1-11e8-b642-0ed5f89f718b') into @socio_enc_id;
+select encounter_type('873f968a-73a8-4f9c-ac78-9f4778b751b6') into @reg_enc_id;
 select program_workflow_id into @mchWorkflow from program_workflow where uuid = '41a277d0-8a14-11e8-9a94-a6cf71072f73';
 set @past_med_finding = concept_from_mapping('PIH','10140');
 
 drop temporary table if exists temp_j9;
-
 create temporary table temp_j9
 (
 patient_id int,
@@ -94,7 +93,7 @@ create temporary table temp_encounter
 select e.encounter_id, e.encounter_datetime , e.patient_id  , e.encounter_type 
 from encounter e 
 inner join temp_j9 t on t.patient_id = e.patient_id 
-where e.encounter_type in (@ob_gyn_enc_id,@socio_enc_id) 
+where e.encounter_type in (@ob_gyn_enc_id,@socio_enc_id,@reg_enc_id) 
 and e.voided = 0;
 
 create index temp_encounter_ei on temp_encounter(encounter_id);
@@ -329,7 +328,7 @@ inner join
 set number_family_planning_visits = s.count_visits;
 
 -- marital status
-set @ms_id = concept_from_mapping('CIEL','1712');
+set @ms_id = concept_from_mapping('CIEL','1054');
 update temp_j9 t 
 set marital_status_obs_id = latest_obs_from_temp_from_concept_id(t.patient_id, @ms_id);
 update temp_j9 t 
