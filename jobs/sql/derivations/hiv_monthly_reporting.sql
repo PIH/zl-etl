@@ -2,45 +2,46 @@ DROP TABLE IF EXISTS hiv_monthly_reporting_staging;
 
 create table hiv_monthly_reporting_staging
 (
-emr_id				                  VARCHAR(20),
-date_enrolled				            DATETIME,
-date_completed				          DATETIME,
-reporting_date				          DATE,
-latest_program_status_outcome  VARCHAR(255),
-latest_program_status_outcome_date DATE,
-latest_hiv_visit_date			      DATETIME,
-latest_expected_hiv_visit_date	DATETIME,
-hiv_visit_days_late			        INT,
-second_to_latest_hiv_visit_date DATE,
-latest_transfer_in_date         DATE,
-latest_transfer_in_location     VARCHAR(255),
-latest_dispensing_date			    DATETIME,
-latest_expected_dispensing_date	DATETIME,
-dispensing_days_late            INT,
-latest_months_dispensed         INT,
-latest_hiv_viral_load_date		  DATETIME,
-latest_hiv_viral_load_coded		  VARCHAR(255),
-latest_hiv_viral_load			      INT,
-latest_arv_regimen_date			    DATETIME,
-latest_arv_regimen_line			    VARCHAR(255),
-latest_arv_dispensed_id			    INT,
-latest_arv_dispensed_date		    DATETIME,
-latest_arv_dispensed_line		    VARCHAR(255),
-days_late_at_latest_pickup      INT,
-latest_reason_not_on_ARV_date   DATE,
-latest_reason_not_on_ARV        VARCHAR(255),
-latest_tb_screening_date        DATE,
-latest_tb_screening_result      BIT,
-latest_tb_test_date             DATE,
-latest_tb_test_type             VARCHAR(255),
-latest_tb_test_result           VARCHAR(255),
-latest_tb_coinfection_date      DATE,
-date_of_last_breastfeeding_status	DATETIME,
-latest_breastfeeding_status		  VARCHAR(255),
-latest_breastfeeding_date		    DATETIME,
-arv_start_date					DATE,
-monthly_arv_status				VARCHAR(255),
-latest_status                   VARCHAR(255)
+emr_id                                VARCHAR(20),  
+date_enrolled                         DATETIME,     
+date_completed                        DATETIME,     
+reporting_date                        DATE,         
+latest_program_status_outcome         VARCHAR(255), 
+latest_program_status_outcome_date    DATE,         
+latest_hiv_visit_date                 DATETIME,     
+latest_expected_hiv_visit_date        DATETIME,     
+hiv_visit_days_late                   INT,          
+second_to_latest_hiv_visit_date       DATE,         
+latest_transfer_in_date               DATE,         
+latest_transfer_in_location           VARCHAR(255), 
+latest_dispensing_date                DATETIME,     
+latest_expected_dispensing_date       DATETIME,     
+dispensing_days_late                  INT,          
+latest_months_dispensed               INT,          
+latest_hiv_viral_load_collection_date DATETIME,     
+latest_hiv_viral_load_results_date    DATETIME,     
+latest_hiv_viral_load_coded           VARCHAR(255), 
+latest_hiv_viral_load                 INT,          
+latest_arv_regimen_date               DATETIME,     
+latest_arv_regimen_line               VARCHAR(255), 
+latest_arv_dispensed_id               INT,          
+latest_arv_dispensed_date             DATETIME,     
+latest_arv_dispensed_line             VARCHAR(255), 
+days_late_at_latest_pickup            INT,          
+latest_reason_not_on_ARV_date         DATE,         
+latest_reason_not_on_ARV              VARCHAR(255), 
+latest_tb_screening_date              DATE,         
+latest_tb_screening_result            BIT,          
+latest_tb_test_date                   DATE,         
+latest_tb_test_type                   VARCHAR(255), 
+latest_tb_test_result                 VARCHAR(255), 
+latest_tb_coinfection_date            DATE,         
+date_of_last_breastfeeding_status     DATETIME,     
+latest_breastfeeding_status           VARCHAR(255), 
+latest_breastfeeding_date             DATETIME,     
+arv_start_date                        DATE,         
+monthly_arv_status                    VARCHAR(255), 
+latest_status                         VARCHAR(255)  
 );
 
 
@@ -73,7 +74,7 @@ WHERE  ( arv_1_med IS NOT NULL
 ;
 
 CREATE OR ALTER VIEW all_reporting_viral AS
-SELECT  hvl.encounter_id ,hvl.emr_id ,x.reporting_date ,hvl.vl_coded_results,hvl.viral_load,hvl.vl_sample_taken_date
+SELECT  hvl.encounter_id ,hvl.emr_id ,x.reporting_date ,hvl.vl_coded_results,hvl.viral_load,hvl.vl_sample_taken_date, hvl.vl_result_date 
 FROM hiv_viral_load hvl INNER JOIN (
     SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd
     WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
@@ -195,11 +196,12 @@ ON t1.emr_id =  ad.emr_id
 -- ############################### HIV Viral Data ##################################################################
 
 UPDATE t1
-SET t1.latest_hiv_viral_load_date = x.vl_sample_taken_date
+SET t1.latest_hiv_viral_load_collection_date = x.vl_sample_taken_date,
+	t1.latest_hiv_viral_load_results_date = x.vl_result_date
     FROM  hiv_monthly_reporting_staging t1 
 LEFT OUTER JOIN 
 (
-	SELECT emr_id,reporting_date,max(vl_sample_taken_date)  vl_sample_taken_date FROM all_reporting_viral
+	SELECT emr_id,reporting_date,max(vl_sample_taken_date)  vl_sample_taken_date, max(vl_result_date) vl_result_date FROM all_reporting_viral
 	GROUP BY emr_id,reporting_date
 ) x
 ON t1.emr_id =  x.emr_id AND t1.reporting_date=x.reporting_date;
@@ -212,7 +214,7 @@ SET t1.latest_hiv_viral_load_coded = avl.vl_coded_results,
 LEFT OUTER JOIN all_reporting_viral avl
 ON t1.emr_id =  avl.emr_id
     AND t1.reporting_date=avl.reporting_date
-    AND t1.latest_hiv_viral_load_date=avl.vl_sample_taken_date;
+    AND t1.latest_hiv_viral_load_collection_date=avl.vl_sample_taken_date;
 
 -- ############################### HIV Regimens ##################################################################
 
@@ -390,6 +392,5 @@ set latest_status =
     from hiv_monthly_reporting_staging t;
 
 -- ------------------------------------------------------------------------------------
-
 DROP TABLE IF EXISTS hiv_monthly_reporting;
 EXEC sp_rename 'hiv_monthly_reporting_staging', 'hiv_monthly_reporting';
