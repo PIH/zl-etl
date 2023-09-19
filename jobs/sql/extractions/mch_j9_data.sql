@@ -7,10 +7,7 @@ select encounter_type('873f968a-73a8-4f9c-ac78-9f4778b751b6') into @reg_enc_id;
 select program_workflow_id into @mchWorkflow from program_workflow where uuid = '41a277d0-8a14-11e8-9a94-a6cf71072f73';
 set @past_med_finding = concept_from_mapping('PIH','10140');
 
-select * from encounter_type e ;
-
 drop temporary table if exists temp_j9;
-
 create temporary table temp_j9
 (
 patient_id int,
