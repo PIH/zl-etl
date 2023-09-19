@@ -30,7 +30,8 @@ CREATE TABLE hiv_patient_summary_status_staging
  next_med_pickup_date             date,          
  days_late_for_next_visit         int,           
  days_late_for_next_med_pickup    int,           
- last_viral_load_date             date,          
+ last_viral_load_collection_date  date,         
+ last_viral_load_results_date     date,          
  last_viral_load_numeric          int,           
  last_viral_load_undetected       varchar(255),  
  months_since_last_viral_load     int,           
@@ -268,7 +269,8 @@ set days_late_for_next_med_pickup =
 
 
 update t
-set last_viral_load_date = hv.vl_sample_taken_date ,
+set last_viral_load_collection_date = hv.vl_sample_taken_date ,
+	last_viral_load_results_date = hv.vl_result_date ,
     last_viral_load_numeric = hv.viral_load ,
     last_viral_load_undetected = IIF(hv.vl_coded_results <> 'Detected','t',null)
     from hiv_patient_summary_status_staging t
@@ -276,7 +278,7 @@ inner join hiv_viral_load hv on hv.emr_id = t.emr_id and hv.order_desc  = 1
 ;
 
 update t
-set months_since_last_viral_load = DATEDIFF(month, t.last_viral_load_date , GETDATE())
+set months_since_last_viral_load = DATEDIFF(month, t.last_viral_load_collection_date , GETDATE())
     from hiv_patient_summary_status_staging t
 
 update t
@@ -448,7 +450,6 @@ alter table hiv_patient_summary_status_staging drop column current_outcome_date;
 alter table hiv_patient_summary_status_staging drop column latest_next_dispense_date;
 alter table hiv_patient_summary_status_staging drop column med_pickup_status;
 alter table hiv_patient_summary_status_staging drop column med_pickup_status_date;
-
 
 -- ------------------------------------------------------------------------------------
 DROP TABLE IF EXISTS hiv_patient_summary_status;
