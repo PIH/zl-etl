@@ -48,24 +48,21 @@ latest_status                         VARCHAR(255)
 CREATE OR ALTER VIEW all_reporting_visits AS
 SELECT hv.encounter_id ,hv.emr_id ,x.reporting_date ,hv.visit_date, hv.next_visit_date
 FROM hiv_visit hv INNER JOIN (
-    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd
-    WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd) x
                              on EOMONTH(hv.visit_date) <= x.reporting_date
                                  AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date));
 
 CREATE OR ALTER VIEW all_reporting_dispense AS
 SELECT hd.encounter_id ,hd.emr_id ,x.reporting_date ,hd.dispense_date,hd.next_dispense_date, hd.months_dispensed, hd.days_late_to_pickup
 FROM hiv_dispensing hd INNER JOIN (
-    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd
-    WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd) x
                                   on EOMONTH(hd.dispense_date) <= x.reporting_date
                                       AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date));
 
 CREATE OR ALTER VIEW all_reporting_dispense_arv AS
 SELECT hd.encounter_id ,hd.emr_id ,x.reporting_date ,hd.dispense_date,hd.next_dispense_date,hd.current_art_treatment_line, hd.arv_1_med , hd.arv_2_med ,hd.arv_3_med
 FROM hiv_dispensing hd INNER JOIN (
-    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd
-    WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd) x
                                   on EOMONTH(hd.dispense_date) <= x.reporting_date
                                       AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date))
 WHERE  ( arv_1_med IS NOT NULL
@@ -76,16 +73,14 @@ WHERE  ( arv_1_med IS NOT NULL
 CREATE OR ALTER VIEW all_reporting_viral AS
 SELECT  hvl.encounter_id ,hvl.emr_id ,x.reporting_date ,hvl.vl_coded_results,hvl.viral_load,hvl.vl_sample_taken_date, hvl.vl_result_date 
 FROM hiv_viral_load hvl INNER JOIN (
-    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd
-    WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd) x
                                    on EOMONTH(hvl.vl_sample_taken_date) <= x.reporting_date
                                        AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date));
 
 CREATE OR ALTER VIEW all_reporting_reg AS
 SELECT hr.encounter_id ,hr.emr_id ,x.reporting_date ,hr.encounter_datetime ,hr.art_treatment_line
 FROM hiv_regimens hr  INNER JOIN (
-    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd
-    WHERE dd.[Year] BETWEEN 2020 AND YEAR(CAST(getdate() AS date))) x
+    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd) x
                                  on EOMONTH(hr.encounter_datetime) <= x.reporting_date
                                      AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date))
                                      AND upper(hr.order_action) ='NEW' AND upper(hr.drug_category)='ART';
