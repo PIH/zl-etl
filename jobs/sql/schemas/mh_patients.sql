@@ -1,4 +1,4 @@
-CREATE TABLE all_mh_patients
+CREATE TABLE mh_patients
 (
 emr_id varchar(50),
 dob date,
