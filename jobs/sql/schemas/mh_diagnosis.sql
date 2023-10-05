@@ -1,4 +1,4 @@
-CREATE TABLE all_mh_diagnosis 
+CREATE TABLE mh_diagnosis 
 (
 emr_id varchar(50),
 encounter_id int,
