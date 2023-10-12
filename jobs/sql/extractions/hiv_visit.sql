@@ -238,12 +238,15 @@ set @refTreat = concept_from_mapping('PIH','3580');
 set @treatPostponed = concept_from_mapping('PIH','7262');
 set @assignART = concept_from_mapping('PIH','2222');
 set @denial = concept_from_mapping('PIH','14666');
+set @treatPostponed_nonmed = concept_from_mapping('PIH','14842');
+
 UPDATE temp_hiv_visit t 
 	inner join temp_obs tobs on tobs.encounter_id = t.encounter_id and concept_id = @eligART
 	and tobs.value_coded in 
 		(@refTreat,
 		@treatPostponed,
 		@assignART,
+		@treatPostponed_nonmed,
 		@denial)
 set reason_not_on_ARV = concept_name(tobs.value_coded,@locale);
 
