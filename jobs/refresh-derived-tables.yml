@@ -19,3 +19,4 @@ configuration:
           - tableName: "visit_entry_dates"
           - tableName: "hiv_monthly_reporting"
           - tableName: "hiv_patient_summary_status"
+          - tableName: "drop_old_tables.sql"         
