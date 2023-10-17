@@ -10,7 +10,7 @@ configuration:
         iterations:
           - tableName: "update_index_numbers"
           - tableName: "dim_date"
-          - tableName: "drop_old_tables.sql"                 
+          - tableName: "drop_old_tables"
     - type: "iterating-job"
       description: "Create final derived tables"
       configuration:
