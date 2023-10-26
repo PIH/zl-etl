@@ -60,4 +60,4 @@ configuration:
           - tableName: "user_roles"
           - tableName: "user_logins"
             conditional: "select table_exists('authentication_event_log')"
-          - tableName: "backup_restore_dates"            
+       
