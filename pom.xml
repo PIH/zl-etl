@@ -193,8 +193,8 @@
                                     <destinationFile>${petlJobExtractionSqlDir}/all_medication_prescribed.sql</destinationFile>
                                 </fileSet>
                                 <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/backup_restore_dates.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/backup_restore_dates.sql</destinationFile>
+                                    <sourceFile>${dataExportSqlDir}/summary_db_restore.sql</sourceFile>
+                                    <destinationFile>${petlJobExtractionSqlDir}/summary_db_restore.sql</destinationFile>
                                 </fileSet>                                
                                 <fileSet>
                                     <sourceFile>${dataExportSqlDir}/all_medication_dispensing.sql</sourceFile>
