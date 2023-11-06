@@ -1,0 +1,7 @@
+databaseType: "mysql"
+host: ${datasources.openmrs.belladere.host}
+port: ${datasources.openmrs.belladere.port}
+databaseName: ${datasources.openmrs.belladere.databaseName}
+user: ${datasources.openmrs.belladere.user}
+password: ${datasources.openmrs.belladere.password}
+options: ${datasources.openmrs.belladere.options}

@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Cerca La Source Data"
+configuration:
+  iterations:
+    - siteName: "cercalasource"
+      partitionNum: "11"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"

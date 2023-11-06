@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Boucan Carre Data"
+configuration:
+  iterations:
+    - siteName: "boucancarre"
+      partitionNum: "10"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"

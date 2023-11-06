@@ -1,0 +1,7 @@
+databaseType: "mysql"
+host: ${datasources.openmrs.cercalasource.host}
+port: ${datasources.openmrs.cercalasource.port}
+databaseName: ${datasources.openmrs.cercalasource.databaseName}
+user: ${datasources.openmrs.cercalasource.user}
+password: ${datasources.openmrs.cercalasource.password}
+options: ${datasources.openmrs.cercalasource.options}

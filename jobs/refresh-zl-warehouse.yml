@@ -18,6 +18,9 @@ configuration:
           - siteName: "saint_marc_hsn"
           - siteName: "lacolline"
           - siteName: "thomonde"
+          - siteName: "belladere"
+          - siteName: "boucancarre"
+          - siteName: "cercalasource"
           - siteName: "mirebalais"
           - siteName: "hiv"
         jobTemplate:

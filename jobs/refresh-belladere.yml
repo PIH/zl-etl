@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Belladere Data"
+configuration:
+  iterations:
+    - siteName: "belladere"
+      partitionNum: "9"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"
