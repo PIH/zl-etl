@@ -14,6 +14,7 @@ department varchar(50),
 commune varchar(50),
 ncd_enrollment_date date,
 ncd_first_encounter_date date,
+ncd_latest_encounter_date date,
 ncd_enrollment_location varchar(50),
 ncd_current_location varchar(50), 
 htn bit,
@@ -62,20 +63,24 @@ tt.department = person_address_state_province(tt.patient_id),
 tt.commune =person_address_city_village(tt.patient_id);
 
 -- -------------------------------------------------------- Enrolled date, location of enrollment  and ncd_current_location -----------------------
+drop table if exists temp_ncd_encounters;
 
-DROP TABLE IF EXISTS first_enc;
-CREATE TEMPORARY TABLE first_enc AS
-		SELECT patient_id , min(encounter_id) encounter_id
-		FROM encounter e 
-		WHERE encounter_type IN (@ncd_init_enc, @ncd_follow_enc)
-		GROUP BY patient_id;
+create temporary table temp_ncd_encounters
+(select encounter_id, patient_id, encounter_datetime from encounter e 
+where e.voided = 0
+and e.encounter_type in (@ncd_init_enc, @ncd_follow_enc));
 
-DROP TABLE IF EXISTS first_enc_details;
-CREATE TEMPORARY TABLE  first_enc_details AS 
-	SELECT DISTINCT e.patient_id, e.encounter_datetime  , e.encounter_id,e.encounter_type
-        FROM encounter e INNER JOIN first_enc X ON X.patient_id =e.patient_id AND X.encounter_id=e.encounter_id
-        WHERE encounter_type IN (@ncd_init_enc, @ncd_follow_enc);
+create index temp_ncd_encounters_pi on temp_ncd_encounters(patient_id);
 
+update ncd_patient_table t 
+set  t.ncd_first_encounter_date =
+	(select date(min(encounter_datetime)) from temp_ncd_encounters e 
+	where e.patient_id = t.patient_id);
+
+update ncd_patient_table t 
+set  t.ncd_latest_encounter_date =
+	(select date(max(encounter_datetime)) from temp_ncd_encounters e 
+	where e.patient_id = t.patient_id);
 	
 UPDATE 
 ncd_patient_table tt INNER JOIN (
@@ -86,19 +91,18 @@ ncd_patient_table tt INNER JOIN (
   ORDER BY date_enrolled ASC) st on st.patient_id = tt.patient_id
 SET tt.ncd_enrollment_date=CAST(st.date_enrolled AS date);
 
-UPDATE 
-ncd_patient_table tt INNER JOIN (
-  SELECT patient_id,CAST(encounter_datetime AS date) date_enrolled 
-  FROM first_enc_details) fe on fe.patient_id = tt.patient_id
-SET tt.ncd_first_encounter_date=fe.date_enrolled;
 
-UPDATE 
-ncd_patient_table tt INNER JOIN (
-  SELECT patient_id,CAST(encounter_datetime AS date) date_enrolled 
-  FROM first_enc_details) fe on fe.patient_id = tt.patient_id
-SET tt.ncd_enrollment_date=fe.date_enrolled
-	  WHERE tt.ncd_enrollment_date IS NULL;
-	 
+update ncd_patient_table t
+set ncd_enrollment_date = 
+	(select min(date(date_enrolled)) from patient_program pp 
+	where pp.patient_id  = t.patient_id 
+	and voided = 0
+	and pp.program_id = @ncd_program_id);
+
+update ncd_patient_table t
+set ncd_enrollment_date = ncd_first_encounter_date where ncd_enrollment_date is null;
+
+ 
 UPDATE ncd_patient_table tt set ncd_enrollment_location = initialProgramLocation(patient_id, @ncd_program_id);
 UPDATE ncd_patient_table tt set ncd_current_location = currentProgramLocation(patient_id, @ncd_program_id);
 
@@ -288,7 +292,6 @@ SET  tt.cardiomyopathy =(
           
           
 SELECT
-patient_id,
 zlemr(patient_id) emr_id,
 birthdate ,
 sex,
@@ -296,6 +299,7 @@ department,
 commune,
 ncd_enrollment_date,
 ncd_first_encounter_date,
+ncd_latest_encounter_date,
 ncd_enrollment_location,
 ncd_current_location,
 htn ,
