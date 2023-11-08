@@ -5,3 +5,4 @@ databaseName: ${datasources.openmrs.humci.databaseName}
 user: ${datasources.openmrs.humci.user}
 password: ${datasources.openmrs.humci.password}
 options: ${datasources.openmrs.humci.options}
+containerName: ${datasources.openmrs.humci.containerName}

@@ -5,3 +5,4 @@ databaseName: ${datasources.openmrs.saint_marc_hsn.databaseName}
 user: ${datasources.openmrs.saint_marc_hsn.user}
 password: ${datasources.openmrs.saint_marc_hsn.password}
 options: ${datasources.openmrs.saint_marc_hsn.options}
+containerName: ${datasources.openmrs.saint_marc_hsn.containerName}

@@ -5,6 +5,8 @@ parameters:
   siteName: "hiv"
   partitionNum: "8"
 configuration:
+  datasources:
+    - "openmrs-${siteName}.yml"
   jobs:
     - path: "create-source-views-and-functions.yml"
     #- path: "setup-for-incremental-updates.yml"

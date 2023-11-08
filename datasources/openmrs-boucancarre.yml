@@ -5,3 +5,4 @@ databaseName: ${datasources.openmrs.boucancarre.databaseName}
 user: ${datasources.openmrs.boucancarre.user}
 password: ${datasources.openmrs.boucancarre.password}
 options: ${datasources.openmrs.boucancarre.options}
+containerName: ${datasources.openmrs.boucancarre.containerName}

@@ -5,3 +5,4 @@ databaseName: ${datasources.openmrs.thomonde.databaseName}
 user: ${datasources.openmrs.thomonde.user}
 password: ${datasources.openmrs.thomonde.password}
 options: ${datasources.openmrs.thomonde.options}
+containerName: ${datasources.openmrs.thomonde.containerName}

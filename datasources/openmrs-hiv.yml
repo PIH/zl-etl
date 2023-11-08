@@ -5,3 +5,4 @@ databaseName: ${datasources.openmrs.hiv.databaseName}
 user: ${datasources.openmrs.hiv.user}
 password: ${datasources.openmrs.hiv.password}
 options: ${datasources.openmrs.hiv.options}
+containerName: ${datasources.openmrs.hiv.containerName}

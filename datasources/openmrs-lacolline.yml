@@ -5,3 +5,4 @@ databaseName: ${datasources.openmrs.lacolline.databaseName}
 user: ${datasources.openmrs.lacolline.user}
 password: ${datasources.openmrs.lacolline.password}
 options: ${datasources.openmrs.lacolline.options}
+containerName: ${datasources.openmrs.lacolline.containerName}

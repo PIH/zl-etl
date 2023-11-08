@@ -5,3 +5,4 @@ databaseName: ${datasources.openmrs.cercalasource.databaseName}
 user: ${datasources.openmrs.cercalasource.user}
 password: ${datasources.openmrs.cercalasource.password}
 options: ${datasources.openmrs.cercalasource.options}
+containerName: ${datasources.openmrs.cercalasource.containerName}
