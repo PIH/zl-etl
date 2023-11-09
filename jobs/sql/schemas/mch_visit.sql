@@ -61,6 +61,7 @@ CREATE TABLE mch_visit
     procedures_other                 TEXT,
     medication_order                 TEXT,
     family_planning_use              BIT,
+    family_planning_patient_type     VARCHAR(255),
     family_planning_method           VARCHAR(255),
     fp_counseling_received           BIT,
     fp_start_date                    DATE,

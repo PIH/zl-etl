@@ -80,10 +80,11 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     procedures_other TEXT,
     family_planning_group INT(11),
     family_planning_use VARCHAR(5), 
+    family_planning_patient_type VARCHAR(255), 
     family_planning_method VARCHAR(255), 
     fp_counseling_received VARCHAR(255),
     fp_start_date	DATETIME,
-    fp_end_date		DATETIME,
+    fp_end_date		DATETIME, 
     implant_date	DATETIME,
     condoms_provided VARCHAR(5),
     location_of_delivery	VARCHAR(255),
@@ -891,6 +892,10 @@ SET
     family_planning_method = CONCEPT_NAME(o.value_coded, 'en');
  
 UPDATE temp_obgyn_visit t 
+INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '14321')
+SET t.family_planning_patient_type = CONCEPT_NAME(o.value_coded,'en');
+
+UPDATE temp_obgyn_visit t 
 INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '165309')
 SET t.fp_counseling_received = CONCEPT_NAME(o.value_coded,'en');
 
@@ -1014,6 +1019,7 @@ SELECT
     procedures_other,
     medication_order,
     IF(family_planning_use LIKE '%Yes%', 1, NULL),
+    family_planning_patient_type,
     family_planning_method,
     IF(fp_counseling_received LIKE '%Family planning counseling%', 1, NULL),
     fp_start_date,
