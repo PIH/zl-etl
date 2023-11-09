@@ -57,6 +57,7 @@ configuration:
           - tableName: "oncology_program"
           - tableName: "oncology_diagnosis"
           - tableName: "all_medication_dispensing"
+            conditional: "select table_exists('medication_dispense')"          
           - tableName: "data_warnings"
           - tableName: "users"
           - tableName: "user_roles"
