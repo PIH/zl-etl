@@ -11,6 +11,7 @@ configuration:
           - tableName: "update_index_numbers"
           - tableName: "dim_date"
           - tableName: "drop_old_tables"
+          - tableName: "deduplicate_tables"
     - type: "iterating-job"
       description: "Create final derived tables"
       configuration:
