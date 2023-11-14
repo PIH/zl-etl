@@ -103,11 +103,11 @@ and avi.encounter_id = av.encounter_id;
 
 
 
--- update index asc/desc on hiv_regimens table
-select  emr_id, order_id, drug_category,start_date,
-ROW_NUMBER() over (PARTITION by emr_id order by order_id asc,drug_category asc, start_date asc) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id  order by order_id desc, drug_category desc, start_date desc) "index_desc"
-into #hiv_regimens_catg_indexes
+-- update index asc/desc by category on hiv_regimens table
+select  emr_id, drug_category ,order_id, start_date,
+ROW_NUMBER() over (PARTITION by emr_id, drug_category  order by order_id asc,drug_category asc, start_date asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id, drug_category  order by order_id desc, drug_category desc, start_date desc) "index_desc"
+-- into #hiv_regimens_catg_indexes
 from hiv_regimens av ;
 
 update  av
@@ -119,7 +119,7 @@ and avi.order_id = av.order_id
 and avi.drug_category = av.drug_category
 and avi.start_date = av.start_date; 
 
-
+-- update index asc/desc by patient on hiv_regimens table
 select  emr_id, order_id, start_date,
 ROW_NUMBER() over (PARTITION by emr_id order by order_id asc,start_date asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id  order by order_id desc, start_date desc) "index_desc"
@@ -133,7 +133,6 @@ from hiv_regimens av
 inner join #hiv_regimens_pat_indexes avi on avi.emr_id = av.emr_id
 and avi.order_id = av.order_id
 and avi.start_date = av.start_date; 
-
 
 -- update index asc/desc on hiv_status table
 select  patient_program_id, start_date, status_id,
@@ -165,9 +164,6 @@ inner join #hiv_status_pat_indexes avi on avi.emr_id = av.emr_id
 and avi.patient_program_id = av.patient_program_id
 and avi.start_date = av.start_date
 and avi.status_id = av.status_id; 
-
-
-
 
 -- update index asc/desc on hiv_tests table
 select  emr_id, encounter_id, specimen_collection_date, test_type, date_created,
@@ -236,7 +232,7 @@ and avi.start_date = av.start_date
 and avi.patient_program_id = av.patient_program_id; 
 
 
--- update index asc/desc on mch_visit table
+-- update index asc/desc by patient on mch_visit table
 select  emr_id, visit_date, encounter_id,
 ROW_NUMBER() over (PARTITION by emr_id order by visit_date asc, encounter_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by visit_date DESC, encounter_id DESC) "index_desc"
@@ -244,12 +240,29 @@ into #mch_visit_indexes
 from mch_visit av ;
 
 update av
-set av.index_asc = avi.index_asc,
-	av.index_desc = avi.index_desc 
+set av.index_patient_asc = avi.index_asc,
+	av.index_patient_desc = avi.index_desc 
 from mch_visit av
 inner join #mch_visit_indexes avi on avi.emr_id = av.emr_id
 and avi.visit_date = av.visit_date
 and avi.encounter_id = av.encounter_id; 
+
+
+-- update index asc/desc by type on mch_visit table
+select  emr_id, visit_type, visit_date, encounter_id,
+ROW_NUMBER() over (PARTITION by emr_id, visit_type  order by visit_date asc, encounter_id asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id, visit_type  order by visit_date DESC, encounter_id DESC) "index_desc"
+into #mch_visit_type_indexes
+from mch_visit av ;
+
+update av
+set av.index_type_asc = avi.index_asc,
+	av.index_type_desc = avi.index_desc 
+from mch_visit av
+inner join #mch_visit_type_indexes avi on avi.emr_id = av.emr_id
+and avi.visit_date = av.visit_date
+and avi.encounter_id = av.encounter_id
+and avi.visit_type  = av.visit_type ; 
 
 
 -- update index asc/desc on pmtct_pregnancy table

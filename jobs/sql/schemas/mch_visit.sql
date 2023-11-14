@@ -79,6 +79,8 @@ CREATE TABLE mch_visit
     hpv                              BIT,
     trichomoniasis                   BIT,
     bacterial_vaginosis              BIT,
-    index_asc                        INT,
-    index_desc                       INT
+    index_patient_asc                INT,
+    index_patient_desc               INT,
+    index_type_asc                   INT,
+    index_type_desc                  INT    
 );
