@@ -5,6 +5,7 @@ CREATE TABLE mch_birth
     encounter_date               DATE,
     date_entered                 DATETIME,
     user_entered                 VARCHAR(50),
+    delivery_datetime            DATETIME,
     birth_number                 INT,
     multiples                    INT,
     birth_apgar                  INT,
