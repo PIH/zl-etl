@@ -97,8 +97,10 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     trichomoniasis BIT,
     bacterial_vaginosis BIT,
     sti_treatment 		BIT,
-    index_asc          INT,
-    index_desc         INT
+    index_patient_asc          INT,
+    index_patient_desc         INT,
+    index_type_asc	INT,
+    index_type_desc INT
 );
 
 
@@ -1037,8 +1039,10 @@ SELECT
     hpv,
     trichomoniasis,
     bacterial_vaginosis,
-    index_asc,
-    index_desc
+    index_patient_asc,
+    index_patient_desc,
+    index_type_asc,
+    index_type_desc
 FROM
     temp_obgyn_visit
 ORDER BY patient_id;
