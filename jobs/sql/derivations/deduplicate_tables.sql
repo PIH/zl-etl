@@ -1,6 +1,6 @@
 -- -------------- deduplicate ncd_patient_table -------------------
-drop table if exists ncd_patient_table_staging;
-create table ncd_patient_table_staging
+drop table if exists ncd_patient_table;
+create table ncd_patient_table
 (
 emr_id                    varchar(50),  
 birthdate                 date,         
@@ -36,7 +36,7 @@ site                      varchar(100),
 partition_num             int           
 );
 
-insert into ncd_patient_table_staging 
+insert into ncd_patient_table 
 (emr_id, 
 ncd_latest_encounter_date,
 htn,
@@ -63,7 +63,7 @@ MAX(CONVERT(tinyint, ISNULL(liver_failure,0))),
 MAX(CONVERT(tinyint, ISNULL(rehabilitation,0))),
 MAX(CONVERT(tinyint, ISNULL(sickle_cell,0))),
 MAX(CONVERT(tinyint, ISNULL(other_ncd,0)))
-from ncd_patient_table
+from ncd_patient_table_staging
 group by emr_id;
 
 update t 
@@ -88,15 +88,14 @@ t.deceased = n.deceased,
 t.date_of_death = n.date_of_death,
 t.site = n.site,
 t.partition_num = n.partition_num
-from ncd_patient_table_staging t
-inner join ncd_patient_table n on n.emr_id = t.emr_id and n.ncd_latest_encounter_date  = t.ncd_latest_encounter_date 
+from ncd_patient_table t
+inner join ncd_patient_table_staging n on n.emr_id = t.emr_id and n.ncd_latest_encounter_date  = t.ncd_latest_encounter_date 
 ;
 
 -- -------------- deduplicate ncd_patient_table -------------------
-drop table if exists ncd_heart_failure_patient_staging;
-CREATE TABLE ncd_heart_failure_patient_staging
-(
-emr_id            VARCHAR(10),  
+drop table if exists ncd_heart_failure_patient;
+CREATE TABLE ncd_heart_failure_patient
+(emr_id            VARCHAR(10),  
 sex               VARCHAR(2),   
 birthdate         DATE,         
 hf_diagnosis_date DATE,         
@@ -113,7 +112,7 @@ site              varchar(100),
 partition_num     int           
 );
 
-insert into ncd_heart_failure_patient_staging 
+insert into ncd_heart_failure_patient 
 (emr_id,
 ncd_enrolled,
 hf_ncd,
@@ -130,7 +129,7 @@ MAX(CONVERT(tinyint, ISNULL(hf_left,0))),
 MAX(CONVERT(tinyint, ISNULL(hf_isolated_right,0))),
 MAX(CONVERT(tinyint, ISNULL(hf_congestive,0))),
 MAX(CONVERT(tinyint, ISNULL(hf_rheumatic,0)))
-from ncd_heart_failure_patient
+from ncd_heart_failure_patient_staging
 group by emr_id;
 
 update t
@@ -141,15 +140,7 @@ t.last_visit_date = nhfp.last_visit_date,
 t.deceased = nhfp.deceased,
 t.site = nhfp.site,
 t.partition_num = nhfp.partition_num
-from ncd_heart_failure_patient_staging t
-inner join ncd_patient_table_staging npt on npt.emr_id = t.emr_id
-inner join ncd_heart_failure_patient nhfp on nhfp.emr_id = npt.emr_id and nhfp.site = npt.site
+from ncd_heart_failure_patient t
+inner join ncd_patient_table npt on npt.emr_id = t.emr_id
+inner join ncd_heart_failure_patient_staging nhfp on nhfp.emr_id = npt.emr_id and nhfp.site = npt.site
 ;
-
-DROP TABLE IF EXISTS ncd_patient_table;
-EXEC sp_rename 'ncd_patient_table_staging', 'ncd_patient_table';
-DROP TABLE IF EXISTS ncd_patient_table_staging;
-
-DROP TABLE IF EXISTS ncd_heart_failure_patient;
-EXEC sp_rename 'ncd_heart_failure_patient_staging', 'ncd_heart_failure_patient';
-DROP TABLE IF EXISTS ncd_heart_failure_patient_staging;
