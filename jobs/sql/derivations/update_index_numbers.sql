@@ -29,6 +29,7 @@ inner join #all_encounters_indexes aei on aei.encounter_id = ae.encounter_id;
 */
 
 -- update index asc/desc on all_vitals table
+drop table if exists #all_vitals_indexes;
 select  emr_id, encounter_datetime, date_entered, 
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime asc, date_entered asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime desc, date_entered desc) "index_desc"
@@ -44,6 +45,7 @@ and avi.encounter_datetime = av.encounter_datetime
 and avi.date_entered = av.date_entered; 
 
 -- update index asc/desc on covid_disposition table
+drop table if exists #covid_disposition_indexes;
 select  emr_id, encounter_id, 
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id desc) "index_desc"
@@ -59,6 +61,7 @@ and avi.encounter_id = av.encounter_id;
 
 
 -- update index asc/desc on covid_visit table
+drop table if exists #covid_visit_indexes;
 select  emr_id, encounter_id, 
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id desc) "index_desc"
@@ -88,6 +91,7 @@ and avi.encounter_id = av.encounter_id;  */
 
 
 -- update index asc/desc on eid_visit table
+drop table if exists #eid_visit_indexes;
 select  emr_id, encounter_id, 
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id desc) "index_desc"
@@ -104,10 +108,11 @@ and avi.encounter_id = av.encounter_id;
 
 
 -- update index asc/desc by category on hiv_regimens table
+drop table if exists #hiv_regimens_catg_indexes;
 select  emr_id, drug_category ,order_id, start_date,
 ROW_NUMBER() over (PARTITION by emr_id, drug_category  order by order_id asc,drug_category asc, start_date asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id, drug_category  order by order_id desc, drug_category desc, start_date desc) "index_desc"
--- into #hiv_regimens_catg_indexes
+into #hiv_regimens_catg_indexes
 from hiv_regimens av ;
 
 update  av
@@ -120,6 +125,7 @@ and avi.drug_category = av.drug_category
 and avi.start_date = av.start_date; 
 
 -- update index asc/desc by patient on hiv_regimens table
+drop table if exists #hiv_regimens_pat_indexes;
 select  emr_id, order_id, start_date,
 ROW_NUMBER() over (PARTITION by emr_id order by order_id asc,start_date asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id  order by order_id desc, start_date desc) "index_desc"
@@ -135,6 +141,7 @@ and avi.order_id = av.order_id
 and avi.start_date = av.start_date; 
 
 -- update index asc/desc on hiv_status table
+drop table if exists #hiv_status_prog_indexes;
 select  patient_program_id, start_date, status_id,
 ROW_NUMBER() over (PARTITION by patient_program_id order by start_date asc, status_id asc ) "index_asc",
 ROW_NUMBER() over (PARTITION by patient_program_id order by start_date desc, status_id desc ) "index_desc"
@@ -149,7 +156,7 @@ inner join #hiv_status_prog_indexes avi on avi.patient_program_id = av.patient_p
 and avi.start_date = av.start_date
 and avi.status_id = av.status_id; 
 
-
+drop table if exists #hiv_status_pat_indexes;
 select  emr_id, start_date, patient_program_id, status_id,
 ROW_NUMBER() over (PARTITION by emr_id order by start_date ASC, patient_program_id ASC,  status_id ASC) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by start_date desc, patient_program_id desc,  status_id desc) "index_desc"
@@ -166,6 +173,7 @@ and avi.start_date = av.start_date
 and avi.status_id = av.status_id; 
 
 -- update index asc/desc on hiv_tests table
+drop table if exists #hiv_tests_indexes;
 select  emr_id, encounter_id, specimen_collection_date, test_type, date_created,
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id asc, specimen_collection_date asc, date_created asc, test_type asc ) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_id DESC, specimen_collection_date DESC, date_created DESC, test_type DESC ) "index_desc"
@@ -184,6 +192,7 @@ and avi.date_created = av.date_created
 ; 
 
 -- update index asc/desc on hiv_viral_load table
+drop table if exists #hiv_viral_load_indexes;
 select  emr_id, vl_sample_taken_date, date_entered, encounter_id,
 ROW_NUMBER() over (PARTITION by emr_id order by vl_sample_taken_date asc, date_entered asc ) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by vl_sample_taken_date DESC, date_entered DESC ) "index_desc"
@@ -201,7 +210,7 @@ and avi.date_entered = av.date_entered
 ; 
 
 -- update index asc/desc on hiv_visit table
-
+drop table if exists #hiv_visit_indexes;
 select  emr_id, visit_date, encounter_id,
 ROW_NUMBER() over (PARTITION by emr_id order by visit_date ASC, encounter_id ASC) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by visit_date desc, encounter_id desc ) "index_desc"
@@ -217,6 +226,7 @@ and avi.encounter_id = av.encounter_id
 and avi.visit_date = av.visit_date; 
 
 -- update index asc/desc on mch_status table
+drop table if exists #mch_status_indexes;
 select  emr_id, start_date, patient_program_id,
 ROW_NUMBER() over (PARTITION by emr_id order by start_date asc, patient_program_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by start_date DESC, patient_program_id DESC) "index_desc"
@@ -233,6 +243,7 @@ and avi.patient_program_id = av.patient_program_id;
 
 
 -- update index asc/desc by patient on mch_visit table
+drop table if exists #mch_visit_indexes;
 select  emr_id, visit_date, encounter_id,
 ROW_NUMBER() over (PARTITION by emr_id order by visit_date asc, encounter_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by visit_date DESC, encounter_id DESC) "index_desc"
@@ -247,8 +258,8 @@ inner join #mch_visit_indexes avi on avi.emr_id = av.emr_id
 and avi.visit_date = av.visit_date
 and avi.encounter_id = av.encounter_id; 
 
-
 -- update index asc/desc by type on mch_visit table
+drop table if exists #mch_visit_type_indexes;
 select  emr_id, visit_type, visit_date, encounter_id,
 ROW_NUMBER() over (PARTITION by emr_id, visit_type  order by visit_date asc, encounter_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id, visit_type  order by visit_date DESC, encounter_id DESC) "index_desc"
@@ -262,10 +273,10 @@ from mch_visit av
 inner join #mch_visit_type_indexes avi on avi.emr_id = av.emr_id
 and avi.visit_date = av.visit_date
 and avi.encounter_id = av.encounter_id
-and avi.visit_type  = av.visit_type ; 
-
+; 
 
 -- update index asc/desc on pmtct_pregnancy table
+drop table if exists #pmtct_pregnancy_indexes;
 select  emr_id, pmtct_enrollment_date,
 ROW_NUMBER() over (PARTITION by emr_id order by pmtct_enrollment_date asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by pmtct_enrollment_date DESC) "index_desc"
@@ -280,6 +291,7 @@ inner join #pmtct_pregnancy_indexes avi on avi.emr_id = av.emr_id
 and avi.pmtct_enrollment_date = av.pmtct_enrollment_date; 
 
 -- update index asc/desc on pmtct_visits table
+drop table if exists #pmtct_visits_indexes;
 select  emr_id, visit_date,visit_id,encounter_id,
 ROW_NUMBER() over (PARTITION by emr_id order by visit_date asc, visit_id asc, encounter_id asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by visit_date DESC, visit_id DESC, encounter_id DESC) "index_desc"
