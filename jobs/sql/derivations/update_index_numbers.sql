@@ -258,11 +258,11 @@ inner join #mch_visit_indexes avi on avi.emr_id = av.emr_id
 and avi.visit_date = av.visit_date
 and avi.encounter_id = av.encounter_id; 
 
--- update index asc/desc by type on mch_visit table
+-- update index asc/desc by consultation type on mch_visit table
 drop table if exists #mch_visit_type_indexes;
-select  emr_id, visit_type, visit_date, encounter_id,
-ROW_NUMBER() over (PARTITION by emr_id, visit_type  order by visit_date asc, encounter_id asc) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id, visit_type  order by visit_date DESC, encounter_id DESC) "index_desc"
+select  emr_id, consultation_type, visit_date, encounter_id,
+ROW_NUMBER() over (PARTITION by emr_id, consultation_type  order by visit_date asc, encounter_id asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id, consultation_type  order by visit_date DESC, encounter_id DESC) "index_desc"
 into #mch_visit_type_indexes
 from mch_visit av ;
 
