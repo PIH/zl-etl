@@ -1,4 +1,4 @@
-create table ncd_patient_table
+create table ncd_patient_table_staging
 (
 emr_id varchar(50),
 birthdate date,
