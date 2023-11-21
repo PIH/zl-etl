@@ -4,7 +4,7 @@ CREATE TABLE all_diagnosis_past_year
 patient_id int,
 dossierId varchar(20),
 patient_primary_id varchar(20),
-loc_registered, varchar(100),
+loc_registered varchar(100),
 unknown_patient varchar(10),
 gender char(1),
 age_at_encounter int,
