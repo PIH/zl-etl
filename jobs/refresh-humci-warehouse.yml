@@ -92,5 +92,6 @@ configuration:
           - tableName: "oncology_monthly_summary"
           - tableName: "mh_medications"
           - tableName: "mh_encounters"
+          - tableName: "all_diagnosis_past_year"
 
     - path: "refresh-derived-tables.yml"
