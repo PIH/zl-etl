@@ -378,7 +378,7 @@ INNER JOIN hiv_status h on h.status_id  =
 update t
 set latest_status =
         CASE
-            when date_completed is not null then latest_program_status_outcome
+            when date_completed is not null and date_completed < reporting_date then latest_program_status_outcome
             when dispensing_days_late <= 28  then 'active - on arvs'
 	        when latest_program_status_outcome is not null
                 and latest_program_status_outcome  not like '%pregnant%' then latest_program_status_outcome
@@ -386,6 +386,5 @@ set latest_status =
             END
     from hiv_monthly_reporting_staging t;
 
--- ------------------------------------------------------------------------------------
 DROP TABLE IF EXISTS hiv_monthly_reporting;
 EXEC sp_rename 'hiv_monthly_reporting_staging', 'hiv_monthly_reporting';
