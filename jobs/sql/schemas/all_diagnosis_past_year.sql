@@ -44,4 +44,5 @@ birthdate date,
 birthdate_estimated int,
 encounter_type varchar(50),
 section_communale_CDC_ID varchar(50)
-);
+)
+;
