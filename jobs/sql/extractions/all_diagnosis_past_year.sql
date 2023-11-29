@@ -32,7 +32,7 @@ o.date_created
 from obs o 
 where concept_id = concept_from_mapping('PIH','Visit Diagnoses')
 AND o.voided = 0
-AND (date(o.obs_datetime) >=date(DATE_ADD(NOW(), INTERVAL -1 YEAR)))
+AND (date(o.obs_datetime) >=DATE_SUB(DATE_ADD(LAST_DAY(NOW() ), INTERVAL 1 DAY), INTERVAL 13 MONTH))
 AND (date(o.obs_datetime) <=date(NOW()))
 ;
 
