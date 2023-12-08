@@ -93,5 +93,6 @@ configuration:
           - tableName: "mh_medications"
           - tableName: "mh_encounters"
           - tableName: "all_diagnosis_past_year"
+          - tableName: "all_encounters_past_year"
 
     - path: "refresh-derived-tables.yml"
