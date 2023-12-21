@@ -44,6 +44,7 @@ SELECT o.person_id, o.obs_id , o.obs_group_id , o.obs_datetime ,o.date_created ,
 FROM temp_encounter te  INNER JOIN  obs o ON te.encounter_id=o.encounter_id 
 WHERE o.voided =0;
 
+create index temp_obs_ci1 on temp_obs(encounter_id, concept_id);
 
 set @identifier_type ='a541af1e-105c-40bf-b345-ba1fd6a59b85';
 
