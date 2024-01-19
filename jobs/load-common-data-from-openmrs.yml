@@ -12,7 +12,7 @@ configuration:
     - "openmrs-${siteName}.yml"
   jobs:
     - path: "create-source-views-and-functions.yml"
-    #- path: "setup-for-incremental-updates.yml"
+    - path: "setup-for-incremental-updates.yml"
     - type: "iterating-job"
       description: "Importing from ${siteName} using partition ${partitionNum}"
       configuration:
