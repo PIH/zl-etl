@@ -1,6 +1,6 @@
 CREATE TABLE ncd_heart_failure_patient_staging
 (
-emr_id		VARCHAR(10),
+emr_id		VARCHAR(50),
 sex		VARCHAR(2),
 birthdate	DATE,
 hf_diagnosis_date	DATE,

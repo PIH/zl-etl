@@ -44,7 +44,7 @@ CREATE INDEX temp_ncd_heart_failure_stage_valuecoded ON temp_ncd_heart_failure_s
 DROP TEMPORARY TABLE IF EXISTS temp_ncd_heart_failure;
 CREATE TEMPORARY TABLE temp_ncd_heart_failure (
 patient_id INT,
-emr_id VARCHAR(20),
+emr_id VARCHAR(50),
 encounter_id INT,
 encounter_type_id INT,
 encounter_type_name VARCHAR(100),
