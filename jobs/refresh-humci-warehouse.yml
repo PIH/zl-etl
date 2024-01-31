@@ -31,7 +31,8 @@ configuration:
           - tableName: "all_encounters"
             incrementalEnabled: "true"
           - tableName: "all_visits"
-          - tableName: "all_patients"
+          - tableName: "all_patients
+          - tableName: "eid_patient"
           - tableName: "eid_visit"
           - tableName: "hiv_dispensing"
           - tableName: "hiv_patient"
