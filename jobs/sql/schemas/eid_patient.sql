@@ -1,4 +1,4 @@
-CREATE TABLE eid_patients
+CREATE TABLE eid_patient
 (
 emr_id                       varchar(50),   
 hiv_emr_id                   varchar(50),   
