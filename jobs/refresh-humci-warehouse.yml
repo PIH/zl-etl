@@ -32,6 +32,7 @@ configuration:
             incrementalEnabled: "true"
           - tableName: "all_visits"
           - tableName: "all_patients"
+          - tableName: "eid_patients"
           - tableName: "eid_visit"
           - tableName: "hiv_dispensing"
           - tableName: "hiv_patient"
