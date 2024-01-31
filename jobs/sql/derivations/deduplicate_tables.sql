@@ -95,7 +95,7 @@ inner join ncd_patient_table_staging n on n.emr_id = t.emr_id and n.ncd_latest_e
 -- -------------- deduplicate ncd_patient_table -------------------
 drop table if exists ncd_heart_failure_patient;
 CREATE TABLE ncd_heart_failure_patient
-(emr_id            VARCHAR(10),  
+(emr_id            VARCHAR(50),  
 sex               VARCHAR(2),   
 birthdate         DATE,         
 hf_diagnosis_date DATE,         
