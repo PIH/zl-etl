@@ -8,6 +8,8 @@ SELECT program_workflow_id into @eid_treatment_status_id from program_workflow p
 SET @eid_program_id = (SELECT program_id FROM program WHERE retired = 0 AND uuid = '7e06bf82-9f1a-4218-b68f-823082ef519b');
 SET @telephone_number = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'Telephone Number');
 
+select rt.relationship_type_id into @parent_id from relationship_type rt where uuid = '8d91a210-c2cc-11de-8d13-0010c6dffd0f';
+select rt.relationship_type_id into @mother_id from relationship_type rt where uuid = '9a4b3b84-8a9f-11e8-9a94-a6cf71072f73';
 
 DROP TEMPORARY TABLE IF EXISTS temp_patient;
 CREATE TEMPORARY TABLE temp_patient
@@ -27,7 +29,16 @@ CREATE TEMPORARY TABLE temp_patient
     latest_enrollment_location  VARCHAR(100),
     current_treatment_status    VARCHAR(255),
     completion_date             DATE,
-    outcome                     VARCHAR(255)
+    outcome                     VARCHAR(255),
+    latest_hiv_test_date        DATE,
+    latest_hiv_test_type        VARCHAR(255),
+    latest_hiv_test_result      VARCHAR(255),
+    art_start_date              DATE,
+    mother_patient_id           INT(11),
+    mother_emr_id               VARCHAR(50),
+    mother_latest_hiv_test_date        DATE,
+    mother_latest_hiv_test_type        VARCHAR(255),
+    mother_latest_hiv_test_result      VARCHAR(255)
  );
 
 INSERT INTO temp_patient (patient_id)
@@ -82,6 +93,60 @@ UPDATE temp_patient t SET current_treatment_status = currentProgramState(t.lates
 UPDATE temp_patient t SET completion_date = programCompletionDate(latest_program_id);
 UPDATE temp_patient t SET outcome = programOutcome(latest_program_id, @locale);
 
+--  update mother's id
+update temp_patient t  
+inner join relationship r on r.relationship_id =
+	(select relationship_id from relationship r2
+	inner join person p on p.person_id = r2.person_a and gender = 'F'
+	where r2.person_b = t.patient_id
+	and r2.relationship in (@parent_id, @mother_id)
+	and end_date is null 
+	order by r2.date_created desc limit 1)
+set t.mother_patient_id	= r.person_a ;
+   
+update temp_patient t
+set  mother_emr_id = zlemr(mother_patient_id);
+
+-- hiv test information
+set @hiv_rapid = concept_from_mapping('PIH','1040');
+set @hiv_pcr =  concept_from_mapping('PIH','1030');
+set @hiv_eia_qual =  concept_from_mapping('PIH','1042');
+
+drop temporary table if exists temp_hiv_tests;
+create temporary table temp_hiv_tests as
+select person_id, obs_id, obs_group_id, obs_datetime from obs o 
+where concept_id in (@hiv_rapid, @hiv_pcr, @hiv_eia_qual) 
+and voided = 0
+and o.person_id in (select distinct patient_id from temp_patient) ;
+
+insert into temp_hiv_tests
+select person_id, obs_id, obs_group_id, obs_datetime from obs o 
+where concept_id in (@hiv_rapid, @hiv_pcr, @hiv_eia_qual) 
+and voided = 0
+and o.person_id in (select distinct mother_patient_id from temp_patient); 
+
+update temp_patient t
+inner join obs o on o.obs_id =
+	(select ht.obs_id from temp_hiv_tests ht
+	where ht.person_id = t.patient_id
+	order by obs_datetime desc, obs_id desc limit 1)
+set t.latest_hiv_test_date = o.obs_datetime,
+    t.latest_hiv_test_type = concept_short_name(concept_id , @locale),
+    t.latest_hiv_test_result = concept_name(value_coded  , @locale);
+   
+update temp_patient t
+inner join obs o on o.obs_id =
+	(select ht.obs_id from temp_hiv_tests ht
+	where ht.person_id = t.mother_patient_id
+	order by obs_datetime desc, obs_id desc limit 1)
+set t.mother_latest_hiv_test_date = o.obs_datetime,
+    t.mother_latest_hiv_test_type = concept_short_name(concept_id , @locale),
+    t.mother_latest_hiv_test_result = concept_name(value_coded  , @locale);
+   
+-- art start date
+update temp_patient 
+set art_start_date = date(OrderReasonStartDate(patient_id, 'CIEL','138405'));
+
 select 
 zl_emr_id,
 hivemr_v1_id,
@@ -95,5 +160,13 @@ initial_enrollment_location,
 latest_enrollment_location,
 current_treatment_status,
 completion_date,
-outcome
+outcome,
+latest_hiv_test_date,
+latest_hiv_test_type,
+latest_hiv_test_result,
+art_start_date,
+mother_emr_id,
+mother_latest_hiv_test_date,
+mother_latest_hiv_test_type,
+mother_latest_hiv_test_result
 from temp_patient;
