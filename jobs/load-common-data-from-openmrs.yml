@@ -28,6 +28,7 @@ configuration:
           - tableName: "all_encounters"
             incrementalEnabled: "true"
           - tableName: "all_visits"
+          - tableName: "all_patients"
           - tableName: "covid_admission"
           - tableName: "covid_diagnoses"
           - tableName: "covid_discharge"
