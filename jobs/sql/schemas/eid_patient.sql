@@ -17,8 +17,5 @@ latest_hiv_test_date          date,
 latest_hiv_test_type          varchar(255), 
 latest_hiv_test_result        varchar(255), 
 art_start_date                date,         
-mother_emr_id                 varchar(50),  
-mother_latest_hiv_test_date   date,         
-mother_latest_hiv_test_type   varchar(255), 
-mother_latest_hiv_test_result varchar(255)  
+mother_emr_id                 varchar(50)
 );
