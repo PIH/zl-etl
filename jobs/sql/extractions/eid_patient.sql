@@ -35,10 +35,7 @@ CREATE TEMPORARY TABLE temp_patient
     latest_hiv_test_result      VARCHAR(255),
     art_start_date              DATE,
     mother_patient_id           INT(11),
-    mother_emr_id               VARCHAR(50),
-    mother_latest_hiv_test_date        DATE,
-    mother_latest_hiv_test_type        VARCHAR(255),
-    mother_latest_hiv_test_result      VARCHAR(255)
+    mother_emr_id               VARCHAR(50)
  );
 
 INSERT INTO temp_patient (patient_id)
@@ -119,12 +116,6 @@ where concept_id in (@hiv_rapid, @hiv_pcr, @hiv_eia_qual)
 and voided = 0
 and o.person_id in (select distinct patient_id from temp_patient) ;
 
-insert into temp_hiv_tests
-select person_id, obs_id, obs_group_id, obs_datetime from obs o 
-where concept_id in (@hiv_rapid, @hiv_pcr, @hiv_eia_qual) 
-and voided = 0
-and o.person_id in (select distinct mother_patient_id from temp_patient); 
-
 update temp_patient t
 inner join obs o on o.obs_id =
 	(select ht.obs_id from temp_hiv_tests ht
@@ -133,15 +124,6 @@ inner join obs o on o.obs_id =
 set t.latest_hiv_test_date = o.obs_datetime,
     t.latest_hiv_test_type = concept_short_name(concept_id , @locale),
     t.latest_hiv_test_result = concept_name(value_coded  , @locale);
-   
-update temp_patient t
-inner join obs o on o.obs_id =
-	(select ht.obs_id from temp_hiv_tests ht
-	where ht.person_id = t.mother_patient_id
-	order by obs_datetime desc, obs_id desc limit 1)
-set t.mother_latest_hiv_test_date = o.obs_datetime,
-    t.mother_latest_hiv_test_type = concept_short_name(concept_id , @locale),
-    t.mother_latest_hiv_test_result = concept_name(value_coded  , @locale);
    
 -- art start date
 update temp_patient 
@@ -165,8 +147,5 @@ latest_hiv_test_date,
 latest_hiv_test_type,
 latest_hiv_test_result,
 art_start_date,
-mother_emr_id,
-mother_latest_hiv_test_date,
-mother_latest_hiv_test_type,
-mother_latest_hiv_test_result
+mother_emr_id
 from temp_patient;
