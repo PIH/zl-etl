@@ -18,6 +18,8 @@ CREATE TEMPORARY TABLE temp_patient
     zl_emr_id                   VARCHAR(255),
     hivemr_v1_id                VARCHAR(255),
     hiv_dossier_id              VARCHAR(255),
+    given_name                  VARCHAR(50),
+    family_name                 VARCHAR(50),
     gender                      VARCHAR(50),
     birthdate                   DATE,
     telephone_number            VARCHAR(100),
@@ -67,6 +69,12 @@ UPDATE temp_patient t
 set hiv_dossier_id = patient_identifier(t.patient_id, '3B954DB1-0D41-498E-A3F9-1E20CCC47323');
 
 -- demographics
+UPDATE temp_patient
+SET given_name = person_given_name(patient_id);
+
+UPDATE temp_patient
+SET family_name = person_family_name(patient_id);
+
 UPDATE temp_patient
 SET gender = GENDER(patient_id);
 
@@ -133,6 +141,8 @@ select
 zl_emr_id,
 hivemr_v1_id,
 hiv_dossier_id,
+given_name,
+family_name,
 gender,
 birthdate,
 telephone_number,
