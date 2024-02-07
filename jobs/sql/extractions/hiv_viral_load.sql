@@ -31,10 +31,19 @@ CREATE TEMPORARY TABLE temp_hiv_construct_encounters
     index_asc                       INT
 );
 
--- patient and encounter IDs
+-- add patient and encounter IDs 
+set @vl_construct = CONCEPT_FROM_MAPPING("PIH", "HIV viral load construct");
 INSERT INTO temp_hiv_construct_encounters (patient_id, encounter_id)
-SELECT person_id, encounter_id FROM obs WHERE voided = 0 AND concept_id = CONCEPT_FROM_MAPPING("PIH", "HIV viral load construct");
+SELECT person_id, encounter_id FROM obs WHERE voided = 0 AND concept_id = @vl_construct;
 
+-- add VLs from lab module
+set @order_num = concept_from_mapping('PIH','10781');
+set @VL_panel = concept_from_mapping('PIH','15124');
+INSERT INTO temp_hiv_construct_encounters (patient_id, encounter_id)
+select o.person_id , o.encounter_id   from orders ord 
+inner join obs  o on o.concept_id = @order_num and o.value_text = ord.order_number and o.voided = 0
+where ord.concept_id = @VL_panel;
+ 
 -- specimen collection date, visit id
 UPDATE temp_hiv_construct_encounters tvl INNER JOIN encounter e ON tvl.encounter_id = e.encounter_id
 SET	vl_sample_taken_date = e.encounter_datetime,
@@ -59,31 +68,38 @@ update temp_hiv_construct_encounters tvl
 set visit_location = location_name(hivEncounterLocationId(encounter_id));
 
 -- is specimen collection date estimated
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('PIH', '11781')
+set @collDateEst = concept_from_mapping('PIH','11781');
+UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @collDateEst
 SET vl_sample_taken_date_estimated =  concept_name(o.value_coded , 'en');
 
 -- lab result date
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('PIH', 'Date of test results')
+set @testResultsDate = concept_from_mapping('PIH', 'Date of test results');
+UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @testResultsDate
 SET vl_result_date =  DATE(o.value_datetime);
 
 -- specimen number
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('CIEL', '162086')
+set @specNumber = concept_from_mapping('CIEL', '162086');
+UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id =  @specNumber 
  SET specimen_number =  o.value_text;
 
 -- viral load results (coded, concept name)
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('CIEL', '1305')
+set @vlCoded = concept_from_mapping('CIEL', '1305');
+UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @vlCoded 
 SET vl_coded_results =  concept_name(o.value_coded, 'en');
 
 -- viral load results (numeric)
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('CIEL', '856')
+set @vlNumeric = concept_from_mapping('CIEL', '856');
+UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @vlNumeric
 SET viral_load =  o.value_numeric;
 
 -- detected lower limit
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('PIH', '11548')
+set @lowLimit = concept_from_mapping('PIH', '11548');
+UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @lowLimit
 SET ldl_value  =  o.value_numeric;
 
 -- viral load type
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = concept_from_mapping('CIEL', '164126')
+set @vlType = concept_from_mapping('CIEL', '164126');
+UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @vlType
 SET vl_type = concept_name(o.value_coded, 'en');
 
 /*
@@ -152,8 +168,4 @@ SELECT
         index_desc,
         index_asc
 FROM temp_hiv_construct_encounters tvl
--- index descending
--- JOIN temp_vl_index_desc tid ON tvl.encounter_id = tid.encounter_id
--- index ascending
--- JOIN temp_vl_index_asc tia ON tvl.encounter_id = tia.encounter_id
-ORDER BY tvl.patient_id;-- , index_desc;
+;
