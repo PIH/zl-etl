@@ -1,8 +1,10 @@
 CREATE TABLE eid_patient
 (
 emr_id                        varchar(50),   
-hiv_emr_id                    varchar(50),   
-dossier_id                    varchar(50),   
+hivemr_v1_id                  varchar(50),   
+hiv_dossier_id                varchar(50),  
+given_name                    varchar(50),           
+family_name                   varchar(50), 
 gender                        varchar(50),   
 birthdate                     date,          
 telephone_number              varchar(100),  
