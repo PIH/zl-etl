@@ -96,6 +96,7 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
     hpv BIT,
     trichomoniasis BIT,
     bacterial_vaginosis BIT,
+    syphilis_treatment_status varchar(255),
     sti_treatment 		BIT,
     index_patient_asc          INT,
     index_patient_desc         INT,
@@ -191,6 +192,7 @@ UPDATE temp_obgyn_pregnacy te
         AND o.voided = 0 
 SET 
     antenatal_visit = 'Yes';-- yes
+    
 
 UPDATE temp_obgyn_pregnacy te
         JOIN
@@ -958,6 +960,12 @@ UPDATE temp_obgyn_visit t SET bacterial_vaginosis = (SELECT 1 FROM obs o WHERE t
 UPDATE temp_obgyn_visit t SET sti_treatment = (SELECT 1 FROM obs o WHERE t.encounter_id = o.encounter_id AND o.voided = 0 AND concept_id = CONCEPT_FROM_MAPPING('CIEL', '160742') AND value_coded
 = CONCEPT_FROM_MAPPING('CIEL', '167125'));
 
+
+# Syphilis treatment status
+UPDATE temp_obgyn_visit t 
+INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13024')
+SET t.syphilis_treatment_status = CONCEPT_NAME(o.value_coded,'en');
+
 # final query
 SELECT
     ZLEMR(patient_id),
@@ -1032,6 +1040,7 @@ SELECT
     delivery_datetime,
     risk_factors,
     sti_treatment,
+    syphilis_treatment_status,
     chlamydia,
     gonorrhea,
     genital_herpes,
