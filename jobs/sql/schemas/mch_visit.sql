@@ -72,6 +72,7 @@ CREATE TABLE mch_visit
     delivery_datetime                DATETIME,
     risk_factors                     TEXT,
     sti_treatment                    BIT,
+    syphilis_treatment_status        VARCHAR(255),
     chlamydia                        BIT,
     gonorrhea                        BIT,
     genital_herpes                   BIT,
