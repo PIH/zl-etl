@@ -21,7 +21,7 @@ dossier_id varchar(50),
 reg_location varchar(50),
 reg_date date,
 user_entered varchar(50),
-fist_encounter_date date,
+first_encounter_date date,
 last_encounter_date date, 
 name varchar(50),
 family_name varchar(50),
@@ -51,11 +51,11 @@ SELECT
     e.encounter_datetime AS encounter_datetime,
     e.encounter_id AS encounter_id,
     e.encounter_type AS encounter_type,
-    encounter_creator(encounter_id) AS username,
+    encounter_creator_name(encounter_id) AS username,
     encounter_location_name(encounter_id) AS name
 FROM
     encounter e
-JOIN tbl_first_enc X ON
+INNER JOIN tbl_first_enc X ON
     X.patient_id = e.patient_id
         AND X.encounter_datetime = e.encounter_datetime;
         
@@ -99,7 +99,7 @@ inner join
 	from tmp_first_enc_date
 ) x
 on dp.patient_id= x.patient_id
-set fist_encounter_date =x.encounter_date;
+set first_encounter_date =x.encounter_date;
 
 
 UPDATE all_patients dp
@@ -160,7 +160,7 @@ dossier_id,
 reg_location,
 reg_date,
 user_entered,
-fist_encounter_date,
+first_encounter_date,
 last_encounter_date,
 name,
 family_name,
