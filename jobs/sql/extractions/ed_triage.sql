@@ -395,4 +395,5 @@ Treatment_Administered,
 Wait_Minutes
 index_asc,
 index_desc
-from temp_ED_Triage;
+from temp_ED_Triage
+;
