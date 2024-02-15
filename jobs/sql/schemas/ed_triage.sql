@@ -1,8 +1,8 @@
 create table ed_triage
 (
 encounter_id             int,
-date_entered 			    date,
-user_entered 			    varchar(100),
+date_entered             date,
+user_entered             varchar(100),
 visit_id                 int,      
 zlemr_id                 varchar(50),  
 dossier_id               varchar(50),  
