@@ -23,6 +23,7 @@ configuration:
         jobTemplate:
           path: "import-to-table-partition.yml"
         iterations:
+          - tableName: "ed_triage"
           - tableName: "all_lab_orders"
           - tableName: "all_lab_results"
           - tableName: "all_medication_prescribed"
@@ -96,6 +97,5 @@ configuration:
           - tableName: "mh_encounters"
           - tableName: "all_diagnosis_past_year"
           - tableName: "all_encounters_past_year"
-          - tableName: "ed_triage"
 
     - path: "refresh-derived-tables.yml"

@@ -1,9 +1,9 @@
 create table ed_triage
 (
-encounter_id             int,
+encounter_id             varchar(100),
 date_entered             date,
 user_entered             varchar(100),
-visit_id                 int,      
+visit_id                 varchar(100),      
 zlemr_id                 varchar(50),  
 dossier_id               varchar(50),  
 loc_registered           varchar(255),   
