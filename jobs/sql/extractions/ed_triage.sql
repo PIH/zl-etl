@@ -5,16 +5,18 @@ SELECT name into @consEncName from encounter_type where uuid = '92fd09b4-5335-4f
 select form_id into @consForm from form where uuid = 'a3fc5c38-eb32-11e2-981f-96c0fcb18276';
 select form_id into @edNoteForm from form where uuid = '793915d6-f8d9-11e2-8ff2-fd54ab5fdb2a';
 
+SET @partition = '${partitionNum}';
+
 set @locale = global_property_value('default_locale', @locale);
 
 drop temporary table if exists temp_ED_Triage;
 create temporary table temp_ED_Triage
 (
-patient_id               int(11),
-encounter_id             int(11),
+patient_id               int,
+encounter_id             int,
 date_entered 			    date,
 user_entered 			    varchar(100),
-visit_id                 int(11),      
+visit_id                 int,      
 zlemr_id                 varchar(50),  
 dossier_id               varchar(50),  
 loc_registered           varchar(255),   
@@ -52,8 +54,8 @@ Glucose_Value            double,
 Paracetamol_dose         double,       
 Treatment_Administered   text,         
 Wait_Minutes             double,       
-EDNote_encounter_id      int(11),         
-Consult_encounter_id     int(11),
+EDNote_encounter_id      int,         
+Consult_encounter_id     int,
 index_asc                int,
 index_desc               int        
 );
@@ -352,10 +354,10 @@ create index temp_ed_obs_ei on temp_ed_obs(encounter_id);
 
 -- final output of data
 Select
-encounter_id,
+CONCAT(@partition, '-', encounter_id) as encounter_id,
 date_entered,
 user_entered,
-visit_id,
+CONCAT(@partition, '-', visit_id) as visit_id,
 zlemr_id,
 dossier_id,
 loc_registered,
