@@ -201,7 +201,7 @@
                                     <destinationFile>${petlJobExtractionSqlDir}/all_medication_dispensing.sql</destinationFile>
                                 </fileSet>
                                 <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/socialEconomics.sql.sql</sourceFile>
+                                    <sourceFile>${dataExportSqlDir}/socialEconomics.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/socioeconomic_encounter.sql</destinationFile>
                                 </fileSet>    
                             </fileSets>
