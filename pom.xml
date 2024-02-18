@@ -199,7 +199,11 @@
                                 <fileSet>
                                     <sourceFile>${dataExportSqlDir}/all_medication_dispensing.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/all_medication_dispensing.sql</destinationFile>
-                                </fileSet>                              
+                                </fileSet>
+                                <fileSet>
+                                    <sourceFile>${dataExportSqlDir}/socialEconomics.sql.sql</sourceFile>
+                                    <destinationFile>${petlJobExtractionSqlDir}/socioeconomic_encounter.sql</destinationFile>
+                                </fileSet>    
                             </fileSets>
                         </configuration>
                     </execution>
