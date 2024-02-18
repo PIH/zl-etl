@@ -95,6 +95,7 @@ configuration:
           - tableName: "oncology_monthly_summary"
           - tableName: "mh_medications"
           - tableName: "mh_encounters"
+          - tableName: "socioeconomic_encounter"
           - tableName: "all_diagnosis_past_year"
           - tableName: "all_encounters_past_year"
 
