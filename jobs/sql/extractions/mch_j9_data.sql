@@ -2,7 +2,6 @@
 
 select program_id into @mchProgram from program where uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73';
 select encounter_type('d83e98fd-dc7b-420f-aa3f-36f648b4483d') into @ob_gyn_enc_id;
-select encounter_type('de844e58-11e1-11e8-b642-0ed5f89f718b') into @socio_enc_id;
 select encounter_type('873f968a-73a8-4f9c-ac78-9f4778b751b6') into @reg_enc_id;
 select program_workflow_id into @mchWorkflow from program_workflow where uuid = '41a277d0-8a14-11e8-9a94-a6cf71072f73';
 set @past_med_finding = concept_from_mapping('PIH','10140');
@@ -13,11 +12,6 @@ create temporary table temp_j9
 patient_id int,
 patient_program_id int,
 patient_age int,
-last_socio_encounter_id int,
-education_level_obs_id int(11),
-education_level varchar(255),
-able_read_write_obs_id int(11),
-able_read_write  boolean,
 date_enrolled datetime,
 date_completed datetime,
 program_state varchar(255),
@@ -45,8 +39,6 @@ number_postpartum_visits int,
 number_family_planning_visits int,
 marital_status_obs_id int(11),
 marital_status varchar(255), 
-employment_status_obs_id int(11),
-employment_status varchar(255),
 religion_obs_id int(11),
 religion varchar(255),
 family_support boolean,  
@@ -61,10 +53,6 @@ address_commune varchar(255),
 address_section_communale varchar(255),
 address_locality varchar(255),
 address_street_landmark varchar(255),
-access_transport_obs_id int(11),
-access_transport boolean,
-mode_transport_obs_id int(11),
-mode_transport varchar(255), 
 traditional_healer_obs_id int(11),
 traditional_healer varchar(255),
 prenatal_teas_obs_id int(11),
@@ -93,7 +81,7 @@ create temporary table temp_encounter
 select e.encounter_id, e.encounter_datetime , e.patient_id  , e.encounter_type 
 from encounter e 
 inner join temp_j9 t on t.patient_id = e.patient_id 
-where e.encounter_type in (@ob_gyn_enc_id,@socio_enc_id,@reg_enc_id) 
+where e.encounter_type in (@ob_gyn_enc_id,@reg_enc_id) 
 and e.voided = 0;
 
 create index temp_encounter_ei on temp_encounter(encounter_id);
@@ -113,11 +101,7 @@ create index temp_obs_ci3 on temp_obs(date_created, obs_id);
 create index temp_obs_ci4 on temp_obs(obs_group_id, concept_id);
 create index temp_obs_ci5 on temp_obs(person_id, concept_id, obs_datetime);
 create index temp_obs_oi on temp_obs(obs_id);
-
--- encounter_id of latest encounter_id (used in calculations below) 
-update temp_j9 t
-set last_socio_encounter_id = latest_enc_from_temp(patient_id, @socio_enc_id, null);
-
+ 
 update temp_j9 t
 set program_state = currentProgramState(t.patient_program_id, @mchWorkflow, @locale);
 
@@ -131,63 +115,6 @@ set mothers_group = value_text_from_temp(mothers_group_obs_id);
 -- patient age
 update temp_j9
 set patient_age = current_age_in_years(patient_id);
-
--- columns from socioeconomic form
--- education level
-set @el_id = concept_from_mapping('CIEL','1712');
-update temp_j9
-set education_level_obs_id = latest_obs_from_temp_from_concept_id(patient_id,@el_id);
-update temp_j9
-set education_level = value_coded_name_from_temp(education_level_obs_id,@locale);
-
--- able to read or write
-set @able_rw_id = concept_from_mapping('CIEL','166855');
-update temp_j9
-set able_read_write_obs_id =latest_obs_from_temp_from_concept_id(patient_id, @able_rw_id);
-update temp_j9
-set able_read_write = value_coded_as_boolean_from_temp(able_read_write_obs_id);
-
--- family support checkbox
-update temp_j9 t
-inner join temp_obs o on o.encounter_id = last_socio_encounter_id and o.voided = 0
-	and o.concept_id = concept_from_mapping('PIH','2156') 
-	and o.value_coded = concept_from_mapping('PIH','10642') 
-set family_support = if(o.obs_id is null,null,1 );
-
--- partner support checkbox
-set @partner_support_id = concept_from_mapping('PIH','13747');
-update temp_j9 
-set partner_support_anc_obs_id = latest_obs_from_temp_from_concept_id(patient_id, @partner_support_id);
-update temp_j9 
-set partner_support_anc = value_coded_as_boolean_from_temp(partner_support_anc_obs_id);
-
--- currently employed checkbox
-set @employment_status_id = concept_from_mapping('PIH','3395');
-update temp_j9
-set employment_status_obs_id = latest_obs_from_temp_from_concept_id(patient_id, @employment_status_id);
-update temp_j9
-set employment_status = value_coded_as_boolean_from_temp(employment_status_obs_id);
-
--- number household members
-set @number_hh_id = concept_from_mapping('CIEL','1474');
-update temp_j9
-set number_household_members_obs_id = latest_obs_from_temp_from_concept_id(patient_id, @number_hh_id);
-update temp_j9
-set number_household_members = value_numeric_from_temp(number_household_members_obs_id);
-
--- access to transpoirt
-set @at_id= concept_from_mapping('PIH','13746');
-update temp_j9
-set access_transport_obs_id = latest_obs_from_temp_from_concept_id(patient_id, @at_id);
-update temp_j9
-set access_transport = value_coded_as_boolean_from_temp(access_transport_obs_id);
-
--- mode of transport
-set @mt_id= concept_from_mapping('PIH','975');
-update temp_j9
-set mode_transport_obs_id = latest_obs_from_temp_from_concept_id(patient_id,@mt_id);
-update temp_j9
-set mode_transport = value_coded_name_from_temp(mode_transport_obs_id,@locale);
 
 -- columns from obgyn form
 -- expected delivery date
@@ -382,8 +309,6 @@ set prenatal_teas = value_coded_name_from_temp(prenatal_teas_obs_id,@locale);
 Select
 zlemr(patient_id),
 patient_age,
-education_level,
-able_read_write,
 date_enrolled,
 date_completed,
 program_state,
@@ -406,7 +331,6 @@ number_obGyn_visits,
 number_postpartum_visits,
 number_family_planning_visits,
 marital_status,
-employment_status,
 religion,
 family_support,
 partner_support_anc,
@@ -417,8 +341,6 @@ address_commune,
 address_section_communale,
 address_locality,
 address_street_landmark,
-access_transport,
-mode_transport,
 traditional_healer,
 prenatal_teas
 from temp_j9 t 
