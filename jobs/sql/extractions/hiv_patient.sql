@@ -538,48 +538,6 @@ SELECT patient_id, MAX(encounter_datetime) FROM encounter WHERE voided = 0
 AND encounter_id IN (SELECT encounter_id FROM encounter WHERE encounter_type IN (@hiv_initial_encounter_type, @hiv_followup_encounter_type) AND voided = 0)
 GROUP BY patient_id;
 
--- viral_load_date
-DROP TEMPORARY TABLE IF EXISTS temp_hiv_last_viral_stage;
-CREATE TEMPORARY TABLE temp_hiv_last_viral_stage (
-person_id INT,
-encounter_id INT, 
-viral_load_date DATE
-);
-
-CREATE INDEX temp_hiv_last_viral_stage_person_id ON temp_hiv_last_viral_stage (person_id);
-CREATE INDEX temp_hiv_last_viral_stage_encounter ON temp_hiv_last_viral_stage (encounter_id);
-
-INSERT INTO temp_hiv_last_viral_stage (person_id, encounter_id)
-SELECT person_id, encounter_id FROM obs WHERE voided = 0 AND concept_id = CONCEPT_FROM_MAPPING("PIH", "HIV viral load construct");
-
--- specimen collection date, visit id
-UPDATE temp_hiv_last_viral_stage tvl INNER JOIN encounter e ON tvl.encounter_id = e.encounter_id
-SET	viral_load_date = e.encounter_datetime;
-
-DROP TEMPORARY TABLE IF EXISTS temp_hiv_last_viral;
-CREATE TEMPORARY TABLE temp_hiv_last_viral (
-person_id INT,
-encounter_id INT, 
-viral_load_date DATETIME,
-last_viral_load_date DATE,
-last_viral_load_numeric DOUBLE,
-last_viral_load_undetectable DOUBLE,
-months_since_last_vl DOUBLE 
-);
-
-CREATE INDEX temp_hiv_last_viral_person_id ON temp_hiv_last_viral (person_id);
-CREATE INDEX temp_hiv_last_viral_encounter ON temp_hiv_last_viral (encounter_id);
-
-INSERT INTO temp_hiv_last_viral (person_id, viral_load_date)
-SELECT person_id, MAX(viral_load_date) FROM temp_hiv_last_viral_stage GROUP BY person_id;
-
-UPDATE temp_hiv_last_viral t SET last_viral_load_date = t.viral_load_date;
-UPDATE temp_hiv_last_viral t INNER JOIN temp_hiv_last_viral_stage tm ON tm.person_id = t.person_id AND tm.viral_load_date = t.last_viral_load_date
-SET t.encounter_id = tm.encounter_id;
-UPDATE temp_hiv_last_viral tvl SET last_viral_load_numeric = OBS_VALUE_NUMERIC(tvl.encounter_id, 'CIEL', '856');
-UPDATE temp_hiv_last_viral tvl SET last_viral_load_undetectable = OBS_VALUE_NUMERIC(tvl.encounter_id, 'PIH', '11548');
-UPDATE temp_hiv_last_viral t SET months_since_last_vl = TIMESTAMPDIFF(MONTH, last_viral_load_date, NOW());
-
 -- next_visit_date
 ### For this section, putting into account restrospective data entry, 
 ### thus using max(encounter_date) instead of max(encounter_id)
@@ -909,11 +867,6 @@ tsh.last_height_date,
 DATE(tsv.last_visit_date),
 DATE(tsd.next_visit_date),
 IF(tsd.days_late_to_visit > 0, days_late_to_visit, 0) days_late_to_visit, 
-DATE(tsl.viral_load_date),
-tsl.last_viral_load_date,
-tsl.last_viral_load_numeric,
-tsl.last_viral_load_undetectable,
-tsl.months_since_last_vl,
 thd.hiv_diagnosis_date,
 t.art_dispensing_start_date,
 t.first_art_dispensing_regimen,
@@ -934,7 +887,6 @@ LEFT JOIN temp_socio_hiv_intake ts ON t.patient_id = ts.patient_id
 LEFT JOIN temp_hiv_vitals_weight tsw ON t.patient_id = tsw.person_id
 LEFT JOIN temp_hiv_vitals_height tsh ON t.patient_id = tsh.person_id
 LEFT JOIN temp_hiv_last_visits tsv ON t.patient_id = tsv.patient_id
-LEFT JOIN temp_hiv_last_viral tsl ON t.patient_id = tsl.person_id
 LEFT JOIN temp_hiv_next_visit_date tsd ON t.patient_id = tsd.person_id
 LEFT JOIN temp_hiv_diagnosis_date thd ON t.patient_id = thd.person_id
 LEFT JOIN temp_hiv_dispensing tehd ON tehd.person_id = t.patient_id
