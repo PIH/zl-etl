@@ -152,6 +152,9 @@ SET t.dead=dead(patient_id),
 t.death_date=death_date(patient_id),
 t.cause_of_death=concept_name(cause_of_death(patient_id),'en');
 
+UPDATE all_patients t
+SET t.first_encounter_date=reg_date
+WHERE t.first_encounter_date IS NULL AND t.reg_date IS NOT NULL;
 
 SELECT 
 emr_id,
