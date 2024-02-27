@@ -307,3 +307,17 @@ and avi.visit_date = av.visit_date
 and avi.visit_id = av.visit_id
 and avi.encounter_id = av.encounter_id
 ; 
+
+-- update index asc/desc on ed_triage table
+select  zlemr_id, Triage_datetime, 
+ROW_NUMBER() over (PARTITION by zlemr_id order by Triage_datetime asc) "index_asc",
+ROW_NUMBER() over (PARTITION by zlemr_id order by Triage_datetime desc) "index_desc"
+into #edtriage_visit_indexes
+from ed_triage et ;
+
+update  et
+set et.index_asc = avi.index_asc,
+	et.index_desc = avi.index_desc 
+from ed_triage et 
+inner join #edtriage_visit_indexes avi on avi.zlemr_id = et.zlemr_id
+and avi.Triage_datetime = et.Triage_datetime; 
