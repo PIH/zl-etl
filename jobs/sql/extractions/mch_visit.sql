@@ -960,11 +960,11 @@ UPDATE temp_obgyn_visit t SET bacterial_vaginosis = (SELECT 1 FROM obs o WHERE t
 UPDATE temp_obgyn_visit t SET sti_treatment = (SELECT 1 FROM obs o WHERE t.encounter_id = o.encounter_id AND o.voided = 0 AND concept_id = CONCEPT_FROM_MAPPING('CIEL', '160742') AND value_coded
 = CONCEPT_FROM_MAPPING('CIEL', '167125'));
 
-
 # Syphilis treatment status
+set @completed = concept_from_mapping('PIH','1267');
 UPDATE temp_obgyn_visit t 
 INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13024')
-SET t.syphilis_treatment_status = CONCEPT_NAME(o.value_coded,'en');
+SET t.syphilis_treatment_status = if(o.value_coded = @completed,'Stopped' ,CONCEPT_NAME(o.value_coded,'en'));
 
 # final query
 SELECT
