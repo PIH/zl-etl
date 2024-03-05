@@ -156,6 +156,10 @@ UPDATE all_patients t
 SET t.first_encounter_date=reg_date
 WHERE t.first_encounter_date IS NULL AND t.reg_date IS NOT NULL;
 
+UPDATE all_patients t
+SET t.reg_date=first_encounter_date
+WHERE t.first_encounter_date IS NOT NULL AND t.reg_date IS NULL;
+
 SELECT 
 emr_id,
 hiv_emr_id,
