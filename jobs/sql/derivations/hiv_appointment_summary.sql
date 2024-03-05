@@ -18,7 +18,6 @@ SELECT emr_id, encounter_id AS appointment_scheduling_encounter_id, visit_date, 
 index_asc , lead(visit_date,1) OVER (ORDER BY visit_date ASC) AS next_actual_visit, partition_num 
 INTO #next_appt_details 
 FROM hiv_visit hv 
-WHERE emr_id IN ('CR0245038','CR012150N') 
 ORDER BY emr_id, visit_date  ASC;
 
 INSERT INTO hiv_appointment_summary
