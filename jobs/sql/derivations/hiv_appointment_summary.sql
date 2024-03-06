@@ -15,7 +15,7 @@ index_desc int
 
 DROP TABLE IF EXISTS #next_appt_details;
 SELECT emr_id, encounter_id AS appointment_scheduling_encounter_id, visit_date,  next_visit_date AS appointment_date,
-index_asc , lead(visit_date,1) OVER (ORDER BY visit_date ASC) AS next_actual_visit, partition_num 
+index_asc , lead(visit_date,1) OVER (ORDER BY emr_id,visit_date ASC) AS next_actual_visit, partition_num 
 INTO #next_appt_details 
 FROM hiv_visit hv 
 ORDER BY emr_id, visit_date  ASC;
