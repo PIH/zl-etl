@@ -23,6 +23,7 @@ CREATE TABLE hiv_patient_summary_status_staging
  inh_end_date					  date,
  site                             varchar(255),  
  last_visit_date                  date,          
+ second_to_latest_hiv_visit_date  DATE, 
  last_med_pickup_date             date,          
  last_med_pickup_months_dispensed int,           
  last_med_pickup_treatment_line   varchar(255),  
@@ -440,6 +441,19 @@ inner join hiv_visit v on v.encounter_id =
     and v2.chw is not NULL
     order by v2.visit_date desc)
 ;
+
+-- pull latest second_to_latest_hiv_visit_date from hiv_monthly_reporting table
+DROP TABLE IF EXISTS #last_second_to_latest_visit;
+SELECT emr_id, max(second_to_latest_hiv_visit_date) AS second_to_latest_hiv_visit_date 
+INTO #last_second_to_latest_visit       
+FROM hiv_monthly_reporting hmr 
+    WHERE emr_id IS NOT NULL 
+    GROUP BY emr_id;
+   
+update t
+set second_to_latest_hiv_visit_date = v.second_to_latest_hiv_visit_date
+    from hiv_patient_summary_status_staging t
+inner join #last_second_to_latest_visit v ON t.emr_id=v.emr_id;
 
 alter table hiv_patient_summary_status_staging drop column dispense_before_prescription;
 alter table hiv_patient_summary_status_staging drop column enrollment_date;
