@@ -444,16 +444,14 @@ inner join hiv_visit v on v.encounter_id =
 
 -- pull latest second_to_latest_hiv_visit_date from hiv_monthly_reporting table
 DROP TABLE IF EXISTS #last_second_to_latest_visit;
-SELECT emr_id, max(second_to_latest_hiv_visit_date) AS second_to_latest_hiv_visit_date 
+SELECT emr_id, visit_date, rank() OVER (PARTITION BY emr_id ORDER BY visit_date DESC ) AS rnk 
 INTO #last_second_to_latest_visit       
-FROM hiv_monthly_reporting hmr 
-    WHERE emr_id IS NOT NULL 
-    GROUP BY emr_id;
+FROM hiv_visit hmr;
    
 update t
-set second_to_latest_hiv_visit_date = v.second_to_latest_hiv_visit_date
+set second_to_latest_hiv_visit_date = v.visit_date
     from hiv_patient_summary_status_staging t
-inner join #last_second_to_latest_visit v ON t.emr_id=v.emr_id;
+inner join #last_second_to_latest_visit v ON t.emr_id=v.emr_id AND v.rnk=2;
 
 alter table hiv_patient_summary_status_staging drop column dispense_before_prescription;
 alter table hiv_patient_summary_status_staging drop column enrollment_date;
