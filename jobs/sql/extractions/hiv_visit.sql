@@ -398,7 +398,7 @@ set @victim_of_gbv = concept_from_mapping('PIH','11049');
 set @multiple_partners = concept_from_mapping('PIH','5567');
 set @without_condom = concept_from_mapping('PIH','11048');
 set @anal_sex = concept_from_mapping('PIH','11051');
-set @with_sex_worker = concept_from_mapping('PIH','160580');
+set @with_sex_worker = concept_from_mapping('PIH','11045');
 
 drop temporary table if exists temp_obs;
 create temporary table temp_obs 
