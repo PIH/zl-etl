@@ -444,7 +444,7 @@ inner join hiv_visit v on v.encounter_id =
 
 -- pull latest second_to_latest_hiv_visit_date from hiv_monthly_reporting table
 DROP TABLE IF EXISTS #last_second_to_latest_visit;
-SELECT emr_id, visit_date, rank() OVER (PARTITION BY emr_id ORDER BY visit_date DESC ) AS rnk 
+SELECT emr_id, visit_date, dense_rank() OVER (PARTITION BY emr_id ORDER BY visit_date DESC ) AS rnk 
 INTO #last_second_to_latest_visit       
 FROM hiv_visit hmr;
    
