@@ -263,148 +263,188 @@ set last_breastfeeding_date = o.value_datetime;
 
 -- inh
 drop temporary table if exists temp_hiv_inh;
-create temporary table temp_hiv_inh(obs_group_id int, encounter_id int, inh_line varchar(50), inh_start_date date, inh_end_date date);
+create temporary table temp_hiv_inh
+(obs_group_id int, 
+encounter_id int, 
+inh_line varchar(50), 
+inh_start_date date, 
+inh_end_date date);
+
+set @isoniazid = concept_from_mapping('PIH', 'ISONIAZID');
+set @prevProphConstruct = concept_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT');
+set @currProphConstruct = concept_from_mapping('PIH', 'CURRENT PROPHYLAXIS TREATMENT CONSTRUCT');
+
 insert into temp_hiv_inh(obs_group_id, encounter_id)
 select obs_group_id, encounter_id from obs o where voided = 0 and 
-value_coded = concept_from_mapping('PIH','ISONIAZID')
+value_coded = @isoniazid
 and o.obs_group_id in
 ((select obs_id from obs where voided = 0 and concept_id in (
-concept_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT'),
-concept_from_mapping('PIH', 'CURRENT PROPHYLAXIS TREATMENT CONSTRUCT'))
+	@prevProphConstruct,
+	@currProphConstruct)
 ))
 and encounter_id in (select encounter_id from temp_hiv_visit);
 
+set @inhLine = concept_from_mapping('PIH', '13786');
+update temp_hiv_inh i 
+set inh_line = 
+	(select concept_name(value_coded, @locale) from obs o 
+	where o.obs_group_id = i.obs_group_id 
+	and voided = 0
+	and concept_id = @inhLine);
 
-update temp_hiv_inh i set inh_line = (select concept_name(value_coded, @locale) from obs o where o.obs_group_id = i.obs_group_id and voided = 0 
-and concept_id = concept_from_mapping('PIH', '13786'));
-update temp_hiv_inh i join obs o on i.encounter_id = o.encounter_id and o.obs_group_id = i.obs_group_id and concept_id in (
-concept_from_mapping('PIH', 'HISTORICAL DRUG START DATE'),
-concept_from_mapping('PIH', '11131'))
+set @drugStartDate = concept_from_mapping('PIH', 'HISTORICAL DRUG START DATE');
+set @treatmentStartDate = concept_from_mapping('PIH', '11131');
+
+update temp_hiv_inh i 
+inner join obs o on i.encounter_id = o.encounter_id and o.obs_group_id = i.obs_group_id 
+and concept_id in (
+	@drugStartDate,
+	@treatmentStartDate)
 set i.inh_start_date = date(value_datetime);
 
-update temp_hiv_inh i set inh_line = (select concept_name(value_coded, @locale) from obs o where o.obs_group_id = i.obs_group_id and voided = 0 
-and concept_id = concept_from_mapping('PIH', '13786'));
+set @inhLine = concept_from_mapping('PIH', '13786');
+update temp_hiv_inh i 
+set inh_line = (select concept_name(value_coded, @locale) from obs o where o.obs_group_id = i.obs_group_id and voided = 0 
+and concept_id = @inhLine);
+
+set @drugStopDate = concept_from_mapping('PIH', 'HISTORICAL DRUG STOP DATE');
+set @treatmentStopDate = concept_from_mapping('PIH', '12748');
 update temp_hiv_inh i join obs o on i.encounter_id = o.encounter_id and o.obs_group_id = i.obs_group_id and concept_id in (
-concept_from_mapping('PIH', 'HISTORICAL DRUG STOP DATE'),
-concept_from_mapping('PIH', '12748'))
+@drugStopDate,
+@treatmentStopDate)
 set i.inh_end_date = date(value_datetime);
 
 update temp_hiv_visit t  join temp_hiv_inh i on t.encounter_id = i.encounter_id
 set t.inh_line = i.inh_line,
 	t.inh_start_date = i.inh_start_date,
     t.inh_end_date = i.inh_end_date;
-   
+
+ -- HIV RISKS
+set @hiv_risks = concept_from_mapping('PIH','11046');   
+drop temporary table if exists temp_obs;
+create temporary table temp_obs 
+select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.date_created  
+from obs o
+inner join temp_hiv_visit t on t.encounter_id = o.encounter_id
+where o.voided = 0
+and o.concept_id = @hiv_risks;
+
+create index temp_obs_ci1 on temp_obs(encounter_id,concept_id,value_coded);
+
+set @sexuallyActiveWithMen = concept_from_mapping('PIH','10870');
 update temp_hiv_visit t
-set sexually_active_with_men = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','10870') is null,null,1);
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @sexuallyActiveWithMen
+set t.sexually_active_with_men = if(o.obs_id is null, null,1);
+
+set @sexually_active_with_women = concept_from_mapping('PIH','10872');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @sexually_active_with_women
+set t.sexually_active_with_women = if(o.obs_id is null, null,1);
+
+set @intravenous_drug_use = concept_from_mapping('PIH','105');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @intravenous_drug_use
+set t.intravenous_drug_use = if(o.obs_id is null, null,1);
+
+set @blood_transfusion = concept_from_mapping('PIH','1063');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @blood_transfusion
+set t.blood_transfusion = if(o.obs_id is null, null,1);
+
+set @maternal_to_fetal_transmission = concept_from_mapping('PIH','11042');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @maternal_to_fetal_transmission
+set t.maternal_to_fetal_transmission = if(o.obs_id is null, null,1);
+
+set @accidental_exposure_to_blood = concept_from_mapping('PIH','11044');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @accidental_exposure_to_blood
+set t.accidental_exposure_to_blood = if(o.obs_id is null, null,1);
+
+set @sex_with_infected = concept_from_mapping('PIH','11060');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @sex_with_infected
+set t.sex_with_infected = if(o.obs_id is null, null,1);
+
+set @sex_with_drug_user = concept_from_mapping('PIH','11534');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @sex_with_drug_user
+set t.sex_with_drug_user = if(o.obs_id is null, null,1);
+
+set @heterosexual_sex_bisexual = concept_from_mapping('PIH','13001');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @heterosexual_sex_bisexual
+set t.heterosexual_sex_bisexual = if(o.obs_id is null, null,1);
+
+set @heterosexual_sex_blood_transfusion = concept_from_mapping('PIH','13000');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @heterosexual_sex_blood_transfusion
+set t.heterosexual_sex_blood_transfusion = if(o.obs_id is null, null,1);
+
+set @other_mode_of_transmission = concept_from_mapping('PIH','5622');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @other_mode_of_transmission
+set t.other_mode_of_transmission = if(o.obs_id is null, null,1);
+
+set @other_risk_factor = concept_from_mapping('PIH','11406');
+update temp_hiv_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @other_risk_factor
+set t.other_risk_factor = if(o.obs_id is null, null,1);
+
+-- other risk factors
+set @history_of_syphilis = concept_from_mapping('PIH','11050');
+set @history_of_other_sti = concept_from_mapping('PIH','11047');
+set @victim_of_gbv = concept_from_mapping('PIH','11049');
+set @multiple_partners = concept_from_mapping('PIH','5567');
+set @without_condom = concept_from_mapping('PIH','11048');
+set @anal_sex = concept_from_mapping('PIH','11051');
+set @with_sex_worker = concept_from_mapping('PIH','160580');
+
+drop temporary table if exists temp_obs;
+create temporary table temp_obs 
+select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.date_created  
+from obs o
+inner join temp_hiv_visit t on t.encounter_id = o.encounter_id
+where o.voided = 0
+and o.concept_id IN 
+	(@history_of_syphilis,
+	@history_of_other_sti,
+	@victim_of_gbv,
+	@multiple_partners,
+	@without_condom,
+	@anal_sex,
+	@with_sex_worker);
+
+create index temp_obs_ci on temp_obs(concept_id); 
 
 update temp_hiv_visit t
-set sexually_active_with_women = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','10872') is null,null,1);
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @history_of_syphilis
+set t.history_of_syphilis = value_coded_as_boolean(o.obs_id);
 
 update temp_hiv_visit t
-set intravenous_drug_use = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','105') is null,null,1);
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @history_of_other_sti
+set t.history_of_other_sti = value_coded_as_boolean(o.obs_id);
 
 update temp_hiv_visit t
-set blood_transfusion = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','1063') is null,null,1);
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @victim_of_gbv
+set t.victim_of_gbv = value_coded_as_boolean(o.obs_id);
 
 update temp_hiv_visit t
-set maternal_to_fetal_transmission = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11042') is null,null,1);
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @multiple_partners
+set t.multiple_partners = value_coded_as_boolean(o.obs_id);
 
 update temp_hiv_visit t
-set accidental_exposure_to_blood = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11044') is null,null,1);
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @without_condom
+set t.without_condom = value_coded_as_boolean(o.obs_id);
 
 update temp_hiv_visit t
-set sex_with_infected = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11060') is null,null,1);
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @anal_sex
+set t.anal_sex = value_coded_as_boolean(o.obs_id);
 
 update temp_hiv_visit t
-set sex_with_drug_user = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11534') is null,null,1);
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @with_sex_worker
+set t.with_sex_worker = value_coded_as_boolean(o.obs_id);
 
-update temp_hiv_visit t
-set heterosexual_sex_bisexual = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','13001') is null,null,1);
-
-update temp_hiv_visit t
-set heterosexual_sex_blood_transfusion = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','13000') is null,null,1);
-
-update temp_hiv_visit t
-set other_mode_of_transmission = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','5622') is null,null,1);
-
-
-update temp_hiv_visit t
-set history_of_syphilis = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11050');
-
-update temp_hiv_visit t
-set history_of_other_sti = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11047');
-
-update temp_hiv_visit t
-set victim_of_gbv = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11049');
-
-update temp_hiv_visit t
-set multiple_partners = obs_value_coded_as_boolean(t.encounter_id, 'PIH','5567');
-
-update temp_hiv_visit t
-set without_condom = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11048');
-
-update temp_hiv_visit t
-set anal_sex = obs_value_coded_as_boolean(t.encounter_id, 'PIH','11051');
-
-update temp_hiv_visit t
-set with_sex_worker = obs_value_coded_as_boolean(t.encounter_id, 'CIEL','160580');
-
-update temp_hiv_visit t
-set other_risk_factor = if(obs_single_value_coded(t.encounter_id, 'PIH','11046','PIH','11406') is null,null,1);
-   
-
-/*
--- The ascending/descending indexes are calculated ordering on the dispense date
--- new temp tables are used to build them and then joined into the main temp table.
-### index ascending
-drop temporary table if exists temp_visit_index_asc;
-CREATE TEMPORARY TABLE temp_visit_index_asc
-(
-    SELECT
-            patient_id,
-            visit_date,
-            encounter_id,
-            index_asc
-FROM (SELECT
-            @r:= IF(@u = patient_id, @r + 1,1) index_asc,
-            visit_date,
-            encounter_id,
-            patient_id,
-            @u:= patient_id
-      FROM temp_hiv_visit,
-                    (SELECT @r:= 1) AS r,
-                    (SELECT @u:= 0) AS u
-            ORDER BY patient_id, visit_date ASC, encounter_id ASC
-        ) index_ascending );
-CREATE INDEX tvia_e ON temp_visit_index_asc(encounter_id);
-update temp_hiv_visit t
-inner join temp_visit_index_asc tvia on tvia.encounter_id = t.encounter_id
-set t.index_asc = tvia.index_asc;
-drop temporary table if exists temp_visit_index_desc;
-CREATE TEMPORARY TABLE temp_visit_index_desc
-(
-    SELECT
-            patient_id,
-            visit_date,
-            encounter_id,
-            index_desc
-FROM (SELECT
-            @r:= IF(@u = patient_id, @r + 1,1) index_desc,
-            visit_date,
-            encounter_id,
-            patient_id,
-            @u:= patient_id
-      FROM temp_hiv_visit,
-                    (SELECT @r:= 1) AS r,
-                    (SELECT @u:= 0) AS u
-            ORDER BY patient_id, visit_date DESC, encounter_id DESC
-        ) index_descending );
-       
- CREATE INDEX tvid_e ON temp_visit_index_desc(encounter_id);      
-update temp_hiv_visit t
-inner join temp_visit_index_desc tvid on tvid.encounter_id = t.encounter_id
-set t.index_desc = tvid.index_desc;
-*/
 SELECT
 	concat(@partition, '-', encounter_id),
 	concat(@partition, '-', visit_id),
