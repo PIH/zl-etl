@@ -225,8 +225,9 @@ set	referral_transfer_location_out = o.value_text
 where
 	internal_external_out <> concept_name(@zlSite,@locale);
 
+
 update temp_hiv_visit t
-inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @pepfarSite and o.voided = 0
+inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id and o.concept_id = @pepfarSite and o.voided = 0
 set	referral_transfer_pepfar_partner_out =	
 	 CASE o.value_coded
 		WHEN @yesID then 1
