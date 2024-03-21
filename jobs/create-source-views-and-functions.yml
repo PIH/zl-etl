@@ -27,3 +27,10 @@ configuration:
         scripts:
           - "sql/utils/create_functions.sql"
           - "sql/utils/global_metadata.sql"
+    - type: "sql-execution"
+      description: "Create source indexes for ${siteName}"
+      configuration:
+        datasource: "openmrs-${siteName}.yml"
+        delimiter: "#"
+        scripts:
+          - "sql/utils/create-indexes-if-needed.sql"
