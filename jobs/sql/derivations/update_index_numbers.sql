@@ -321,3 +321,19 @@ set et.index_asc = avi.index_asc,
 from ed_triage et 
 inner join #edtriage_visit_indexes avi on avi.zlemr_id = et.zlemr_id
 and avi.Triage_datetime = et.Triage_datetime; 
+
+-- update index asc/desc on outpatient_encounters table
+drop table if exists #outpatient_encounters_indexes;
+select  emr_id, encounter_datetime,
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime DESC) "index_desc"
+into #outpatient_encounters_indexes
+from outpatient_encounters av ;
+
+update av
+set av.index_asc = avi.index_asc,
+	av.index_desc = avi.index_desc 
+from outpatient_encounters av
+inner join #outpatient_encounters_indexes avi on avi.emr_id = av.emr_id
+and avi.encounter_datetime = av.encounter_datetime
+; 

@@ -98,5 +98,6 @@ configuration:
           - tableName: "socioeconomic_encounter"
           - tableName: "all_diagnosis_past_year"
           - tableName: "all_encounters_past_year"
+          - tableName: "outpatient_encounters"
 
     - path: "refresh-derived-tables.yml"
