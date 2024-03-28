@@ -74,3 +74,4 @@ configuration:
           - tableName: "all_encounters_past_year"
           - tableName: "ed_triage"
           - tableName: "outpatient_encounters"
+          - tableName: "all_admissions_tmp"

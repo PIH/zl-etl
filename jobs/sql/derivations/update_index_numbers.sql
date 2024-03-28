@@ -337,3 +337,26 @@ from outpatient_encounters av
 inner join #outpatient_encounters_indexes avi on avi.emr_id = av.emr_id
 and avi.encounter_datetime = av.encounter_datetime
 ; 
+
+-- update all_admissions data
+SELECT emr_id, encounter_id, start_date, lag(start_date) OVER(PARTITION BY emr_id ORDER BY start_date desc )  AS end_date
+, encounter_type, encounter_location 
+INTO #end_date_data
+FROM all_admissions_tmp aat;
+-- WHERE encounter_type IN (13,14,16);
+
+UPDATE tgt  
+SET tgt.end_date=tmp.end_date
+FROM all_admissions_tmp AS tgt
+INNER JOIN #end_date_data AS tmp
+ON tgt.emr_id = tmp.emr_id AND tgt.encounter_id = tmp.encounter_id;
+
+UPDATE all_admissions_tmp
+SET end_date = start_date 
+WHERE end_date IS NULL AND encounter_type_name IN ('Sortie de soins hospitaliers','Transfert');
+
+ALTER TABLE all_admissions_tmp DROP COLUMN patient_id;
+ALTER TABLE all_admissions_tmp DROP COLUMN encounter_type;
+ALTER TABLE all_admissions_tmp DROP COLUMN voided;
+
+EXEC sp_rename 'all_admissions_tmp', 'all_admissions';
