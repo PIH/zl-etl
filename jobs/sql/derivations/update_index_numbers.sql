@@ -339,6 +339,8 @@ and avi.encounter_datetime = av.encounter_datetime
 ; 
 
 -- update all_admissions data
+DROP TABLE all_admissions;
+
 SELECT emr_id, encounter_id, start_date, lag(start_date) OVER(PARTITION BY emr_id ORDER BY start_date desc )  AS end_date
 , encounter_type, encounter_location 
 INTO #end_date_data
