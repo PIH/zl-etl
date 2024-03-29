@@ -25,7 +25,7 @@ configuration:
           - tableName: "all_medication_prescribed"
           - tableName: "all_procedures"
           - tableName: "all_vitals"
-          # - tableName: "all_encounters"
+          - tableName: "all_encounters"
           #   incrementalEnabled: "true"
           - tableName: "all_visits"
           - tableName: "all_patients"
