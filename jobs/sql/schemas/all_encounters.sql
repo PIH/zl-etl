@@ -9,6 +9,5 @@ encounter_location  varchar(255),
 encounter_datetime  datetime, 
 entered_datetime    datetime,
 user_entered        varchar(255),
-next_appt_date      date,
-voided              bit
+next_appt_date      date
 );
