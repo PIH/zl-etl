@@ -30,7 +30,7 @@ configuration:
           - tableName: "all_procedures"
           - tableName: "all_vitals"
           - tableName: "all_encounters"
-            incrementalEnabled: "true"
+          #   incrementalEnabled: "true"
           - tableName: "all_visits"
           - tableName: "all_patients"
           - tableName: "eid_patient"
