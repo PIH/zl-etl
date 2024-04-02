@@ -18,7 +18,16 @@ birth_apgar                  INT,
 birth_outcome                VARCHAR(30), 
 birth_weight                 DOUBLE,      
 birth_neonatal_resuscitation VARCHAR(5),  
-birth_macerated_fetus        VARCHAR(5)   
+birth_macerated_fetus        VARCHAR(5),
+Type_of_delivery                varchar(500),
+c_section_maternal_reasons      varchar(500),
+other_c_section_maternal_reasons    text,
+c_section_fetal_reasons         varchar(255),
+other_c_section_fetal_reason        text,
+c_section_obstetrical_reasons   varchar(255),
+other_c_section_obstetrical_reason  text,
+Caesarean_hysterectomy          varchar(10),
+C_section_with_tubal_ligation   varchar(10)
 );
 
 -- encounter level columms
@@ -68,6 +77,14 @@ inner join temp_mch_birth_encounter e on e.encounter_id = o.encounter_id
 where concept_id = concept_from_mapping('PIH','13555')
 and voided = 0;
 
+DROP TEMPORARY TABLE IF EXISTS temp_obs;
+create temporary table temp_obs 
+select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, 
+o.value_text,o.value_datetime, o.comments, o.date_created
+from obs o
+inner join temp_mch_birth_encounter t on t.encounter_id = o.encounter_id
+where o.voided = 0;
+
 -- UPDATE temp_mch_birth1 SET birth_number = 1;
 UPDATE temp_mch_birth SET birth_outcome = OBS_FROM_GROUP_ID_VALUE_CODED_LIST(birth_obs_group_id,'CIEL','161033',@locale);
 UPDATE temp_mch_birth SET birth_weight = OBS_FROM_GROUP_ID_VALUE_NUMERIC(birth_obs_group_id,'CIEL','5916');
@@ -85,6 +102,51 @@ create index temp_mch_birth_dup_c1 on temp_mch_birth_dup(encounter_id,birth_obs_
 UPDATE temp_mch_birth t SET multiples = (SELECT COUNT(birth_obs_group_id) FROM temp_mch_birth_dup t2 WHERE t2.encounter_id = t.encounter_id);
 UPDATE temp_mch_birth t SET birth_number = t.multiples - (select count(*) from temp_mch_birth_dup t2 where t2.encounter_id = t.encounter_id and t2.birth_obs_group_id > t.birth_obs_group_id);
 
+update temp_mch_birth set Type_of_delivery = obs_value_coded_list_from_temp(encounter_id,'PIH','11663',@locale);
+
+update temp_mch_birth t set c_section_maternal_reasons = (select group_concat(concept_name(value_coded, @locale) separator " | ")
+from temp_obs o where t.encounter_id = o.encounter_id and concept_id = concept_from_mapping("PIH", "13527") and voided = 0 and value_coded in
+(
+concept_from_mapping("CIEL", "113017"),
+concept_from_mapping("CIEL", "113858"),
+concept_from_mapping("CIEL", "117703"),
+concept_from_mapping("CIEL", "113918"),
+concept_from_mapping("CIEL", "113006"),
+concept_from_mapping("CIEL", "118744"),
+concept_from_mapping("CIEL", "111491"),
+concept_from_mapping("CIEL", "162185"),
+concept_from_mapping("CIEL", "158060")
+));
+
+update temp_mch_birth t set other_c_section_maternal_reasons = obs_comments_from_temp(encounter_id, "PIH", "13527" , "PIH", "13571");
+
+update temp_mch_birth t set c_section_fetal_reasons = (select group_concat(concept_name(value_coded, @locale) separator " | ")
+from temp_obs o where t.encounter_id = o.encounter_id and concept_id = concept_from_mapping("PIH", "13527") and voided = 0 and value_coded in
+(
+concept_from_mapping("CIEL", "115939"),
+concept_from_mapping("CIEL", "143849"),
+concept_from_mapping("CIEL", "118256"),
+concept_from_mapping("CIEL", "115491")
+));
+
+update temp_mch_birth t set other_c_section_fetal_reason = obs_comments_from_temp(encounter_id, "PIH", "13527" , "PIH", "13572");
+
+update temp_mch_birth t set c_section_obstetrical_reasons   = (select group_concat(concept_name(value_coded, @locale) separator " | ")
+from temp_obs o where t.encounter_id = o.encounter_id and concept_id = concept_from_mapping("PIH", "13527") and voided = 0 and value_coded in
+(
+concept_from_mapping("CIEL", "130109"),
+concept_from_mapping("CIEL", "113617"),
+concept_from_mapping("CIEL", "114127"),
+concept_from_mapping("CIEL", "113814"),
+concept_from_mapping("CIEL", "145935"),
+concept_from_mapping("CIEL", "113602")
+));
+update temp_mch_birth t set other_c_section_obstetrical_reason = obs_comments_from_temp(encounter_id, "PIH", "13527" , "PIH", "13573");
+
+update temp_mch_birth set Caesarean_hysterectomy = obs_single_value_coded_from_temp(encounter_id, 'CIEL','1651','CIEL','161848');  
+update temp_mch_birth set C_section_with_tubal_ligation = obs_single_value_coded_from_temp(encounter_id, 'CIEL','1651','CIEL','161890');
+
+
 SELECT
 emr_id,
 concat(@partition,'-',encounter_id),
@@ -98,5 +160,14 @@ birth_apgar,
 birth_outcome,
 birth_weight,
 birth_neonatal_resuscitation,
-birth_macerated_fetus
+birth_macerated_fetus,
+Type_of_delivery,
+c_section_maternal_reasons,
+other_c_section_maternal_reasons,
+c_section_fetal_reasons,
+other_c_section_fetal_reason,
+c_section_obstetrical_reasons,
+other_c_section_obstetrical_reason,
+Caesarean_hysterectomy,
+C_section_with_tubal_ligation
 FROM temp_mch_birth ORDER BY patient_id, encounter_id, birth_number;

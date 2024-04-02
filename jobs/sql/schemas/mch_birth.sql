@@ -12,5 +12,14 @@ CREATE TABLE mch_birth
     birth_outcome                VARCHAR(30),
     birth_weight                 FLOAT,
     birth_neonatal_resuscitation VARCHAR(5),
-    birth_macerated_fetus        VARCHAR(5)
+    birth_macerated_fetus        VARCHAR(5),
+    type_of_delivery                varchar(500),
+    c_section_maternal_reasons      varchar(500),
+    other_c_section_maternal_reasons    text,
+    c_section_fetal_reasons         varchar(255),
+    other_c_section_fetal_reason        text,
+    c_section_obstetrical_reasons   varchar(255),
+    other_c_section_obstetrical_reason  text,
+    caesarean_hysterectomy          varchar(10),
+    c_section_with_tubal_ligation   varchar(10)
 );
