@@ -377,3 +377,18 @@ ALTER TABLE all_admissions_tmp DROP COLUMN encounter_type;
 ALTER TABLE all_admissions_tmp DROP COLUMN voided;
 
 EXEC sp_rename 'all_admissions_tmp', 'all_admissions';
+
+-- update index asc/desc on adt_encounters
+drop table if exists #adt_encounters_indexes;
+select  emr_id, encounter_datetime, 
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime desc) "index_desc"
+into #adt_encounters_indexes
+from adt_encounters av ;
+
+update  av
+set av.index_asc = avi.index_asc,
+	av.index_desc = avi.index_desc 
+from adt_encounters av
+inner join #adt_encounters_indexes avi on avi.emr_id = av.emr_id
+and avi.encounter_datetime = av.encounter_datetime; 
