@@ -395,7 +395,7 @@ and avi.encounter_datetime = av.encounter_datetime;
 
 -- update index asc/desc on consult_encounters
 drop table if exists #consult_encounters_indexes;
-select  emr_id, encounter_datetime, encounter_id
+select  emr_id, encounter_datetime, encounter_id,
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime asc) "index_asc",
 ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime desc) "index_desc"
 into #consult_encounters_indexes
