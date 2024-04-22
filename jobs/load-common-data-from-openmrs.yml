@@ -75,4 +75,4 @@ configuration:
           - tableName: "ed_triage"
           - tableName: "outpatient_encounters"
           - tableName: "adt_encounters"
-        #  - tableName: "all_admissions_tmp"
+          - tableName: "consult_encounters"
