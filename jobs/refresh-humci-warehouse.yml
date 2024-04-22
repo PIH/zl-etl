@@ -101,5 +101,6 @@ configuration:
           - tableName: "outpatient_encounters"
           - tableName: "all_admissions_tmp"
           - tableName: "adt_encounters"
+          - tableName: "consult_encounters"
 
     - path: "refresh-derived-tables.yml"

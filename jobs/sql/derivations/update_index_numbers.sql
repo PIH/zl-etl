@@ -392,3 +392,17 @@ set av.index_asc = avi.index_asc,
 from adt_encounters av
 inner join #adt_encounters_indexes avi on avi.emr_id = av.emr_id
 and avi.encounter_datetime = av.encounter_datetime; 
+
+-- update index asc/desc on consult_encounters
+drop table if exists #consult_encounters_indexes;
+select  emr_id, encounter_datetime, encounter_id
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime desc) "index_desc"
+into #consult_encounters_indexes
+from consult_encounters ce ;
+
+update  ce
+set ce.index_asc = cei.index_asc,
+	ce.index_desc = cei.index_desc 
+from consult_encounters ce
+inner join #consult_encounters_indexes cei on cei.encounter_id = ce.encounter_id; 
