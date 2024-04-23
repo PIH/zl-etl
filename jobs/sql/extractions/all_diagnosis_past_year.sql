@@ -1,4 +1,5 @@
 SET @locale = GLOBAL_PROPERTY_VALUE('default_locale', 'en');
+SET @partition = '${partitionNum}';
 
 DROP TEMPORARY TABLE IF EXISTS temp_diagnoses;
 CREATE TEMPORARY TABLE temp_diagnoses
@@ -194,7 +195,7 @@ update temp_dx_concept set oncology = concept_in_set(diagnosis_concept, concept_
     
 -- select final output
 select 
-p.patient_id,
+CONCAT(@partition, '-', p.patient_id) as patient_id,
 p.dossierId,
 p.patient_primary_id,
 p.loc_registered,
@@ -206,7 +207,7 @@ p.commune,
 p.section,
 p.locality,
 p.street_landmark,
-e.encounter_id,
+CONCAT(@partition, '-', e.encounter_id) as encounter_id,
 e.encounter_location,
 d.obs_id,
 d.obs_datetime,
@@ -232,7 +233,7 @@ dc.age_restricted,
 dc.oncology,
 e.date_created,
 IF(TIME_TO_SEC(e.date_created) - TIME_TO_SEC(d.obs_datetime) > 1800,1,0) "retrospective",
-e.visit_id,
+CONCAT(@partition, '-', e.visit_id) as visit_id,
 p.birthdate,
 p.birthdate_estimated,
 e.encounter_type,
