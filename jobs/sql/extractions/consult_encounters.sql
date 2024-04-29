@@ -77,8 +77,9 @@ create temporary table temp_obs_collated
 select encounter_id,
 max(case when concept_id = @trauma then value_coded end) "trauma_value_coded",
 max(case when concept_id = @trauma_type then concept_name(value_coded,@locale) end) "trauma_type",
-max(case when concept_id = @return_visit_date then value_numeric end) "return_visit_date",
-max(case when concept_id = @disposition then concept_name(value_coded,@locale) end) "disposition"
+max(case when concept_id = @return_visit_date then value_datetime end) "return_visit_date",
+max(case when concept_id = @disposition then concept_name(value_coded,@locale) end) "disposition",
+max(case when concept_id = @disposition then value_coded end) "disposition_code"
 from temp_obs
 group by encounter_id;
 
@@ -93,7 +94,8 @@ set t.trauma =
 		END,
 	t.trauma_type = o.trauma_type,
 	t.return_visit_date = o.return_visit_date,
-	t.disposition = o.disposition
+	t.disposition = o.disposition,
+	t.disposition_code=o.disposition_code
 ;	
 
 -- final output
@@ -111,6 +113,9 @@ trauma,
 trauma_type,
 return_visit_date,
 disposition, 
+CASE WHEN disposition_code=concept_from_mapping('PIH','3799') THEN encounter_location ELSE NULL END  AS admission_location,
+CASE WHEN disposition_code=concept_from_mapping('PIH','8623') THEN encounter_location ELSE NULL END  AS internal_transfer_location,
+CASE WHEN disposition_code=concept_from_mapping('PIH','8624') THEN encounter_location ELSE NULL END  AS external_transfer_location,
 index_asc,
 index_desc
 FROM temp_consult_encs;

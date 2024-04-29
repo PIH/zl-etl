@@ -12,7 +12,10 @@ create table consult_encounters
        trauma             bit,           
        trauma_type        varchar(255),  
        return_visit_date  date,          
-       disposition        varchar(255),  
+       disposition        varchar(255),
+       admission_location varchar(255),
+       internal_transfer_location varchar(255),
+       external_transfer_location varchar(255),
        index_asc          int,           
        index_desc         int            
  );
