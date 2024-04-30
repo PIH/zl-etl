@@ -24,7 +24,8 @@ create temporary table temp_consult_encs
  trauma              boolean,       
  trauma_type         varchar(255), 
  return_visit_date   date,         
- disposition         varchar(255), 
+ disposition         varchar(255),
+ disposition_code	   int, 
  index_asc           int,          
  index_desc          int           
 );
