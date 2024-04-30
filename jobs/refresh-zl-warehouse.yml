@@ -16,6 +16,7 @@ configuration:
           - siteName: "cange"
           - siteName: "hinche"
           - siteName: "saint_marc_hsn"
+          - siteName: "saint_marc_sspe"
           - siteName: "lacolline"
           - siteName: "thomonde"
           - siteName: "belladere"
@@ -23,7 +24,6 @@ configuration:
           - siteName: "cercalasource"
           - siteName: "mirebalais"
           - siteName: "hiv"
-          - siteName: "saint_marc_sspe"
         jobTemplate:
           path: "refresh-${siteName}.yml"
 
