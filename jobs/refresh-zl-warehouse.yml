@@ -23,6 +23,7 @@ configuration:
           - siteName: "cercalasource"
           - siteName: "mirebalais"
           - siteName: "hiv"
+          - siteName: "saint_marc_sspe"
         jobTemplate:
           path: "refresh-${siteName}.yml"
 

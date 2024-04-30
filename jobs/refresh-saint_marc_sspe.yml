@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Saint Marc SSPE Data"
+configuration:
+  iterations:
+    - siteName: "saint_marc_sspe"
+      partitionNum: "12"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"
