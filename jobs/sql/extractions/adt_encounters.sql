@@ -58,8 +58,8 @@ SET emr_id = patient_identifier(patient_id, @emr_identifier_type);
 
 SELECT 
 emr_id,
-encounter_id,
-visit_id,
+CONCAT(@partition,'-',encounter_id) "encounter_id",
+CONCAT(@partition,'-',visit_id) "visit_id",
 encounter_datetime,
 creator AS user_entered,
 datetime_created,
