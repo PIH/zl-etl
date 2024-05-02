@@ -64,6 +64,7 @@ encounter_datetime,
 creator AS user_entered,
 datetime_created,
 encounter_type_name AS encounter_type,
+encounter_location,
 provider,
 index_asc,
 index_desc
