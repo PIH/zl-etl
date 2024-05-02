@@ -1,8 +1,8 @@
 create table adt_encounters
 (
-	 emr_id               varchar(15),
-    encounter_id         int,
-    visit_id             int,
+	emr_id               varchar(15),
+    encounter_id         varchar(255),
+    visit_id             varchar(255),
     encounter_datetime   datetime,
     user_entered         varchar(255),
     datetime_created     datetime,
