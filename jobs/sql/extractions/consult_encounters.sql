@@ -25,7 +25,10 @@ create temporary table temp_consult_encs
  trauma_type         varchar(255), 
  return_visit_date   date,         
  disposition         varchar(255),
- disposition_code	   int, 
+ disposition_code	   int,
+ location_within     varchar(255), 
+ location_out        varchar(255),
+ adm_location        varchar(255),
  index_asc           int,          
  index_desc          int           
 );
@@ -59,6 +62,9 @@ set @trauma = concept_from_mapping('PIH','8848');
 set @trauma_type = concept_from_mapping('PIH','8849');
 set @return_visit_date = concept_from_mapping('PIH','5096');
 set @disposition = concept_from_mapping('PIH','8620');
+SET @location_within = concept_from_mapping('PIH','8621');
+SET @location_out = concept_from_mapping('PIH','8854');
+SET @adm_location = concept_from_mapping('PIH','8622');
 
 DROP TEMPORARY TABLE IF EXISTS temp_obs;
 create temporary table temp_obs 
@@ -80,7 +86,10 @@ max(case when concept_id = @trauma then value_coded end) "trauma_value_coded",
 max(case when concept_id = @trauma_type then concept_name(value_coded,@locale) end) "trauma_type",
 max(case when concept_id = @return_visit_date then value_datetime end) "return_visit_date",
 max(case when concept_id = @disposition then concept_name(value_coded,@locale) end) "disposition",
-max(case when concept_id = @disposition then value_coded end) "disposition_code"
+max(case when concept_id = @disposition then value_coded end) "disposition_code",
+max(case when concept_id = @location_within then location_name(value_text) end) "location_within",
+max(case when concept_id = @location_out then concept_name(value_coded,@locale) end) "location_out",
+max(case when concept_id = @adm_location then location_name(value_text) end) "adm_location"
 from temp_obs
 group by encounter_id;
 
@@ -96,7 +105,10 @@ set t.trauma =
 	t.trauma_type = o.trauma_type,
 	t.return_visit_date = o.return_visit_date,
 	t.disposition = o.disposition,
-	t.disposition_code=o.disposition_code
+	t.disposition_code=o.disposition_code,
+	t.location_within=o.location_within,
+	t.location_out=o.location_out,
+	t.adm_location=o.adm_location
 ;	
 
 -- final output
@@ -114,9 +126,9 @@ trauma,
 trauma_type,
 return_visit_date,
 disposition, 
-CASE WHEN disposition_code=concept_from_mapping('PIH','3799') THEN encounter_location ELSE NULL END  AS admission_location,
-CASE WHEN disposition_code=concept_from_mapping('PIH','8623') THEN encounter_location ELSE NULL END  AS internal_transfer_location,
-CASE WHEN disposition_code=concept_from_mapping('PIH','8624') THEN encounter_location ELSE NULL END  AS external_transfer_location,
+CASE WHEN disposition_code=concept_from_mapping('PIH','3799') THEN adm_location ELSE NULL END  AS admission_location,
+CASE WHEN disposition_code=concept_from_mapping('PIH','8623') THEN location_within ELSE NULL END  AS internal_transfer_location,
+CASE WHEN disposition_code=concept_from_mapping('PIH','8624') THEN location_out ELSE NULL END  AS external_transfer_location,
 index_asc,
 index_desc
 FROM temp_consult_encs;
