@@ -1,38 +1,38 @@
 drop table if exists ed_summary_staging;
 create table ed_summary_staging
 (
-emr_id                   varchar(50),
-encounter_id             varchar(50),
-triage_datetime          datetime,  
-date_entered 			 date,
-user_entered 			 varchar(100),
-visit_id                 varchar(50),     
-zlemr_id                 varchar(50),  
-dossier_id               varchar(50),  
-loc_registered           varchar(255),   
-unknown_patient          varchar(255),        
-ed_visit_start_datetime  datetime,     
-encounter_location       text,         
-provider                 varchar(255), 
-triage_queue_status      varchar(255), 
-triage_Color             varchar(255), 
-triage_score             int,  
-index_asc                int,
-index_desc               int,    
-ed_note_enc_id      varchar(50),
-ednote_datetime          datetime,
-ednote_disposition       varchar(255),
-ed_diagnosis1            varchar(255),
-ed_diagnosis2            varchar(255),
-ed_diagnosis3            varchar(255),
-ed_diagnosis_noncoded    varchar(255),
-consult_enc_id      varchar(50),
-consult_datetime          datetime,
-consult_disposition       varchar(255),
-consult_diagnosis1            varchar(255),
-consult_diagnosis2            varchar(255),
-consult_diagnosis3            varchar(255),
-consult_diagnosis_noncoded    varchar(255)
+emr_id                     varchar(50),  
+encounter_id               varchar(50),  
+triage_datetime            datetime,      
+date_entered               date,         
+user_entered               varchar(100), 
+visit_id                   varchar(50),   
+zlemr_id                   varchar(50),   
+dossier_id                 varchar(50),   
+loc_registered             varchar(255),  
+unknown_patient            varchar(255),  
+ed_visit_start_datetime    datetime,      
+encounter_location         text,          
+provider                   varchar(255),  
+triage_queue_status        varchar(255),  
+triage_Color               varchar(255),  
+triage_score               int,           
+index_asc                  int,          
+index_desc                 int,           
+ed_note_enc_id             varchar(50),  
+ednote_datetime            datetime,     
+ednote_disposition         varchar(255), 
+ed_diagnosis1              varchar(255), 
+ed_diagnosis2              varchar(255), 
+ed_diagnosis3              varchar(255), 
+ed_diagnosis_noncoded      varchar(255), 
+consult_enc_id             varchar(50),  
+consult_datetime           datetime,     
+consult_disposition        varchar(255), 
+consult_diagnosis1         varchar(255), 
+consult_diagnosis2         varchar(255), 
+consult_diagnosis3         varchar(255), 
+consult_diagnosis_noncoded varchar(255)  
 );
 
 insert ed_summary_staging (
@@ -84,8 +84,8 @@ inner join consult_encounters ce on ce.encounter_id =
 	from consult_encounters ce2
 	where ce2.visit_id = es.visit_id
 	and ce2.trauma is not nULL 
-	and ce2.encounter_datetime > es.triage_datetime
-	order by ce2.encounter_datetime desc);
+	and ce2.encounter_datetime >= es.triage_datetime
+	order by ce2.encounter_datetime desc, ce2.encounter_id desc);
 
 update es 
  set ednote_datetime = ce.encounter_datetime,
@@ -136,8 +136,6 @@ inner join all_diagnosis_past_year d on d.obs_id =
 	and d2.coded = 0
 	order by obs_id desc);
 
-select * from all_diagnosis_past_year;
-
 -- next consult note information
 update es
 set consult_enc_id = ce.encounter_id 
@@ -147,8 +145,8 @@ inner join consult_encounters ce on ce.encounter_id =
 	from consult_encounters ce2
 	where ce2.visit_id = es.visit_id
 	and ce2.trauma is null 
-	and ce2.encounter_datetime > es.triage_datetime
-	order by ce2.encounter_datetime desc);
+	and ce2.encounter_datetime >= es.triage_datetime
+	order by ce2.encounter_datetime desc, ce2.encounter_id desc);
 
 update es 
  set consult_datetime = ce.encounter_datetime,
