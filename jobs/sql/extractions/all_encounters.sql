@@ -53,9 +53,9 @@ set t.encounter_datetime = e.encounter_datetime,
     t.voided = e.voided
 ;
 
--- update encounter type name
 create index temp_all_encounters_et on temp_all_encounters(encounter_type_id);
 
+-- update encounter type name
 drop temporary table if exists encounter_types;
 create temporary table encounter_types
 (encounter_type_id int(11),
@@ -67,14 +67,13 @@ select distinct encounter_type_id from temp_all_encounters;
 
 create index encounter_types_li on encounter_types(encounter_type_id);
 
-update encounter_types ls
-inner join encounter_type l on l.encounter_type_id = ls.encounter_type_id
-set ls.encounter_type_name = name;
+update encounter_types et
+inner join encounter_type l on l.encounter_type_id = et.encounter_type_id
+set et.encounter_type_name = name;
 
 update temp_all_encounters t
-inner join encounter_types ls on ls.encounter_type_id = t.encounter_type_id
-set t.encounter_type_name = ls.encounter_type_id;
-
+inner join encounter_types et on et.encounter_type_id = t.encounter_type_id
+set t.encounter_type_name = et.encounter_type_name;
 
 -- update location name
 drop temporary table if exists locations;
@@ -96,7 +95,7 @@ set ls.location_name = name;
 create index temp_all_encounters_li on temp_all_encounters(location_id);
 update temp_all_encounters t
 inner join locations ls on ls.location_id = t.location_id
-set t.encounter_location = ls.location_id;
+set t.encounter_location = ls.location_name;
 
 -- update user entered
 drop temporary table if exists user_names;
