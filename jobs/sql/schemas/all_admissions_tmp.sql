@@ -1,6 +1,5 @@
 create table all_admissions_tmp
 (
-   patient_id           int,
 	emr_id                varchar(15),
    encounter_id         int,
    visit_id              int,
