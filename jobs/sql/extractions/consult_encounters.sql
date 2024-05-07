@@ -73,7 +73,7 @@ o.value_text,o.value_datetime, o.comments, o.date_created
 from obs o
 inner join temp_consult_encs t on t.encounter_id = o.encounter_id
 where o.voided = 0
-and concept_id IN (@trauma,@trauma_type,@return_visit_date,@disposition);
+and concept_id IN (@trauma,@trauma_type,@return_visit_date,@disposition,@location_within,@location_out,@adm_location );
 
 create index temp_obs_io on temp_obs(obs_id);
 create index temp_obs_ei on temp_obs(encounter_id);
