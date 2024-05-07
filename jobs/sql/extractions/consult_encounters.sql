@@ -111,6 +111,8 @@ set t.trauma =
 	t.adm_location=o.adm_location
 ;	
 
+
+
 -- final output
 SELECT 
 emr_id,
