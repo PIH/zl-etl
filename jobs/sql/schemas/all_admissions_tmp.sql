@@ -1,8 +1,8 @@
 create table all_admissions_tmp
 (
 	emr_id                varchar(15),
-   encounter_id         int,
-   visit_id              int,
+   encounter_id         varchar(255),
+   visit_id              varchar(255),
    start_date           datetime,
    end_date             datetime,
    creator              varchar(255),
