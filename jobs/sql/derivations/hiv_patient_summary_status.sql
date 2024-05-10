@@ -47,7 +47,7 @@ CREATE TABLE hiv_patient_summary_status_staging
  current_outcome                  varchar(255),  
  current_outcome_date             date,        
  tb_diag_date                     date,
- tb_diag_type                     varchar(255),
+ tb_diag_test                     varchar(255),
  tb_tx_start_date                 date,
  tb_tx_end_date                   date,
  latest_next_dispense_date        date,          
@@ -361,7 +361,7 @@ set tb_diag_date =
 from hiv_patient_summary_status_staging t;
 		
 update t 
-set tb_diag_type = tbl.test_type
+set tb_diag_test = tbl.test_type
 from hiv_patient_summary_status_staging t
 inner join tb_lab_results tbl  on tb_lab_results_id =
 	(select top 1 tb_lab_results_id from tb_lab_results tbl2
