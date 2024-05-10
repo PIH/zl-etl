@@ -7,25 +7,25 @@ SET @followup_pmtct_encounter =  ENCOUNTER_TYPE('95e03e7d-9aeb-4a99-bd7a-94e8591
 -- drop and create temp pmct visit table
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit;
 CREATE TEMPORARY TABLE temp_pmtct_visit (
-    visit_id                	INT,
-    encounter_id            	INT,
-    patient_id              	INT,
-    emr_id 			VARCHAR(25),
-    visit_date              	DATE,
-    health_facility         	VARCHAR(100),
-    date_entered            	DATETIME,
-    user_entered            	VARCHAR(50),
-    hiv_test_date           	DATE,
-    expected_delivery_date	DATE,
-    tb_screening_date 		DATE,
-    has_provided_contact 	BIT,
-    breastfeeding_status	VARCHAR(255),
-   	last_breastfeeding_date	DATETIME,
-	next_visit_date			DATETIME,
-    -- hiv_test_result varchar(255),
-    -- maternity_clinic_type varchar(100),
-    index_asc               	INT,
-    index_desc              	INT
+ visit_id                INT,          
+ encounter_id            INT,          
+ patient_id              INT,          
+ emr_id                  VARCHAR(25),  
+ visit_date              DATE,         
+ health_facility         VARCHAR(100), 
+ date_entered            DATETIME,     
+ user_entered            VARCHAR(50),  
+ hiv_test_date           DATE,         
+ expected_delivery_date  DATE,         
+ tb_screening_date       DATE,         
+ has_provided_contact    BIT,          
+ breastfeeding_status    VARCHAR(255), 
+ last_breastfeeding_date DATETIME,     
+ next_visit_date         DATETIME,     
+ delivery                BOOLEAN,      
+ delivery_datetime       DATETIME,     
+ index_asc               INT,          
+ index_desc              INT           
 );
 
 INSERT INTO temp_pmtct_visit (visit_id, encounter_id, patient_id, emr_id, date_entered, user_entered)
@@ -165,6 +165,22 @@ UPDATE 	temp_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','6889') and o.voided = 0
 set last_breastfeeding_date = o.value_datetime;
 
+set @yes = concept_from_mapping('PIH','1065');
+set @no = concept_from_mapping('PIH','1066');
+UPDATE 	temp_pmtct_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','14990') and o.voided = 0
+set delivery = 
+	CASE  o.value_coded
+		when @yes then 1
+		when @no then 0
+	END;
+	
+
+UPDATE 	temp_pmtct_visit t
+inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','5599') and o.voided = 0
+set delivery_datetime = o.value_datetime;
+
+
 /*
 -- index asc
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit_index_asc;
@@ -231,6 +247,8 @@ has_provided_contact,
 breastfeeding_status,
 last_breastfeeding_date,
 next_visit_date,
+delivery,
+delivery_datetime,
 index_asc,
 index_desc
 FROM temp_pmtct_visit ORDER BY patient_id, visit_date, visit_id;
