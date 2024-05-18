@@ -99,6 +99,7 @@ configuration:
           - tableName: "all_diagnosis_past_year"
           - tableName: "all_encounters_past_year"
           - tableName: "outpatient_encounters"
+          - tableName: "chemo_session_encounter"
           - tableName: "all_admissions_tmp"
           - tableName: "adt_encounters"
           - tableName: "consult_encounters"
