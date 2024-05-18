@@ -338,6 +338,20 @@ inner join #outpatient_encounters_indexes avi on avi.emr_id = av.emr_id
 and avi.encounter_datetime = av.encounter_datetime
 ; 
 
+-- update index asc/desc on chemo_session_encounter table
+drop table if exists #chemo_session_indexes;
+select  emr_id, encounter_datetime,
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime DESC) "index_desc"
+into #chemo_session_indexes
+from chemo_session_encounter av ;
+
+update av
+set av.index_asc = avi.index_asc,
+	av.index_desc = avi.index_desc 
+from chemo_session_encounter av
+inner join #chemo_session_indexes avi on avi.enounter_id = av.encounter_id; 
+
 -- update all_admissions data
 DROP TABLE IF EXISTS all_admissions;
 
