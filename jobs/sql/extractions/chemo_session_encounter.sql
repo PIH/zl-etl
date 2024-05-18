@@ -153,4 +153,4 @@ e.visit_information_comments,
 e.index_asc,
 e.index_desc
 from chemo_encounters e
-inner join chemo_regimens r on r.encounter_id = e.encounter_id ;
+;
