@@ -74,6 +74,7 @@ configuration:
           - tableName: "all_encounters_past_year"
           - tableName: "ed_triage"
           - tableName: "chemo_session_encounter"
+          - tableName: "chemo_session_regimens"
           - tableName: "outpatient_encounters"
           - tableName: "adt_encounters"
           - tableName: "consult_encounters"
