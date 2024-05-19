@@ -24,4 +24,5 @@ configuration:
           - tableName: "hiv_patient_summary_status"
           - tableName: "drug_categories"
           - tableName: "hiv_appointment_summary"
-          - tableName: "ed_summary"          
+          - tableName: "ed_summary"
+          - tableName: "chemo_session_summary"
