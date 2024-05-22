@@ -28,6 +28,19 @@ order_reason              int(11),
 drug_category             varchar(20),  
 drug_short_name           varchar(255), 
 drug_name                 varchar(255), 
+dose                      double,
+dose_unit_id              int(11),
+dose_units                varchar(255),
+duration                  varchar(255),
+duration_unit_id          int(11),
+duration_units            varchar(255),
+prescribed_quantity       double,
+qty_unit_id               int(11),
+quantity_units            varchar(255),
+route                     varchar(255),
+route_id                  int(11),
+frequency_id              int(11),
+frequency                 varchar(255),
 start_date                datetime,     
 end_date                  datetime,     
 end_reasons               varchar(255), 
@@ -80,11 +93,36 @@ set t.encounter_datetime = e.encounter_datetime, t.date_entered = e.date_created
 -- update drug info
 update temp_HIV_regimens t
 inner join drug_order do on do.order_id = t.order_id
-set t.drug_id = do.drug_inventory_id;
+set t.drug_id = do.drug_inventory_id,
+	t.dose = do.dose,
+	t.dose_unit_id = do.dose_units,
+	t.prescribed_quantity = do.quantity,
+	t.qty_unit_id = do.quantity_units,
+	t.route_id = do.route,
+	t.frequency_id = do.frequency,
+	t.duration = do.duration,
+	t.duration_unit_id = do.duration_units 
+;
 
 update temp_HIV_regimens t
 inner join drug d on d.drug_id = t.drug_id 
 set t.drug_name = d.name;
+
+update temp_HIV_regimens t
+set t.dose_units = concept_name(dose_unit_id, @locale);
+
+update temp_HIV_regimens t
+set t.quantity_units = concept_name(qty_unit_id, @locale);
+
+update temp_HIV_regimens t
+set t.route = concept_name(route_id, @locale);
+
+update temp_HIV_regimens t
+set t.frequency = concept_name(frequency_id, @locale);
+
+update temp_HIV_regimens t
+set t.duration_units = concept_name(duration_unit_id, @locale);
+
 
 -- add art treatment line  
 update temp_HIV_regimens t
@@ -294,6 +332,14 @@ art_treatment_line,
 drug_id,
 drug_short_name,
 drug_name, 
+dose,
+dose_units,
+prescribed_quantity,
+quantity_units,
+route,
+frequency,
+duration,
+duration_units,
 start_date,
 end_date,
 end_reasons,
@@ -307,4 +353,3 @@ index_ascending_patient,
 index_descending_patient
 from temp_HIV_regimens
 order by patient_id,  drug_category, encounter_datetime;
-
