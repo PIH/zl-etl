@@ -118,7 +118,8 @@ update temp_HIV_regimens t
 set t.route = concept_name(route_id, @locale);
 
 update temp_HIV_regimens t
-set t.frequency = concept_name(frequency_id, @locale);
+inner join order_frequency of on of.order_frequency_id = t.frequency_id
+set t.frequency = concept_name(of.concept_id, @locale);
 
 update temp_HIV_regimens t
 set t.duration_units = concept_name(duration_unit_id, @locale);
