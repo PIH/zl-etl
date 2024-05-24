@@ -423,78 +423,37 @@ inner join #consult_encounters_indexes cei on cei.encounter_id = ce.encounter_id
 
 -- Temporary all_admissions_tmp
 
-DROP TABLE all_admissions_tmp;
-create table all_admissions_tmp
+DROP TABLE IF EXISTS all_admissions;
+create table all_admissions
 (
-	emr_id                varchar(15),
+   emr_id               varchar(15),
    encounter_id         varchar(255),
-   visit_id              varchar(255),
+   visit_id             varchar(255),
+   encounter_type       varchar(50),
    start_date           datetime,
    end_date             datetime,
    creator              varchar(255),
    date_entered         date,
    encounter_location   varchar(255),
    provider             varchar(255),
-   encounter_type_name  varchar(50),
-   outcome_disposition	 varchar(255)
+   site                 varchar(255),
+   partition_num        int
 );
 
+INSERT INTO all_admissions(emr_id, encounter_id, visit_id, encounter_type, start_date,
+   end_date, creator, date_entered, encounter_location, provider, site, partition_num)
+SELECT emr_id,  
+encounter_id,
+visit_id,
+encounter_type, 
+encounter_datetime  AS start_date,
+lag(encounter_datetime) OVER(PARTITION BY emr_id ORDER BY encounter_datetime desc ) AS end_date, 
+user_entered  AS creator,
+datetime_created  AS date_entered,
+encounter_location,
+provider,
+site,
+partition_num
+FROM adt_encounters ae;
 
-DROP TABLE IF EXISTS #union_data; 
-SELECT * 
-INTO #union_data
-FROM (
-SELECT emr_id, encounter_id, visit_id, encounter_datetime AS start_date, CAST(NULL AS datetime) AS end_date, 
-user_entered, datetime_created, encounter_location, provider, encounter_type AS encounter_type_name,
-disposition AS outcome_disposition, site, partition_num
-FROM consult_encounters
-UNION ALL 
-SELECT emr_id, concat(partition_num,'-',encounter_id) AS encounter_id, 
-concat(partition_num,'-',visit_id) AS visit_id, encounter_datetime AS start_date, CAST(NULL AS datetime) AS end_date, 
-user_entered, datetime_created, NULL AS encounter_location, provider, encounter_type AS encounter_type_name,
-NULL AS outcome_disposition, site, partition_num
-FROM adt_encounters
-) x;
-
-
-DROP TABLE IF EXISTS #outcome_data;
-SELECT emr_id, encounter_id, start_date AS end_date, encounter_type_name, 
-lag(encounter_type_name) OVER(PARTITION BY emr_id ORDER BY start_date desc )  AS last_encounter_type,
-lag(outcome_disposition) OVER(PARTITION BY emr_id ORDER BY start_date desc )  AS outcome_disposition_2,
-CASE WHEN (encounter_type_name='Consultation' OR encounter_type_name='Sortie de soins hospitaliers')
-THEN outcome_disposition ELSE NULL END AS outcome_disposition
-INTO #outcome_data
-FROM #union_data aat
-WHERE emr_id='Y2ADYX'
-ORDER BY start_date DESC;
-
-
-DELETE FROM #union_data WHERE encounter_id NOT IN (
-SELECT encounter_id FROM #outcome_data
-WHERE (
-(encounter_type_name='Transfert' AND last_encounter_type='Consultation')
-OR 
-(encounter_type_name='Consultation' AND last_encounter_type='Transfert')
-OR
-(encounter_type_name='Consultation' AND last_encounter_type='Sortie de soins hospitaliers')
-OR 
-(encounter_type_name='Sortie de soins hospitaliers' AND last_encounter_type='Consultation')
-)
-);
-
-
-INSERT INTO all_admissions_tmp (emr_id, encounter_id, visit_id, start_date, end_date,
-   creator,
-   date_entered,
-   encounter_location,
-   provider,
-   encounter_type_name,
-   outcome_disposition)
-SELECT ud.emr_id, ud.encounter_id, ud.visit_id,  ud.start_date,
-od.end_date,
-ud.user_entered, ud.datetime_created, ud.encounter_location, ud.provider, 
-CASE WHEN (od.encounter_type_name='Transfert' OR od.last_encounter_type='Transfert') THEN 'Transfert' 
-WHEN (od.encounter_type_name='Sortie de soins hospitaliers' OR od.last_encounter_type='Sortie de soins hospitaliers') THEN 'Sortie de soins hospitaliers' END AS encounter_type_name,
-COALESCE(od.outcome_disposition_2, od.outcome_disposition) AS outcome_disposition
-FROM #union_data ud INNER JOIN #outcome_data od
-ON ud.emr_id=od.emr_id AND ud.encounter_id= od.encounter_id;
+DELETE FROM all_admissions WHERE encounter_type='Sortie de soins hospitaliers';
