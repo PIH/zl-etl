@@ -71,6 +71,7 @@ configuration:
           - tableName: "mh_encounters"
           - tableName: "socioeconomic_encounter"
           - tableName: "all_diagnosis_past_year"
+          - tableName: "all_diagnosis"
           - tableName: "all_encounters_past_year"
           - tableName: "ed_triage"
           - tableName: "chemo_session_encounter"
