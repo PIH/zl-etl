@@ -19,7 +19,5 @@ CREATE TABLE mch_birth
     c_section_fetal_reasons         varchar(255),
     other_c_section_fetal_reason        text,
     c_section_obstetrical_reasons   varchar(255),
-    other_c_section_obstetrical_reason  text,
-    caesarean_hysterectomy          varchar(10),
-    c_section_with_tubal_ligation   varchar(10)
+    other_c_section_obstetrical_reason  text
 );
