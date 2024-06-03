@@ -15,12 +15,12 @@ birth_obs_group_id           INT(11),
 birth_number                 INT,         
 multiples                    INT,         
 birth_apgar                  INT,         
-birth_outcome                VARCHAR(30), 
+birth_outcome                VARCHAR(255), 
 birth_weight                 DOUBLE,      
-birth_neonatal_resuscitation VARCHAR(5),  
-birth_macerated_fetus        VARCHAR(5),
-Type_of_delivery                varchar(500),
-c_section_maternal_reasons      varchar(500),
+birth_neonatal_resuscitation VARCHAR(255),  
+birth_macerated_fetus        VARCHAR(255),
+Type_of_delivery                varchar(255),
+c_section_maternal_reasons      varchar(255),
 other_c_section_maternal_reasons    text,
 c_section_fetal_reasons         varchar(255),
 other_c_section_fetal_reason        text,
@@ -86,10 +86,8 @@ where o.voided = 0;
 create index temp_obs_obs_oi on temp_obs(obs_id);
 create index temp_obs_obs_ogi on temp_obs(obs_group_id);
 
-
 DROP TEMPORARY TABLE IF EXISTS temp_mch_birth_dup;
 CREATE TEMPORARY TABLE temp_mch_birth_dup
-select * from temp_mch_birth;
 
 create index temp_mch_birth_dup_ei on temp_mch_birth_dup(encounter_id);
 create index temp_mch_birth_dup_c1 on temp_mch_birth_dup(encounter_id,birth_obs_group_id);
