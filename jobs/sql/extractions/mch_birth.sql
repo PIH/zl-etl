@@ -25,9 +25,7 @@ other_c_section_maternal_reasons    text,
 c_section_fetal_reasons         varchar(255),
 other_c_section_fetal_reason        text,
 c_section_obstetrical_reasons   varchar(255),
-other_c_section_obstetrical_reason  text,
-Caesarean_hysterectomy          varchar(10),
-C_section_with_tubal_ligation   varchar(10)
+other_c_section_obstetrical_reason  text
 );
 
 -- encounter level columms
@@ -85,12 +83,9 @@ from obs o
 inner join temp_mch_birth_encounter t on t.encounter_id = o.encounter_id
 where o.voided = 0;
 
--- UPDATE temp_mch_birth1 SET birth_number = 1;
-UPDATE temp_mch_birth SET birth_outcome = OBS_FROM_GROUP_ID_VALUE_CODED_LIST(birth_obs_group_id,'CIEL','161033',@locale);
-UPDATE temp_mch_birth SET birth_weight = OBS_FROM_GROUP_ID_VALUE_NUMERIC(birth_obs_group_id,'CIEL','5916');
-UPDATE temp_mch_birth SET birth_apgar = OBS_FROM_GROUP_ID_VALUE_NUMERIC(birth_obs_group_id,'CIEL','1504');
-UPDATE temp_mch_birth SET birth_neonatal_resuscitation = OBS_FROM_GROUP_ID_VALUE_CODED_LIST(birth_obs_group_id,'CIEL','162131',@locale);
-UPDATE temp_mch_birth SET birth_macerated_fetus = OBS_FROM_GROUP_ID_VALUE_CODED_LIST(birth_obs_group_id,'CIEL','135437',@locale);
+create index temp_obs_obs_oi on temp_obs(obs_id);
+create index temp_obs_obs_ogi on temp_obs(obs_group_id);
+
 
 DROP TEMPORARY TABLE IF EXISTS temp_mch_birth_dup;
 CREATE TEMPORARY TABLE temp_mch_birth_dup
@@ -102,21 +97,36 @@ create index temp_mch_birth_dup_c1 on temp_mch_birth_dup(encounter_id,birth_obs_
 UPDATE temp_mch_birth t SET multiples = (SELECT COUNT(birth_obs_group_id) FROM temp_mch_birth_dup t2 WHERE t2.encounter_id = t.encounter_id);
 UPDATE temp_mch_birth t SET birth_number = t.multiples - (select count(*) from temp_mch_birth_dup t2 where t2.encounter_id = t.encounter_id and t2.birth_obs_group_id > t.birth_obs_group_id);
 
-update temp_mch_birth set Type_of_delivery = obs_value_coded_list_from_temp(encounter_id,'PIH','11663',@locale);
+UPDATE temp_mch_birth SET birth_outcome = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'CIEL','161033',@locale);
+UPDATE temp_mch_birth SET birth_weight = obs_from_group_id_value_numeric_from_temp(birth_obs_group_id,'CIEL','5916');
+UPDATE temp_mch_birth SET birth_apgar = obs_from_group_id_value_numeric_from_temp(birth_obs_group_id,'CIEL','1504');
+UPDATE temp_mch_birth SET birth_neonatal_resuscitation = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'CIEL','162131',@locale);
+UPDATE temp_mch_birth SET birth_macerated_fetus = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'CIEL','135437',@locale);
 
-update temp_mch_birth t set c_section_maternal_reasons = obs_value_coded_list_from_temp(encounter_id,'PIH','13571',@locale);
+update temp_mch_birth set Type_of_delivery = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'PIH','11663',@locale);
+update temp_mch_birth t set c_section_maternal_reasons = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'PIH','13571',@locale);
 
-update temp_mch_birth t set other_c_section_maternal_reasons = obs_comments_from_temp(encounter_id, 'PIH', '13571' , 'PIH', '5622');
+-- TO DO: the following could use obs_from_group_id_comment_from_temp function but that function needs to be rewritten
+-- to pass in an answer in addition to the question.  this will involve changing wherever that function is used
+update temp_mch_birth t 
+inner join temp_obs o on o.obs_group_id = t.birth_obs_group_id
+	and o.concept_id = concept_from_mapping('PIH','13571')
+	and o.value_coded = concept_from_mapping('PIH','5622')
+set  other_c_section_maternal_reasons = o.comments;
 
-update temp_mch_birth t set c_section_fetal_reasons = obs_value_coded_list_from_temp(encounter_id,'PIH','13572',@locale);
+update temp_mch_birth t set c_section_fetal_reasons = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'PIH','13572',@locale);
+update temp_mch_birth t 
+inner join temp_obs o on o.obs_group_id = t.birth_obs_group_id
+	and o.concept_id = concept_from_mapping('PIH','13572')
+	and o.value_coded = concept_from_mapping('PIH','5622')
+set  other_c_section_fetal_reason = o.comments;
 
-update temp_mch_birth t set other_c_section_fetal_reason = obs_comments_from_temp(encounter_id, 'PIH', '13572' , 'PIH', '5622');
-
-update temp_mch_birth t set c_section_obstetrical_reasons   = obs_value_coded_list_from_temp(encounter_id,'PIH','13573',@locale);
-update temp_mch_birth t set other_c_section_obstetrical_reason = obs_comments_from_temp(encounter_id, 'PIH', '13573' , 'PIH', '5622');
-
-update temp_mch_birth set Caesarean_hysterectomy = obs_single_value_coded_from_temp(encounter_id, 'PIH','10484','PIH','8764');  
-update temp_mch_birth set C_section_with_tubal_ligation = obs_single_value_coded_from_temp(encounter_id, 'PIH','10484','PIH','8892');
+update temp_mch_birth t set c_section_obstetrical_reasons   = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'PIH','13573',@locale);
+update temp_mch_birth t 
+inner join temp_obs o on o.obs_group_id = t.birth_obs_group_id
+	and o.concept_id = concept_from_mapping('PIH','13573')
+	and o.value_coded = concept_from_mapping('PIH','5622')
+set  other_c_section_fetal_reason = o.comments;
 
 SELECT
 emr_id,
@@ -138,7 +148,5 @@ other_c_section_maternal_reasons,
 c_section_fetal_reasons,
 other_c_section_fetal_reason,
 c_section_obstetrical_reasons,
-other_c_section_obstetrical_reason,
-Caesarean_hysterectomy,
-C_section_with_tubal_ligation
+other_c_section_obstetrical_reason
 FROM temp_mch_birth ORDER BY patient_id, encounter_id, birth_number;
