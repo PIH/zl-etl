@@ -88,6 +88,7 @@ create index temp_obs_obs_ogi on temp_obs(obs_group_id);
 
 DROP TEMPORARY TABLE IF EXISTS temp_mch_birth_dup;
 CREATE TEMPORARY TABLE temp_mch_birth_dup
+select * from temp_mch_birth;
 
 create index temp_mch_birth_dup_ei on temp_mch_birth_dup(encounter_id);
 create index temp_mch_birth_dup_c1 on temp_mch_birth_dup(encounter_id,birth_obs_group_id);
