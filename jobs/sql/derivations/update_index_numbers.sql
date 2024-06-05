@@ -417,3 +417,17 @@ partition_num
 FROM adt_encounters ae;
 
 DELETE FROM all_admissions WHERE encounter_type='Sortie de soins hospitaliers';
+
+-- update index asc/desc on hiv_psychosocial_encounter
+drop table if exists #hiv_psychosocial_encounter_indexes;
+select  emr_id, encounter_datetime, encounter_id,
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime desc) "index_desc"
+into #hiv_psychosocial_encounter_indexes
+from hiv_psychosocial_encounter ce ;
+
+update  ce
+set ce.index_asc = cei.index_asc,
+	ce.index_desc = cei.index_desc 
+from hiv_psychosocial_encounter ce
+inner join #hiv_psychosocial_encounter_indexes cei on cei.encounter_id = ce.encounter_id; 

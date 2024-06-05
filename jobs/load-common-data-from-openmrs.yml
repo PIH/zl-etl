@@ -79,3 +79,4 @@ configuration:
           - tableName: "outpatient_encounters"
           - tableName: "adt_encounters"
           - tableName: "consult_encounters"
+          - tableName: "hiv_psychosocial_encounter"
