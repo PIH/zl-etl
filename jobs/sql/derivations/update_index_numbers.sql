@@ -352,46 +352,6 @@ set av.index_asc = avi.index_asc,
 from chemo_session_encounter av
 inner join #chemo_session_indexes avi on avi.encounter_id = av.encounter_id; 
 
--- update all_admissions data
-DROP TABLE IF EXISTS all_admissions;
-
-DROP TABLE IF EXISTS #outcome_data;
-SELECT emr_id, encounter_id, lag(outcome_disposition) OVER(PARTITION BY emr_id ORDER BY start_date desc )  AS outcome_disposition
-, encounter_type
-INTO #outcome_data
-FROM all_admissions_tmp aat;
-
-UPDATE tgt  
-SET tgt.outcome_disposition=tmp.outcome_disposition
-FROM all_admissions_tmp AS tgt
-INNER JOIN #outcome_data AS tmp
-ON tgt.emr_id = tmp.emr_id AND tgt.encounter_id = tmp.encounter_id;
-
-DELETE FROM all_admissions_tmp WHERE encounter_type_name NOT IN ('Transfert', 'Admission aux soins hospitaliers');
-
-DROP TABLE IF EXISTS #end_date_data;
-SELECT emr_id, encounter_id, start_date, lag(start_date) OVER(PARTITION BY emr_id ORDER BY start_date desc )  AS end_date
-, encounter_type, encounter_location 
-INTO #end_date_data
-FROM all_admissions_tmp aat
-WHERE encounter_type IN (13,14);
-
-UPDATE tgt  
-SET tgt.end_date=tmp.end_date
-FROM all_admissions_tmp AS tgt
-INNER JOIN #end_date_data AS tmp
-ON tgt.emr_id = tmp.emr_id AND tgt.encounter_id = tmp.encounter_id;
-
-UPDATE all_admissions_tmp
-SET end_date = start_date 
-WHERE end_date IS NULL AND encounter_type_name IN ('Sortie de soins hospitaliers','Transfert');
-
-ALTER TABLE all_admissions_tmp DROP COLUMN patient_id;
-ALTER TABLE all_admissions_tmp DROP COLUMN encounter_type;
-ALTER TABLE all_admissions_tmp DROP COLUMN voided;
-
-EXEC sp_rename 'all_admissions_tmp', 'all_admissions';
-
 -- update index asc/desc on adt_encounters
 drop table if exists #adt_encounters_indexes;
 select  emr_id, encounter_datetime, 
