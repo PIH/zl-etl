@@ -1,7 +1,6 @@
 create table hiv_psychosocial_encounter
 (
-patient_id 			int,
-emr_id				varchar(255),
+emr_id              varchar(255),
 encounter_id        int,
 visit_id            int,
 encounter_datetime  datetime,
