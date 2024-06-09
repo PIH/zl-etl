@@ -8,6 +8,7 @@ CREATE TEMPORARY TABLE oncology_treatment_plan (
 patient_id int,
 emr_id varchar(50),
 encounter_id int,
+visit_id int,
 encounter_datetime datetime,
 encounter_location varchar(100),
 date_entered date,
@@ -18,11 +19,12 @@ treatment_intent varchar(30),
 cancer_stage varchar(30),
 plan_details text);
 
-INSERT INTO oncology_treatment_plan(patient_id, emr_id,encounter_id,encounter_datetime,encounter_location,date_entered,user_entered,encounter_provider)
+INSERT INTO oncology_treatment_plan(patient_id, emr_id,encounter_id,visit_id,encounter_datetime,encounter_location,date_entered,user_entered,encounter_provider)
 SELECT 
 patient_id,
 zlemr(patient_id),
 encounter_id,
+visit_id ,
 encounter_datetime ,
 encounter_location_name(encounter_id),
 date_created,
@@ -66,6 +68,7 @@ UPDATE oncology_treatment_plan SET treatment_intent=currentProgramState(patientP
 SELECT 
 emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
+CONCAT(@partition,'-',visit_id) "visit_id",
 encounter_datetime,
 encounter_location,
 date_entered,

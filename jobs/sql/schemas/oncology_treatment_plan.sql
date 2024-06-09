@@ -1,13 +1,14 @@
 CREATE TABLE oncology_treatment_plan 
 (
-emr_id varchar(50),
-encounter_id varchar(50),
-encounter_datetime datetime,
-encounter_location varchar(100),
-date_entered date,
-user_entered varchar(30),
-encounter_provider varchar(30),
-treatment_intent varchar(30),
-cancer_stage varchar(30),
-plan_details text
+emr_id             varchar(50),  
+encounter_id       varchar(50),  
+visit_id           varchar(50),  
+encounter_datetime datetime,     
+encounter_location varchar(100), 
+date_entered       date,         
+user_entered       varchar(30),  
+encounter_provider varchar(30),  
+treatment_intent   varchar(30),  
+cancer_stage       varchar(30),  
+plan_details       text          
 );
