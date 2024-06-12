@@ -59,7 +59,7 @@ from oncology_treatment_plan_summary_staging o
 inner join all_diagnosis d on d.obs_id = 
 	(select top 1 d2.obs_id from all_diagnosis d2
 	where d2.encounter_id = o.encounter_id
-	and d.oncology = 1
+	and d2.oncology = 1
 	order by IIF(dx_order ='Primaire',0,1) asc, obs_id asc);
 
 update o
@@ -69,7 +69,7 @@ from oncology_treatment_plan_summary_staging o
 inner join all_diagnosis d on d.obs_id = 
 	(select top 1 d2.obs_id from all_diagnosis d2
 	where d2.encounter_id = o.encounter_id
-	and d.oncology = 1
+	and d2.oncology = 1
 	and d2.diagnosis_coded_fr <> o.diagnosis_1
 	order by IIF(dx_order ='Primaire',0,1) asc, obs_id asc);
 	
@@ -80,7 +80,7 @@ from oncology_treatment_plan_summary_staging o
 inner join all_diagnosis d on d.obs_id = 
 	(select top 1 d2.obs_id from all_diagnosis d2
 	where d2.encounter_id = o.encounter_id
-	and d.oncology = 1
+	and d2.oncology = 1
 	and d2.diagnosis_coded_fr not in (o.diagnosis_1, o.diagnosis_2)
 	order by IIF(dx_order ='Primaire',0,1) asc, obs_id asc);
 
