@@ -25,6 +25,7 @@ configuration:
           - tableName: "drug_categories"
           - tableName: "hiv_appointment_summary"
           - tableName: "ed_summary"
+          - tableName: "all_admissions"
           - tableName: "chemo_session_summary"
           - tableName: "oncology_treatment_plan_summary"
           - tableName: "outpatient_chemo_summary"
