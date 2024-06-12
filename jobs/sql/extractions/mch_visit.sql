@@ -11,97 +11,98 @@ SET @diagnosis = CONCEPT_FROM_MAPPING('PIH', 'DIAGNOSIS');
 DROP TEMPORARY TABLE IF EXISTS temp_obgyn_visit;
 CREATE TEMPORARY TABLE temp_obgyn_visit
 (
-    patient_id      INT,
-    encounter_id    INT,
-    emr_id          VARCHAR(25),
-    visit_date      DATE,
-    visit_site      VARCHAR(100),
-    age_at_visit    DOUBLE,
-    date_entered    DATETIME,
-    user_entered    VARCHAR(50),
-    consultation_type  	 VARCHAR (30), 
-    consultation_type_fp VARCHAR(30),
-    pregnant        BIT,
-    breastfeeding   VARCHAR(5),
-    pregnant_lmp    DATE,
-    pregnant_edd    DATE,
-    next_visit_date DATE,
-    triage_level    VARCHAR(11),
-    referral_type   VARCHAR(255),
-    referral_type_other         VARCHAR(255),
-    implant_inserted            BIT,
-    IUD_inserted                BIT,
-    tubal_ligation_completed    BIT,
-    abortion_completed          BIT,
-    reason_for_visit            VARCHAR(255),
-    visit_type                  VARCHAR(255),
-    referring_service           VARCHAR(255),
-    other_service               VARCHAR(255),
-    triage_color                VARCHAR(255),
-    bcg_1              DATE,
-    polio_0            DATE,
-    polio_1            DATE,
-    polio_2            DATE,
-    polio_3            DATE,
-    polio_booster_1    DATE,
-    polio_booster_2    DATE,
-    pentavalent_1      DATE,
-    pentavalent_2      DATE,
-    pentavalent_3      DATE,
-    rotavirus_1        DATE,
-    rotavirus_2        DATE,
-    mmr_1              DATE,
-    tetanus_0          DATE,
-    tetanus_1          DATE,
-    tetanus_2          DATE,
-    tetanus_3          DATE,
-    tetanus_booster_1  DATE,
-    tetanus_booster_2  DATE,
-    gyno_exam          BIT,
-    wh_exam            BIT,
-    via				VARCHAR(255),
-    pap_test_performed BIT,
-    previous_history   TEXT,
-    cervical_cancer_screening_date DATE,
-    cervical_cancer_screening_result BIT,
-    risk_factors       TEXT,
-    risk_factors_other TEXT,
-    examining_doctor   VARCHAR(100),
-    hiv_test_admin		BIT,
-    hiv_test_date DATE,
-    hiv_test_result VARCHAR(255),
-    received_post_test_counseling VARCHAR(255),
-    post_test_counseling_date DATE,
-	medication_order TEXT,
-    primary_diagnosis TEXT,
-    secondary_diagnosis TEXT,
-    diagnosis_non_coded TEXT,
-    procedures TEXT,
-    procedures_other TEXT,
-    family_planning_group INT(11),
-    family_planning_use VARCHAR(5), 
-    family_planning_patient_type VARCHAR(255), 
-    family_planning_method VARCHAR(255), 
-    fp_counseling_received VARCHAR(255),
-    fp_start_date	DATETIME,
-    fp_end_date		DATETIME, 
-    implant_date	DATETIME,
-    condoms_provided VARCHAR(5),
-    location_of_delivery	VARCHAR(255),
-    delivery_datetime DATETIME,
-    chlamydia BIT,
-    gonorrhea BIT,
-    genital_herpes BIT,
-    hep_b BIT,
-    hpv BIT,
-    trichomoniasis BIT,
-    bacterial_vaginosis BIT,
-    syphilis_treatment_status varchar(255),
-    sti_treatment 		BIT,
-    index_patient_asc          INT,
-    index_patient_desc         INT,
-    index_type_asc	INT,
-    index_type_desc INT
+ patient_id                       INT,          
+ encounter_id                     INT,          
+ emr_id                           VARCHAR(25),  
+ visit_date                       DATE,         
+ visit_site                       VARCHAR(100), 
+ age_at_visit                     DOUBLE,       
+ date_entered                     DATETIME,     
+ user_entered                     VARCHAR(50),  
+ consultation_type                VARCHAR       (30),  
+ consultation_type_fp             VARCHAR(30),  
+ pregnant                         BIT,          
+ breastfeeding                    VARCHAR(5),   
+ pregnant_lmp                     DATE,         
+ pregnant_edd                     DATE,         
+ next_visit_date                  DATE,         
+ triage_level                     VARCHAR(11),  
+ referral_type                    VARCHAR(255), 
+ referral_type_other              VARCHAR(255), 
+ implant_inserted                 BIT,          
+ IUD_inserted                     BIT,          
+ tubal_ligation_completed         BIT,          
+ abortion_completed               BIT,          
+ reason_for_visit                 VARCHAR(255), 
+ visit_type                       VARCHAR(255), 
+ referring_service                VARCHAR(255), 
+ other_service                    VARCHAR(255), 
+ triage_color                     VARCHAR(255), 
+ bcg_1                            DATE,         
+ polio_0                          DATE,         
+ polio_1                          DATE,         
+ polio_2                          DATE,         
+ polio_3                          DATE,         
+ polio_booster_1                  DATE,         
+ polio_booster_2                  DATE,         
+ pentavalent_1                    DATE,         
+ pentavalent_2                    DATE,         
+ pentavalent_3                    DATE,         
+ rotavirus_1                      DATE,         
+ rotavirus_2                      DATE,         
+ mmr_1                            DATE,         
+ tetanus_0                        DATE,         
+ tetanus_1                        DATE,         
+ tetanus_2                        DATE,         
+ tetanus_3                        DATE,         
+ tetanus_booster_1                DATE,         
+ tetanus_booster_2                DATE,         
+ gyno_exam                        BIT,          
+ wh_exam                          BIT,          
+ via                              VARCHAR(255), 
+ pap_test_performed               BIT,          
+ previous_history                 TEXT,         
+ cervical_cancer_screening_date   DATE,         
+ cervical_cancer_screening_result BIT,          
+ risk_factors                     TEXT,         
+ risk_factors_other               TEXT,         
+ examining_doctor                 VARCHAR(100), 
+ hiv_test_admin                   BIT,          
+ hiv_test_date                    DATE,         
+ hiv_test_result                  VARCHAR(255), 
+ received_post_test_counseling    VARCHAR(255), 
+ post_test_counseling_date        DATE,         
+ medication_order                 TEXT,         
+ primary_diagnosis                TEXT,         
+ secondary_diagnosis              TEXT,         
+ diagnosis_non_coded              TEXT,         
+ procedures                       TEXT,         
+ procedures_other                 TEXT,         
+ family_planning_group            INT(11),      
+ family_planning_use              VARCHAR(5),         
+ family_planning_patient_type     VARCHAR(255),       
+ family_planning_method           VARCHAR(255),       
+ fp_counseling_received           VARCHAR(255), 
+ fp_start_date                    DATETIME,     
+ fp_end_date                      DATETIME,           
+ implant_date                     DATETIME,     
+ condoms_provided                 VARCHAR(5),   
+ location_of_delivery             VARCHAR(255), 
+ delivery_datetime                DATETIME,     
+ chlamydia                        BIT,          
+ gonorrhea                        BIT,          
+ genital_herpes                   BIT,          
+ hep_b                            BIT,          
+ hpv                              BIT,          
+ trichomoniasis                   BIT,          
+ bacterial_vaginosis              BIT,          
+ syphilis_treatment_status        varchar(255), 
+ sti_treatment                    BIT,          
+ other_sti                        text,         
+ index_patient_asc                INT,          
+ index_patient_desc               INT,          
+ index_type_asc                   INT,          
+ index_type_desc                  INT           
 );
 
 
@@ -129,15 +130,15 @@ WHERE
             AND a.value = 'true'
             AND t.name = 'Test Patient');
 
-DROP TEMPORARY TABLE IF EXISTS temp_mch_obs;
-CREATE TEMPORARY TABLE temp_mch_obs 
+DROP TEMPORARY TABLE IF EXISTS temp_obs;
+CREATE TEMPORARY TABLE temp_obs 
 SELECT o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.comments 
 FROM obs o
 INNER JOIN temp_obgyn_visit t ON t.encounter_id = o.encounter_id
 WHERE o.voided = 0;
 
-CREATE INDEX temp_mch_obs_concept_id ON temp_mch_obs(concept_id);
-CREATE INDEX temp_mch_obs_ei ON temp_mch_obs(encounter_id);
+CREATE INDEX temp_obs_concept_id ON temp_obs(concept_id);
+CREATE INDEX temp_obs_ei ON temp_obs(encounter_id);
 
            
            
@@ -147,7 +148,7 @@ SET
             GROUP_CONCAT(CONCEPT_NAME(value_coded, 'en')
                     SEPARATOR ' | ')
         FROM
-            temp_mch_obs o
+            temp_obs o
         WHERE
            --  o.voided = 0
                 t.encounter_id = o.encounter_id
@@ -159,10 +160,10 @@ SET
                 WHERE
                     concept_id = CONCEPT_FROM_MAPPING('CIEL', '1633')));
 
-UPDATE temp_obgyn_visit t JOIN temp_mch_obs o ON o.encounter_id = t.encounter_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH','Type of HUM visit')
+UPDATE temp_obgyn_visit t JOIN temp_obs o ON o.encounter_id = t.encounter_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH','Type of HUM visit')
 SET consultation_type = CONCEPT_NAME(value_coded, 'en');
 
-UPDATE temp_obgyn_visit t JOIN temp_mch_obs o ON o.encounter_id = t.encounter_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH','REASON FOR VISIT')
+UPDATE temp_obgyn_visit t JOIN temp_obs o ON o.encounter_id = t.encounter_id AND o.voided = 0 AND o.concept_id = CONCEPT_FROM_MAPPING('PIH','REASON FOR VISIT')
 SET consultation_type_fp = CONCEPT_NAME(value_coded, 'en');
 
 UPDATE temp_obgyn_visit t 
@@ -186,7 +187,7 @@ SELECT encounter_id, patient_id FROM temp_obgyn_visit;
 
 UPDATE temp_obgyn_pregnacy te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', '8879')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'ANC VISIT')
         AND o.voided = 0 
@@ -196,7 +197,7 @@ SET
 
 UPDATE temp_obgyn_pregnacy te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'ESTIMATED DATE OF CONFINEMENT')
         AND o.voided = 0 
 SET 
@@ -210,7 +211,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
         AND value_coded = CONCEPT_FROM_MAPPING('CIEL', '136163')
         AND o.voided = 0 
@@ -219,7 +220,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'DATE OF LAST MENSTRUAL PERIOD') 
 SET 
@@ -227,7 +228,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'ESTIMATED DATE OF CONFINEMENT') 
 SET 
@@ -235,7 +236,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'RETURN VISIT DATE') 
 SET 
@@ -243,7 +244,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Triage color classification') 
 SET 
@@ -260,14 +261,14 @@ SET
 UPDATE temp_obgyn_visit t 
 INNER JOIN 
 	(SELECT o.encounter_id, GROUP_CONCAT(DISTINCT  CONCEPT_NAME(o.value_coded,'en') SEPARATOR ' | ') AS ret
-	FROM temp_mch_obs o
+	FROM temp_obs o
 	WHERE o.concept_id = CONCEPT_FROM_MAPPING('PIH','Type of referring service')
 	GROUP BY o.encounter_id) i ON i.encounter_id = t.encounter_id
 SET t.referral_type = i.ret;
            
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Type of referring service')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'OTHER') 
@@ -276,7 +277,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
         AND value_coded = CONCEPT_FROM_MAPPING('CIEL', '1873')
         AND o.voided = 0 
@@ -285,7 +286,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'INTRAUTERINE DEVICE')
         AND o.voided = 0 
@@ -294,7 +295,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'TUBAL LIGATION')
         AND o.voided = 0 
@@ -326,7 +327,7 @@ CREATE INDEX temp_vaccinations_dose_number ON temp_vaccinations (dose_number);
 
 INSERT INTO temp_vaccinations (obs_group_id, person_id, encounter_id, concept_id, vaccine)
 SELECT o.obs_group_id, o.person_id, o.encounter_id, o.concept_id, a.uuid
-FROM temp_mch_obs o,
+FROM temp_obs o,
      concept c,
      concept a
 WHERE o.concept_id = c.concept_id
@@ -336,7 +337,7 @@ WHERE o.concept_id = c.concept_id
 
 INSERT INTO temp_vaccinations (obs_group_id, dose_number)
 SELECT o.obs_group_id, o.value_numeric
-FROM temp_mch_obs o,
+FROM temp_obs o,
      concept c
 WHERE o.concept_id = c.concept_id
   AND c.uuid = 'ef6b45b4-525e-4d74-bf81-a65a41f3feb9' # Vaccination Sequence Number
@@ -345,7 +346,7 @@ ON DUPLICATE KEY UPDATE dose_number = o.value_numeric;
 
 INSERT INTO temp_vaccinations (obs_group_id, vaccine_date)
 SELECT o.obs_group_id, DATE(o.value_datetime)
-FROM temp_mch_obs o,
+FROM temp_obs o,
      concept c
 WHERE o.concept_id = c.concept_id
   AND c.uuid = '1410AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' # Vaccine Date
@@ -506,7 +507,7 @@ SET
 
 UPDATE temp_obgyn_visit e
         JOIN
-    temp_mch_obs o ON e.encounter_id = o.encounter_id
+    temp_obs o ON e.encounter_id = o.encounter_id
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13229')
         AND o.voided = 0 
 SET 
@@ -514,7 +515,7 @@ SET
 
 UPDATE temp_obgyn_visit e
         JOIN
-    temp_mch_obs o ON e.encounter_id = o.encounter_id
+    temp_obs o ON e.encounter_id = o.encounter_id
         AND o.concept_id IN (CONCEPT_FROM_MAPPING('CIEL', '1439') , CONCEPT_FROM_MAPPING('CIEL', '160090'),
         CONCEPT_FROM_MAPPING('CIEL', '163749'),
         CONCEPT_FROM_MAPPING('CIEL', '1440'),
@@ -526,7 +527,7 @@ SET
     wh_exam = 1;
 
 UPDATE temp_obgyn_visit te
-        JOIN temp_mch_obs o ON te.encounter_id = o.encounter_id
+        JOIN temp_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', '11319')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', '1267')
         AND o.voided = 0 
@@ -534,14 +535,14 @@ SET
     pap_test_performed = 1;
    
 UPDATE temp_obgyn_visit te
-        JOIN temp_mch_obs o ON te.encounter_id = o.encounter_id
+        JOIN temp_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', '9759')
         AND o.voided = 0 
 SET via = CONCEPT_NAME(o.value_coded, @locale);
    
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '165429') 
 SET 
@@ -549,7 +550,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND concept_id = CONCEPT_FROM_MAPPING('CIEL', '163560')
         AND value_coded = CONCEPT_FROM_MAPPING('CIEL', '151185')
         AND o.voided = 0 
@@ -562,7 +563,7 @@ SET
             GROUP_CONCAT(CONCEPT_NAME(value_coded, 'en')
                     SEPARATOR ' | ')
         FROM
-            temp_mch_obs o
+            temp_obs o
         WHERE
             o.voided = 0
                 AND t.encounter_id = o.encounter_id
@@ -570,7 +571,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '160079')
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'OTHER') 
@@ -579,7 +580,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '164181') 
 SET 
@@ -650,7 +651,7 @@ SET
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'HIV test done') 
 SET 
@@ -658,7 +659,7 @@ SET
 
 -- UPDATE temp_obgyn_visit SET hiv_test_date = obs_value_datetime(encounter_id, 'CIEL', '164400');
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id = t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '164400')
+INNER JOIN temp_obs o ON o.encounter_id = t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '164400')
 SET t.hiv_test_date = o.value_datetime
 ;
 
@@ -667,7 +668,7 @@ SET t.hiv_test_date = o.value_datetime
 UPDATE temp_obgyn_visit t 
 INNER JOIN 
 	(SELECT o.encounter_id, GROUP_CONCAT(DISTINCT  CONCEPT_NAME(o.value_coded,'en') SEPARATOR ' | ') AS ret
-	FROM temp_mch_obs o
+	FROM temp_obs o
 	WHERE o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '159427')
 	GROUP BY o.encounter_id) i ON i.encounter_id = t.encounter_id
 SET t.hiv_test_result = i.ret;
@@ -676,14 +677,14 @@ SET t.hiv_test_result = i.ret;
 UPDATE temp_obgyn_visit t 
 INNER JOIN 
 	(SELECT o.encounter_id, GROUP_CONCAT(DISTINCT  CONCEPT_NAME(o.value_coded,'en') SEPARATOR ' | ') AS ret
-	FROM temp_mch_obs o
+	FROM temp_obs o
 	WHERE o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '159382')
 	GROUP BY o.encounter_id) i ON i.encounter_id = t.encounter_id
 SET t.received_post_test_counseling = i.ret;
 
 -- UPDATE temp_obgyn_visit SET post_test_counseling_date = obs_value_datetime(encounter_id, 'PIH', '11525');
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id = t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '11525')
+INNER JOIN temp_obs o ON o.encounter_id = t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '11525')
 SET t.post_test_counseling_date = o.value_datetime
 ;
 
@@ -714,7 +715,7 @@ INSERT INTO temp_diagnosis_obs_id(encounter_id, obs_id)
 SELECT
                         encounter_id, obs_id
                     FROM
-                        temp_mch_obs
+                        temp_obs
                     WHERE
                         concept_id = @visit_diagnosis_concept_id
 AND voided = 0
@@ -737,7 +738,7 @@ INSERT INTO temp_primary_diagnosis_obs_group_id(encounter_id, obs_id, obs_group_
 SELECT
 encounter_id, obs_id, obs_group_id
                     FROM
-                        temp_mch_obs
+                        temp_obs
                     WHERE
                         concept_id = @diagnosis_order
                             AND voided = 0
@@ -759,7 +760,7 @@ INSERT INTO temp_primary_diagnosis_stage (encounter_id, value_coded)
 SELECT
 encounter_id, value_coded
                     FROM
-                        temp_mch_obs
+                        temp_obs
                     WHERE
                         concept_id = @diagnosis
                             AND voided = 0
@@ -798,7 +799,7 @@ INSERT INTO temp_secondary_diagnosis_obs_group_id(encounter_id, obs_id, obs_grou
 SELECT
 encounter_id, obs_id, obs_group_id
                     FROM
-                        temp_mch_obs
+                        temp_obs
                     WHERE
                         concept_id = @diagnosis_order
                             AND voided = 0
@@ -820,7 +821,7 @@ INSERT INTO temp_secondary_diagnosis_stage (encounter_id, value_coded)
 SELECT
 encounter_id, value_coded
                     FROM
-                        temp_mch_obs
+                        temp_obs
                     WHERE
                         concept_id = @diagnosis
                             AND voided = 0
@@ -845,7 +846,7 @@ SET t.secondary_diagnosis = tp.secondary_diagnosis;
 -- non coded diagnosis    
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Diagnosis or problem, non-coded') 
 SET 
@@ -857,7 +858,7 @@ SET
 UPDATE temp_obgyn_visit t 
 INNER JOIN 
 	(SELECT o.encounter_id, GROUP_CONCAT(DISTINCT  CONCEPT_NAME(o.value_coded,'en') SEPARATOR ' | ') AS ret
-	FROM temp_mch_obs o
+	FROM temp_obs o
 	WHERE o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '1651')
 	GROUP BY o.encounter_id) i ON i.encounter_id = t.encounter_id
 SET t.procedures = i.ret;
@@ -866,7 +867,7 @@ SET t.procedures = i.ret;
 -- SET 
 --    procedures_other = OBS_VALUE_TEXT(te.encounter_id, 'CIEL', '165264');
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id = t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '165264')
+INNER JOIN temp_obs o ON o.encounter_id = t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '165264')
 SET t.procedures_other = o.value_text
 ;   
 
@@ -876,19 +877,19 @@ SET t.procedures_other = o.value_text
 UPDATE temp_obgyn_visit t 
 INNER JOIN 
 	(SELECT o.encounter_id, GROUP_CONCAT(DISTINCT  CONCEPT_NAME(o.value_coded,'en') SEPARATOR ' | ') AS ret
-	FROM temp_mch_obs o
+	FROM temp_obs o
 	WHERE o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '965')
 	GROUP BY o.encounter_id) i ON i.encounter_id = t.encounter_id
 SET t.family_planning_use = i.ret;
     
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Family planning construct')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Family planning construct')
 SET t.family_planning_group = o.obs_id;
 
 
 UPDATE temp_obgyn_visit te
         JOIN
-    temp_mch_obs o ON te.encounter_id = o.encounter_id
+    temp_obs o ON te.encounter_id = o.encounter_id
         AND o.voided = 0
         AND concept_id = CONCEPT_FROM_MAPPING('PIH', 'METHOD OF FAMILY PLANNING')
         AND o.obs_group_id = te.family_planning_group
@@ -896,35 +897,35 @@ SET
     family_planning_method = CONCEPT_NAME(o.value_coded, 'en');
  
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '14321')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '14321')
 SET t.family_planning_patient_type = CONCEPT_NAME(o.value_coded,'en');
 
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '165309')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '165309')
 SET t.fp_counseling_received = CONCEPT_NAME(o.value_coded,'en');
 
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13006')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13006')
 SET t.condoms_provided = CONCEPT_NAME(o.value_coded,'en');
 
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11348')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11348')
 SET t.location_of_delivery = CONCEPT_NAME(o.value_coded,'en');
 
 UPDATE temp_obgyn_visit t
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '5599')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '5599')
 SET t.delivery_datetime = o.value_datetime;
 
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11466')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11466')
 SET t.fp_start_date = o.value_datetime;
 
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11465')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11465')
 SET t.fp_end_date = o.value_datetime;
 
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '3203')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '3203')
 SET t.implant_date = o.value_datetime;
 
 ## Suspected STD
@@ -963,8 +964,28 @@ UPDATE temp_obgyn_visit t SET sti_treatment = (SELECT 1 FROM obs o WHERE t.encou
 # Syphilis treatment status
 set @completed = concept_from_mapping('PIH','1267');
 UPDATE temp_obgyn_visit t 
-INNER JOIN temp_mch_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13024')
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '13024')
 SET t.syphilis_treatment_status = if(o.value_coded = @completed,'Stopped' ,CONCEPT_NAME(o.value_coded,'en'));
+
+# other STIs
+set @gonnorhea = concept_from_mapping('PIH','893');
+set @hepatitis = concept_from_mapping('PIH','27');
+set @herpes = concept_from_mapping('PIH','7250');
+set @hpv = concept_from_mapping('PIH','1213');
+set @chlamydia = concept_from_mapping('PIH','14363');
+
+update temp_obgyn_visit t
+INNER JOIN (select encounter_id, group_concat(concept_name(value_coded, @locale)  SEPARATOR ' | ') 'stis' 
+	from temp_obs o 
+	where o.concept_id = @diagnosis
+	and o.value_coded in (
+		@gonnorhea,
+		@hepatitis,
+		@herpes,
+		@hpv,
+		@chlamydia)
+	group by encounter_id) o on o.encounter_id = t.encounter_id
+set t.other_sti = o.stis;		
 
 # final query
 SELECT
@@ -1041,6 +1062,7 @@ SELECT
     risk_factors,
     sti_treatment,
     syphilis_treatment_status,
+    other_sti,
     chlamydia,
     gonorrhea,
     genital_herpes,
@@ -1055,4 +1077,3 @@ SELECT
 FROM
     temp_obgyn_visit
 ORDER BY patient_id;
--- , index_asc;

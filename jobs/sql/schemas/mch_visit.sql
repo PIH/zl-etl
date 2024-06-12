@@ -73,6 +73,7 @@ CREATE TABLE mch_visit
     risk_factors                     TEXT,
     sti_treatment                    BIT,
     syphilis_treatment_status        VARCHAR(255),
+    other_sti                        TEXT,
     chlamydia                        BIT,
     gonorrhea                        BIT,
     genital_herpes                   BIT,
