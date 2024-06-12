@@ -27,3 +27,4 @@ configuration:
           - tableName: "ed_summary"
           - tableName: "chemo_session_summary"
           - tableName: "oncology_treatment_plan_summary"
+          - tableName: "outpatient_chemo_summary"
