@@ -227,9 +227,9 @@ and avi.visit_date = av.visit_date;
 
 -- update index asc/desc on mch_status table
 drop table if exists #mch_status_indexes;
-select  emr_id, start_date, patient_program_id,
-ROW_NUMBER() over (PARTITION by emr_id order by start_date asc, patient_program_id asc) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id order by start_date DESC, patient_program_id DESC) "index_desc"
+select  patient_state_id,
+ROW_NUMBER() over (PARTITION by emr_id order by emr_id, program_date_enrolled asc, status_start_date asc, patient_state_id asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id order by emr_id, program_date_enrolled DESC, status_start_date DESC, patient_state_id DESC) "index_desc"
 into #mch_status_indexes
 from mch_status av ;
 
@@ -237,9 +237,7 @@ update av
 set av.index_asc = avi.index_asc,
 	av.index_desc = avi.index_desc 
 from mch_status av
-inner join #mch_status_indexes avi on avi.emr_id = av.emr_id
-and avi.start_date = av.start_date
-and avi.patient_program_id = av.patient_program_id; 
+inner join #mch_status_indexes avi on avi.patient_state_id = av.patient_state_id;
 
 
 -- update index asc/desc by patient on mch_visit table
@@ -309,6 +307,7 @@ and avi.encounter_id = av.encounter_id
 ; 
 
 -- update index asc/desc on ed_triage table
+drop table if exists #edtriage_visit_indexes;
 select  zlemr_id, Triage_datetime, 
 ROW_NUMBER() over (PARTITION by zlemr_id order by Triage_datetime asc) "index_asc",
 ROW_NUMBER() over (PARTITION by zlemr_id order by Triage_datetime desc) "index_desc"
