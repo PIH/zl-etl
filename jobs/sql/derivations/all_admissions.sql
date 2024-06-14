@@ -42,7 +42,8 @@ from all_admissions_staging a
 inner join all_encounters e on e.encounter_id = 
 	(select top 1 e2.encounter_id from all_encounters e2
 	where e2.emr_id = a.emr_id 
-	and e2.encounter_datetime < a.start_date 
+	and e2.encounter_datetime < a.start_date
+	and e2.disposition is not null
 	order by e2.encounter_datetime desc, encounter_id desc);	
 
 -- ------------------------------------------------------------------------------------
