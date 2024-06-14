@@ -22,8 +22,8 @@ other_monitoring                   bit,
 other_monitoring_text              text,         
 reasons_evaluation                 text,          
 consequences_inadherence           text,          
-willing_reenroll                   boolean,       
-action_reinforce_adherence         boolean,       
+willing_reenroll                   bit,       
+action_reinforce_adherence         bit,       
 index_asc                          INT,          
 index_desc                         INT           
 );
