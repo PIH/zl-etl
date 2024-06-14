@@ -5,30 +5,34 @@ FROM encounter_type et WHERE uuid='83081f7d-ffd7-4d43-9571-a86e1bc19d7f';
 DROP temporary table if exists temp_hiv_encs;
 create temporary table temp_hiv_encs
 (
-patient_id 			int,
-emr_id				varchar(255),
-encounter_id        int,
-visit_id            int,
-encounter_datetime  datetime,
-datetime_created    datetime,
-creator             int,	
-user_entered        varchar(255),
-provider            varchar(255),
-return_to_care_follow_up boolean DEFAULT FALSE,
-undetected_vl_follow_up boolean DEFAULT FALSE,
-inadherence_to_treatment_follow_up boolean DEFAULT FALSE,
-other_follow_up boolean DEFAULT FALSE,
-other_follow_up_text varchar(500),
-home_visit_monitoring boolean DEFAULT FALSE,
-support_group_monitoring boolean DEFAULT FALSE,
-food_support_monitoring boolean DEFAULT FALSE,
-financial_support_monitoring boolean DEFAULT FALSE,
-income_generator_monitoring boolean DEFAULT FALSE,
-school_support_monitoring boolean DEFAULT FALSE,
-other_monitoring boolean DEFAULT FALSE,
-other_monitoring_text varchar(500),
-index_asc INT,
-index_desc INT
+patient_id                         int,          
+emr_id                             varchar(255), 
+encounter_id                       int,          
+visit_id                           int,          
+encounter_datetime                 datetime,     
+datetime_created                   datetime,     
+creator                            int,                  
+user_entered                       varchar(255), 
+provider                           varchar(255), 
+return_to_care_follow_up           boolean DEFAULT FALSE, 
+undetected_vl_follow_up            boolean DEFAULT FALSE, 
+inadherence_to_treatment_follow_up boolean DEFAULT FALSE, 
+other_follow_up                    boolean DEFAULT FALSE, 
+other_follow_up_text               text, 
+home_visit_monitoring              boolean DEFAULT FALSE, 
+support_group_monitoring           boolean DEFAULT FALSE, 
+food_support_monitoring            boolean DEFAULT FALSE, 
+financial_support_monitoring       boolean DEFAULT FALSE, 
+income_generator_monitoring        boolean DEFAULT FALSE, 
+school_support_monitoring          boolean DEFAULT FALSE, 
+other_monitoring                   boolean DEFAULT FALSE, 
+other_monitoring_text              text, 
+reasons_evaluation                 text,         
+consequences_inadherence           text,         
+willing_reenroll                   boolean,      
+action_reinforce_adherence         boolean,      
+index_asc                          INT,          
+index_desc                         INT           
 );
 
 insert into temp_hiv_encs(patient_id, encounter_id, visit_id, encounter_datetime, 
@@ -103,6 +107,20 @@ SET other_monitoring=answerEverExists_from_temp(patient_id, 'PIH', '20103', 'PIH
 UPDATE temp_hiv_encs
 SET other_monitoring_text=obs_value_text_from_temp(encounter_id, 'PIH', '2923');
 
+UPDATE temp_hiv_encs
+SET reasons_evaluation=obs_value_text_from_temp(encounter_id, 'PIH', '20089');
+
+UPDATE temp_hiv_encs
+SET consequences_inadherence=obs_value_text_from_temp(encounter_id, 'PIH', '20101');
+
+UPDATE temp_hiv_encs
+SET consequences_inadherence=obs_value_text_from_temp(encounter_id, 'PIH', '20101');
+
+UPDATE temp_hiv_encs
+SET willing_reenroll = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '20102',0));
+
+UPDATE temp_hiv_encs
+SET action_reinforce_adherence = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '14627',0));
 
 SELECT 
 emr_id,
@@ -125,7 +143,10 @@ income_generator_monitoring,
 school_support_monitoring,
 other_monitoring,
 other_monitoring_text,
+reasons_evaluation,         
+consequences_inadherence,         
+willing_reenroll,      
+action_reinforce_adherence, 
 index_asc,
 index_desc 
 FROM temp_hiv_encs;
-
