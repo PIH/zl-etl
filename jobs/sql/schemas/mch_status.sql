@@ -1,20 +1,15 @@
 CREATE TABLE mch_status
 (
-    emr_id                  VARCHAR(25),
-    enrollment_location     VARCHAR(25),
-    encounter_location_name VARCHAR(25),
-    start_date              DATE,
-    end_date                DATE,
-    treatment_status        VARCHAR(255),
-    outcome                 VARCHAR(100),
-    antenatal_visit         VARCHAR(5),
-    estimated_delivery_date DATE,
-    history_hiv             VARCHAR(5),
-    high_risk_factor_hiv    VARCHAR(5),
-    arv_status              VARCHAR(5),
-    patient_disposition     VARCHAR(100),
-    transfer                TEXT,
-    patient_program_id      INT,
-    index_asc               INT,
-    index_desc              INT
+ patient_state_id       varchar(50),  
+ patient_program_id     varchar(50),  
+ emr_id                 varchar(25),  
+ enrollment_location    varchar(255), 
+ program_date_enrolled  date,         
+ program_date_completed date,         
+ treatment_status       varchar(255), 
+ status_start_date      date,         
+ status_end_date        date,         
+ outcome                varchar(255), 
+ index_asc              int,          
+ index_desc             int    
 );
