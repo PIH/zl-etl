@@ -114,9 +114,6 @@ UPDATE temp_hiv_encs
 SET consequences_inadherence=obs_value_text_from_temp(encounter_id, 'PIH', '20101');
 
 UPDATE temp_hiv_encs
-SET consequences_inadherence=obs_value_text_from_temp(encounter_id, 'PIH', '20101');
-
-UPDATE temp_hiv_encs
 SET willing_reenroll = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '20102',0));
 
 UPDATE temp_hiv_encs
