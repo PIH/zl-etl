@@ -20,6 +20,7 @@ create temporary table temp_all_encounters
     entered_datetime     datetime,
     emr_id               varchar(15),
     next_appt_date       date,
+    disposition          varchar(255),
     voided               bit
 );
 
@@ -116,25 +117,33 @@ update temp_all_encounters t
 inner join user_names u on t.creator = u.user_id
 set t.user_entered = u.user_name;
 
--- get next appointment
-CREATE INDEX temp_all_encounters_patientId ON temp_all_encounters (patient_id);
-
-DROP TABLE IF EXISTS temp_next_appt_obs;
-CREATE TEMPORARY TABLE temp_next_appt_obs
-select encounter_id, max(value_datetime) "next_appt_date"
+-- get next appointment, disposition
+set @disposition_concept_id = concept_from_mapping('PIH','8620');
+DROP TEMPORARY TABLE IF EXISTS temp_obs;
+CREATE TEMPORARY TABLE temp_obs
+select encounter_id, concept_id, value_coded, value_datetime
 from obs
-where concept_id = @next_appt_date_concept_id
+where concept_id in ( @next_appt_date_concept_id, @disposition_concept_id)
   and voided = 0
 group by encounter_id;
 
-create index temp_next_appt_obs_ei on temp_next_appt_obs (encounter_id);
+DROP TEMPORARY TABLE IF EXISTS temp_obs_collated;
+CREATE TEMPORARY TABLE temp_obs_collated
+select encounter_id,
+max(case when concept_id = @next_appt_date_concept_id then value_datetime end) "next_appt_date",
+max(case when concept_id = @disposition_concept_id then concept_name(value_coded, @locale) end) "disposition"
+from temp_obs
+group by encounter_id;
 
-update temp_all_encounters te
-    inner join temp_next_appt_obs tvo on tvo.encounter_id = te.encounter_id
-set te.next_appt_date = tvo.next_appt_date
-where te.voided = 0;
+create index temp_obs_collated_ei on temp_obs_collated(encounter_id);
+
+UPDATE temp_all_encounters t
+inner join temp_obs_collated o on o.encounter_id = t.encounter_id
+set t.next_appt_date = o.next_appt_date,
+    t.disposition = o.disposition;
 
 -- emr_id
+CREATE INDEX temp_all_encounters_patientId ON temp_all_encounters (patient_id);
 drop temporary table if exists temp_emrids;
 create temporary table temp_emrids
 (
@@ -154,7 +163,6 @@ set emr_id = patient_identifier(patient_id, 'ZL EMR ID');
 update temp_all_encounters t
 set t.emr_id = zlemrid_from_temp(t.patient_id);
 
-
 -- final query
 select emr_id,
        CONCAT(@partition, '-', encounter_id) as encounter_id,
@@ -165,6 +173,7 @@ select emr_id,
        encounter_datetime,
        entered_datetime,
        user_entered,
-       next_appt_date
+       next_appt_date,
+       disposition
 from temp_all_encounters t
 ORDER BY t.patient_id, t.encounter_id;
