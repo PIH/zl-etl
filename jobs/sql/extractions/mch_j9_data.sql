@@ -1,3 +1,5 @@
+SET sql_safe_updates = 0;
+set @partition = '${partitionNum}';
 select program_id into @mchProgram from program where uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73';
 select encounter_type('d83e98fd-dc7b-420f-aa3f-36f648b4483d') into @ob_gyn_enc_id;
 select encounter_type('873f968a-73a8-4f9c-ac78-9f4778b751b6') into @reg_enc_id;
@@ -328,6 +330,7 @@ set number_family_planning_visits =
 
 -- final output
 Select
+concat(@partition,'-',t.patient_program_id) "patient_program_id",zlemr(patient_id) "emr_id",
 zlemr(patient_id) "emr_id",
 patient_age,
 date_enrolled,
