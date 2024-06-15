@@ -1,5 +1,6 @@
 CREATE TABLE mch_j9_data
 (
+patient_program_id varchar(50),  
 emr_id varchar(25),
 patient_age int ,
 date_enrolled datetime,
