@@ -1,9 +1,9 @@
 CREATE TABLE all_medication_prescribed
 (
 emr_id varchar(25),
-encounter_id int,
-visit_id int,
-order_id int,
+encounter_id VARCHAR(25),
+visit_id VARCHAR(25),
+order_id VARCHAR(25),
 order_location varchar(255),
 order_created_date date,
 order_date_activated date,
