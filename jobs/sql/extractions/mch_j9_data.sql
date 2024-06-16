@@ -330,7 +330,7 @@ set number_family_planning_visits =
 
 -- final output
 Select
-concat(@partition,'-',t.patient_program_id) "patient_program_id",zlemr(patient_id) "emr_id",
+concat(@partition,'-',t.patient_program_id) "patient_program_id",
 zlemr(patient_id) "emr_id",
 patient_age,
 date_enrolled,
