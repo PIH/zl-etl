@@ -968,23 +968,20 @@ INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CON
 SET t.syphilis_treatment_status = if(o.value_coded = @completed,'Stopped' ,CONCEPT_NAME(o.value_coded,'en'));
 
 # other STIs
-set @gonnorhea = concept_from_mapping('PIH','893');
-set @hepatitis = concept_from_mapping('PIH','27');
-set @herpes = concept_from_mapping('PIH','7250');
-set @hpv = concept_from_mapping('PIH','1213');
-set @chlamydia = concept_from_mapping('PIH','14363');
+set @sti_set = concept_from_mapping('PIH','13076');
+drop temporary table if exists sti_dxs;
+create temporary table sti_dxs
+select answer_concept from concept_answer ca
+where ca.concept_id = @sti_set;
+
+create index sti_dxs_ci on sti_dxs(answer_concept);
 
 update temp_obgyn_visit t
 INNER JOIN (select encounter_id, group_concat(concept_name(value_coded, @locale)  SEPARATOR ' | ') 'stis' 
 	from temp_obs o 
+	inner join sti_dxs s on s.answer_concept = o.value_coded
 	where o.concept_id = @diagnosis
-	and o.value_coded in (
-		@gonnorhea,
-		@hepatitis,
-		@herpes,
-		@hpv,
-		@chlamydia)
-	group by encounter_id) o on o.encounter_id = t.encounter_id
+group by encounter_id) o on o.encounter_id = t.encounter_id
 set t.other_sti = o.stis;		
 
 # final query
