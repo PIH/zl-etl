@@ -2,7 +2,7 @@ DROP TABLE IF EXISTS all_admissions_staging;
 create table all_admissions_staging
 (
    emr_id               varchar(15),
-   encounter_id         varchar(255),
+   encounter_id         varchar(50),
    visit_id             varchar(255),
    encounter_type       varchar(50),
    start_date           datetime,
@@ -11,8 +11,12 @@ create table all_admissions_staging
    date_entered         date,
    encounter_location   varchar(255),
    provider             varchar(255),
+   previous_disposition_encounter_id varchar(50),
    previous_disposition_datetime datetime,
    previous_disposition varchar(255),
+   ending_disposition_encounter_id varchar(50),
+   ending_disposition_datetime datetime,
+   ending_disposition varchar(255),
    site                 varchar(255),
    partition_num        int
 );
@@ -37,7 +41,8 @@ DELETE FROM all_admissions_staging WHERE encounter_type='Sortie de soins hospita
 
 update a 
  set previous_disposition_datetime = e.encounter_datetime,
- 	previous_disposition = disposition
+ 	 previous_disposition = disposition,
+ 	 previous_disposition_encounter_id = e.encounter_id
 from all_admissions_staging a
 inner join all_encounters e on e.encounter_id = 
 	(select top 1 e2.encounter_id from all_encounters e2
@@ -45,6 +50,18 @@ inner join all_encounters e on e.encounter_id =
 	and e2.encounter_datetime < a.start_date
 	and e2.disposition is not null
 	order by e2.encounter_datetime desc, encounter_id desc);	
+
+update a 
+ set ending_disposition_datetime = e.encounter_datetime,
+ 	 ending_disposition = disposition,
+ 	 ending_disposition_encounter_id = e.encounter_id
+from all_admissions_staging a
+inner join all_encounters e on e.encounter_id = 
+	(select top 1 e2.encounter_id from all_encounters e2
+	where e2.emr_id = a.emr_id 
+	and e2.encounter_datetime > a.start_date
+	and e2.disposition is not null
+	order by e2.encounter_datetime asc, encounter_id asc);	
 
 -- ------------------------------------------------------------------------------------
 DROP TABLE IF EXISTS all_admissions;
