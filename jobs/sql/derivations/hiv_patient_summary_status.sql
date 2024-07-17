@@ -54,7 +54,13 @@ CREATE TABLE hiv_patient_summary_status_staging
  med_pickup_status                varchar(255),  
  med_pickup_status_date           date,          
  status                           varchar(255),  
- status_date                      date           
+ status_date                      date,
+ last_bp_diastolic                float,
+ last_bp_diastolic_date           date,
+ last_bp_systolic                 float,
+ last_bp_systolic_date            date,
+ last_htn_diag                    text,
+ last_htn_diag_date               date
 );
 
 insert into hiv_patient_summary_status_staging (emr_id)
@@ -314,6 +320,39 @@ inner join all_vitals v on v.all_vitals_id =
     where av2.emr_id = t.emr_id
     and av2.height is not null
     order by av2.encounter_datetime desc, av2.date_entered desc );
+
+-- last bp diastolic
+update t
+set last_bp_diastolic = v.bp_diastolic ,
+    last_bp_diastolic_date = v.encounter_datetime
+    from hiv_patient_summary_status_staging t
+inner join all_vitals v on v.all_vitals_id =
+    (select top 1 all_vitals_id from all_vitals av2
+    where av2.emr_id = t.emr_id
+    and av2.bp_diastolic is not null
+    order by av2.encounter_datetime desc, av2.date_entered desc );
+
+-- last bp systolic
+update t
+set last_bp_systolic = v.bp_systolic ,
+    last_bp_systolic_date = v.encounter_datetime
+    from hiv_patient_summary_status_staging t
+inner join all_vitals v on v.all_vitals_id =
+    (select top 1 all_vitals_id from all_vitals av2
+    where av2.emr_id = t.emr_id
+    and av2.bp_systolic is not null
+    order by av2.encounter_datetime desc, av2.date_entered desc );
+
+-- last hypertension diagnosis
+update t
+set last_htn_diag = d.diagnosis_entered,
+    last_htn_diag_date = d.obs_datetime
+    from hiv_patient_summary_status_staging t
+inner join all_diagnosis d on d.obs_id =
+    (select top 1 obs_id from all_diagnosis ad2
+    where ad2.patient_primary_id = t.emr_id
+    and ad2.diagnosis_entered like '%HYPERTENSION'
+    order by ad2.obs_datetime desc, ad2.date_created desc );
 
 update t
 set current_treatment_status = s.status_outcome,

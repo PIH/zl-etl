@@ -40,7 +40,7 @@ SELECT
     e.patient_id AS patient_id,
     min(e.encounter_datetime) AS encounter_datetime
 FROM
-    openmrs.encounter e
+    encounter e
 GROUP BY
     e.patient_id;
  
