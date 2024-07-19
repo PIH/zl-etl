@@ -17,6 +17,19 @@ program_enrollment_date date,
 last_visit_enc_id int,
 interventions varchar(1000));
 
+DROP TABLE IF EXISTS temp_encounter;
+CREATE TEMPORARY TABLE temp_encounter AS
+SELECT patient_id, encounter_id, encounter_datetime, encounter_type
+FROM encounter e
+WHERE e.encounter_type =@mh_enctype
+  AND e.voided =0;
+
+DROP TABLE IF EXISTS temp_obs;
+CREATE TEMPORARY TABLE temp_obs AS
+SELECT o.person_id, o.obs_id , o.obs_datetime , o.encounter_id, o.value_coded, o.concept_id, o.voided
+FROM obs o INNER JOIN temp_encounter te ON te.encounter_id=o.encounter_id
+WHERE o.voided =0;
+
 INSERT INTO all_mh_patients(patient_id,emr_id, program_enrollment_date)
 SELECT 
 pp.patient_id,
