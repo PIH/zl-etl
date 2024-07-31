@@ -31,6 +31,7 @@ create table mch_delivery
     Episiotomy                           varchar(255),
     Postpartum_blood_loss                varchar(255),
     Transfusion                          varchar(255),
+    maternal_delivery_type_deprecated    varchar(500),
     baby_Malpresentation_of_fetus        varchar(10),
     baby_Cephalopelvic_disproportion     varchar(10),
     baby_Extreme_premature               varchar(10),
