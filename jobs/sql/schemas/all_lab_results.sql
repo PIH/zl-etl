@@ -21,7 +21,7 @@ CREATE TABLE all_lab_results
     specimen_collection_entry_date DATETIME,
     results_date             DATE,
     results_entry_date       DATETIME,
-    result                   VARCHAR(255),
+    result                   TEXT,
     units                    VARCHAR(11),
     reason_not_performed     VARCHAR(255)
 );
