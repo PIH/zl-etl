@@ -1,6 +1,7 @@
 CREATE TABLE mh_encounters
 (
 emr_id varchar(30),
+emr_id_deprecated varchar(30),
 encounter_id int, 
 encounter_date date,
 date_entered date,

@@ -65,8 +65,9 @@ SET interventions =  obs_value_coded_list_from_temp(last_visit_enc_id, 'PIH', '1
 UPDATE all_mh_patients tgt
 SET referral =  obs_value_coded_list_from_temp(last_visit_enc_id, 'PIH', '10647', 'en');
 
-SELECT 
-CONCAT(@partition,'-',emr_id) "emr_id",
+SELECT
+emr_id,
+CONCAT(@partition,'-',emr_id) as emr_id_deprecated,
 dob,
 gender,
 town,

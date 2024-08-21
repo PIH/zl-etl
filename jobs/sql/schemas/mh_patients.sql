@@ -1,6 +1,7 @@
 CREATE TABLE mh_patients
 (
 emr_id varchar(50),
+emr_id_deprecated varchar(30),
 dob date,
 gender varchar(50),
 town varchar(500),

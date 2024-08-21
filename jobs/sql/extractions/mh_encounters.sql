@@ -75,7 +75,8 @@ UPDATE all_mh_encounters SET whodas_score=obs_value_numeric_from_temp(encounter_
 UPDATE all_mh_encounters SET return_encounter_date=obs_value_datetime_from_temp(encounter_id, 'PIH','5096');
 
 SELECT
-CONCAT(@partition,'-',emr_id) "emr_id",
+emr_id,
+CONCAT(@partition,'-',emr_id) as emr_id_deprecated,
 encounter_id, 
 encounter_date,
 date_entered,

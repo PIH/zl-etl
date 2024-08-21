@@ -80,7 +80,7 @@ AND pws.concept_id IN (concept_from_mapping('PIH','10364'),concept_from_mapping(
 
 SELECT 
 DISTINCT 
-CONCAT(@partition,'-',emr_id) "emr_id",
+emr_id,
 status_start_date,
 status_end_date,
 status_type,
