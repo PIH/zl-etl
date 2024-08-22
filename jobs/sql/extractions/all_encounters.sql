@@ -21,7 +21,9 @@ create temporary table temp_all_encounters
     emr_id               varchar(15),
     next_appt_date       date,
     disposition          varchar(255),
-    voided               bit
+    voided               bit,
+    index_asc			 int,
+    index_desc			 int
 );
 
 -- If there is not a previous watermark, initialize with all encounters
@@ -174,6 +176,8 @@ select emr_id,
        entered_datetime,
        user_entered,
        next_appt_date,
-       disposition
+       disposition,
+       index_asc,
+       index_desc
 from temp_all_encounters t
 ORDER BY t.patient_id, t.encounter_id;

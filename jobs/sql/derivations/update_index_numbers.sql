@@ -1,32 +1,34 @@
-/* TODO Commenting out since these are currently broken
-
 -- update index asc/desc on all_visits table
-select visit_id, emr_id, visit_date_started, 
-ROW_NUMBER() over (PARTITION by emr_id order by visit_date_started asc, visit_id asc) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id order by visit_date_started desc, visit_id desc) "index_desc"
-into #all_visits_indexes
-from all_visits av ;
+drop table if exists #derived_indexes;
+select  visit_id,
+        ROW_NUMBER() over (PARTITION by patient_id order by visit_date_started, visit_id) as index_asc,
+        ROW_NUMBER() over (PARTITION by patient_id order by visit_date_started DESC, visit_id DESC) as index_desc
+into    #derived_indexes
+from    all_visits;
 
-update  av
-set av.index_asc = avi.index_asc,
-	av.index_desc = avi.index_desc 
-from all_visits av	
-inner join #all_visits_indexes avi on avi.visit_id = av.visit_id ; 
+update  t
+set     t.index_asc = i.index_asc, t.index_desc = i.index_desc
+from    all_visits t inner join #derived_indexes i on i.visit_id = t.visit_id
+;
 
 -- update index asc/desc on all_encounters table
-select encounter_id, emr_id, encounter_datetime, 
-ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime asc, visit_id asc) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id order by encounter_datetime desc, visit_id desc) "index_desc"
-into #all_encounters_indexes
-from all_encounters ae ;
+drop table if exists #derived_indexes;
+select  encounter_id,
+        ROW_NUMBER() over (PARTITION by patient_id order by encounter_datetime, encounter_id) as index_asc,
+        ROW_NUMBER() over (PARTITION by patient_id order by encounter_datetime DESC, encounter_id DESC) as index_desc
+into    #derived_indexes
+from    all_encounters;
 
-update  ae
-set ae.index_asc = aei.index_asc,
-	ae.index_desc = aei.index_desc 
-from all_encounters ae
-inner join #all_encounters_indexes aei on aei.encounter_id = ae.encounter_id; 
+update  t
+set     t.index_asc = i.index_asc, t.index_desc = i.index_desc
+from    all_encounters t inner join #derived_indexes i on i.encounter_id = t.encounter_id
+;
 
-*/
+-- #########################################
+-- REFACTOR ALL OF THE BELOW IN THE STYLE OF THE ABOVE
+-- REVIEW ALL CRITERIA AND TEST TO ENSURE ORDERING IS CORRECT
+-- ALSO SEE sl-etl PROJECT WHERE THIS HAS BEEN DONE
+-- ##########################################
 
 -- update index asc/desc on all_vitals table
 drop table if exists #all_vitals_indexes;

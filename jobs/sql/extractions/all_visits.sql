@@ -91,13 +91,14 @@ set tv.visit_user_entered = tu.creator_name;
 
 select 
 emr_id,
-CONCAT(@partition,'-',visit_id) "visit_id",
+CONCAT(@partition,'-',visit_id) as visit_id,
+CONCAT(@partition,'-',patient_id) as patient_id,
 visit_date_started,
 visit_date_stopped,
 visit_date_entered,
 visit_user_entered,
 visit_type,
-if(checkin_encounter_id is null, null, 1) "visit_checkin",
+if(checkin_encounter_id is null, null, 1) as visit_checkin,
 visit_reason,
 visit_location,
 index_asc,
