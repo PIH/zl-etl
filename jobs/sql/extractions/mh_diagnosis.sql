@@ -3,17 +3,17 @@ SELECT encounter_type_id INTO @mh_enctype FROM encounter_type et WHERE et.uuid =
 SET @partition = '${partitionNum}';
 
 DROP TABLE IF EXISTS all_mh_diagnosis;
-CREATE TEMPORARY TABLE all_mh_diagnosis (
-patient_id int,
-emr_id varchar(50),
-encounter_id int,
-encounter_datetime datetime,
-encounter_location_name varchar(50),
-encounter_creator varchar(50),
-provider varchar(50),
-diagnosis varchar(100)
+CREATE TEMPORARY TABLE all_mh_diagnosis
+(
+    patient_id              int,
+    emr_id                  varchar(50),
+    encounter_id            int,
+    encounter_datetime      datetime,
+    encounter_location_name varchar(50),
+    encounter_creator       varchar(50),
+    provider                varchar(50),
+    diagnosis               varchar(100)
 );
-
 
 DROP TABLE IF EXISTS temp_encounter;
 CREATE TEMPORARY TABLE temp_encounter AS 
@@ -42,9 +42,10 @@ provider(e.encounter_id) provider,
 value_coded_name(o.obs_id,'en') diagnosis
 FROM temp_encounter e INNER JOIN temp_obs o ON e.encounter_id=o.encounter_id;
 
-SELECT 
+SELECT
+CONCAT(@partition,'-',encounter_id) as encounter_id,
+CONCAT(@partition,'-',patient_id) as patient_id,
 emr_id,
-encounter_id,
 encounter_datetime,
 encounter_location_name,
 encounter_creator,

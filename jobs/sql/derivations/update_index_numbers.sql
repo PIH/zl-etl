@@ -24,6 +24,32 @@ set     t.index_asc = i.index_asc, t.index_desc = i.index_desc
 from    all_encounters t inner join #derived_indexes i on i.encounter_id = t.encounter_id
 ;
 
+-- update index asc/desc on mh_patients table
+drop table if exists #derived_indexes;
+select  patient_program_id,
+        ROW_NUMBER() over (PARTITION by patient_id order by program_enrollment_date, patient_program_id) as index_asc,
+        ROW_NUMBER() over (PARTITION by patient_id order by program_enrollment_date DESC, patient_program_id DESC) as index_desc
+into    #derived_indexes
+from    mh_patients;
+
+update  t
+set     t.index_asc = i.index_asc, t.index_desc = i.index_desc
+from    mh_patients t inner join #derived_indexes i on i.patient_program_id = t.patient_program_id
+;
+
+-- update index asc/desc on mh_encounters table
+drop table if exists #derived_indexes;
+select  encounter_id,
+        ROW_NUMBER() over (PARTITION by patient_id order by encounter_date, encounter_id) as index_asc,
+        ROW_NUMBER() over (PARTITION by patient_id order by encounter_date DESC, encounter_id DESC) as index_desc
+into    #derived_indexes
+from    mh_encounters;
+
+update  t
+set     t.index_asc = i.index_asc, t.index_desc = i.index_desc
+from    mh_encounters t inner join #derived_indexes i on i.encounter_id = t.encounter_id
+;
+
 -- #########################################
 -- REFACTOR ALL OF THE BELOW IN THE STYLE OF THE ABOVE
 -- REVIEW ALL CRITERIA AND TEST TO ENSURE ORDERING IS CORRECT
