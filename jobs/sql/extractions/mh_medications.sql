@@ -52,9 +52,10 @@ UPDATE all_mh_medications SET dosage_unit=obs_from_group_id_value_coded_list(obs
 UPDATE all_mh_medications SET dosage=obs_from_group_id_value_numeric_from_temp(obs_group_id,'PIH','9073');
 
 
-SELECT 
+SELECT
+CONCAT(@partition,'-',encounter_id) as encounter_id,
+CONCAT(@partition,'-',patient_id) as patient_id,
 emr_id,
-encounter_id,
 encounter_datetime,
 encounter_location_name,
 encounter_creator,
