@@ -2,46 +2,52 @@ DROP TABLE IF EXISTS hiv_monthly_reporting_staging;
 
 create table hiv_monthly_reporting_staging
 (
-emr_id                                VARCHAR(20),  
-date_enrolled                         DATETIME,     
-date_completed                        DATETIME,     
-reporting_date                        DATE,         
-latest_program_status_outcome         VARCHAR(255), 
-latest_program_status_outcome_date    DATE,         
-latest_hiv_visit_date                 DATETIME,     
-latest_expected_hiv_visit_date        DATETIME,     
-hiv_visit_days_late                   INT,          
-second_to_latest_hiv_visit_date       DATE,         
-latest_transfer_in_date               DATE,         
-latest_transfer_in_location           VARCHAR(255), 
-latest_dispensing_date                DATETIME,     
-latest_expected_dispensing_date       DATETIME,     
-dispensing_days_late                  INT,          
-latest_months_dispensed               INT,          
-latest_hiv_viral_load_collection_date DATETIME,     
-latest_hiv_viral_load_results_date    DATETIME,     
-latest_hiv_viral_load_coded           VARCHAR(255), 
-latest_hiv_viral_load                 INT,          
-latest_arv_regimen_date               DATETIME,     
-latest_arv_regimen_line               VARCHAR(255), 
-latest_arv_dispensed_id               INT,          
-latest_arv_dispensed_date             DATETIME,     
-latest_arv_dispensed_line             VARCHAR(255), 
-days_late_at_latest_pickup            INT,          
-latest_reason_not_on_ARV_date         DATE,         
-latest_reason_not_on_ARV              VARCHAR(255), 
-latest_tb_screening_date              DATE,         
-latest_tb_screening_result            BIT,          
-latest_tb_test_date                   DATE,         
-latest_tb_test_type                   VARCHAR(255), 
-latest_tb_test_result                 VARCHAR(255), 
-latest_tb_coinfection_date            DATE,         
-date_of_last_breastfeeding_status     DATETIME,     
-latest_breastfeeding_status           VARCHAR(255), 
-latest_breastfeeding_date             DATETIME,     
-arv_start_date                        DATE,         
-monthly_arv_status                    VARCHAR(255), 
-latest_status                         VARCHAR(255)  
+    emr_id                                VARCHAR(20),
+    date_enrolled                         DATETIME,
+    date_completed                        DATETIME,
+    reporting_date                        DATE,
+    latest_program_status_outcome         VARCHAR(255),
+    latest_program_status_outcome_date    DATE,
+    latest_hiv_visit_date                 DATETIME,
+    latest_expected_hiv_visit_date        DATETIME,
+    hiv_visit_days_late                   INT,
+    second_to_latest_hiv_visit_date       DATE,
+    latest_transfer_in_date               DATE,
+    latest_transfer_in_location           VARCHAR(255),
+    latest_dispensing_date                DATETIME,
+    latest_expected_dispensing_date       DATETIME,
+    dispensing_days_late                  INT,
+    latest_months_dispensed               INT,
+    latest_hiv_viral_load_collection_date DATETIME,
+    latest_hiv_viral_load_results_date    DATETIME,
+    latest_hiv_viral_load_coded           VARCHAR(255),
+    latest_hiv_viral_load                 INT,
+    latest_arv_regimen_date               DATETIME,
+    latest_arv_regimen_line               VARCHAR(255),
+    latest_arv_dispensed_id               INT,
+    latest_arv_dispensed_date             DATETIME,
+    latest_arv_dispensed_line             VARCHAR(255),
+    days_late_at_latest_pickup            INT,
+    latest_reason_not_on_ARV_date         DATE,
+    latest_reason_not_on_ARV              VARCHAR(255),
+    latest_tb_screening_date              DATE,
+    latest_tb_screening_result            BIT,
+    latest_tb_test_date                   DATE,
+    latest_tb_test_type                   VARCHAR(255),
+    latest_tb_test_result                 VARCHAR(255),
+    latest_tb_coinfection_date            DATE,
+    date_of_last_breastfeeding_status     DATETIME,
+    latest_breastfeeding_status           VARCHAR(255),
+    latest_breastfeeding_date             DATETIME,
+    arv_start_date                        DATE,
+    monthly_arv_status                    VARCHAR(255),
+    latest_status                         VARCHAR(255),
+    latest_bp_diastolic                   FLOAT,
+    latest_bp_diastolic_date              DATE,
+    latest_bp_systolic                    FLOAT,
+    latest_bp_systolic_date               DATE,
+    htn_diagnosis                         BIT,
+    latest_htn_diagnosis_date             DATE
 );
 
 
@@ -385,6 +391,47 @@ set latest_status =
             else 'Lost to followup'
             END
     from hiv_monthly_reporting_staging t;
+
+-- ############################### bp systolic/diastolic ##########################################################
+
+update t
+set latest_bp_diastolic = v.bp_diastolic ,
+    latest_bp_diastolic_date = v.encounter_datetime
+from hiv_monthly_reporting_staging t
+inner join all_vitals v on v.all_vitals_id =
+    (select top 1 all_vitals_id from all_vitals av2
+    where av2.emr_id = t.emr_id
+    and av2.bp_diastolic is not null
+    and av2.encounter_datetime <= t.reporting_date
+    order by av2.encounter_datetime desc, av2.date_entered desc );
+
+update t
+set latest_bp_systolic = v.bp_systolic ,
+    latest_bp_systolic_date = v.encounter_datetime
+from hiv_monthly_reporting_staging t
+inner join all_vitals v on v.all_vitals_id =
+    (select top 1 all_vitals_id from all_vitals av2
+    where av2.emr_id = t.emr_id
+    and av2.bp_systolic is not null
+    and av2.encounter_datetime <= t.reporting_date
+    order by av2.encounter_datetime desc, av2.date_entered desc );
+
+-- ############################### hypertension ##################################################################
+
+update t
+set latest_htn_diagnosis_date = d.obs_datetime
+from hiv_monthly_reporting_staging t
+inner join all_diagnosis d on d.obs_id =
+   (select top 1 obs_id from all_diagnosis ad2
+    where ad2.patient_primary_id = t.emr_id
+      and ad2.diagnosis_entered like '%HYPERTENSION'
+      and ad2.obs_datetime <= t.reporting_date
+    order by ad2.obs_datetime desc, ad2.date_created desc );
+
+update hiv_monthly_reporting_staging set htn_diagnosis = 0;
+update hiv_monthly_reporting_staging set htn_diagnosis = 1 where latest_htn_diagnosis_date is not null;
+
+-- ############################### rename table ##################################################################
 
 DROP TABLE IF EXISTS hiv_monthly_reporting;
 EXEC sp_rename 'hiv_monthly_reporting_staging', 'hiv_monthly_reporting';
