@@ -13,7 +13,6 @@ date_entered DATETIME,
 user_entered VARCHAR(50),
 dispense_site  varchar(255),
 age_at_dispense_date int,
-dac char(1),
 dispense_date_ascending int,
 dispense_date_descending int,
 dispensed_to  varchar(100),
@@ -79,12 +78,6 @@ set dispense_site = location_name(encounter_location_id);
 update temp_HIV_dispensing t
 inner join person p on p.person_id = t.patient_id
 set age_at_dispense_date = TIMESTAMPDIFF(YEAR, birthdate, dispense_date) ;
-
-update temp_HIV_dispensing t
-inner join temp_obs o on o.encounter_id = t.encounter_id
-and o.concept_id = concept_from_mapping('PIH', 3671)
-and o.value_coded =  concept_from_mapping('PIH', 9361)
-set t.dac = if(o.concept_id is null, 0,1);
 
 -- The ascending/descending indexes are calculated ordering on the dispense date
 -- new temp tables are used to build them and then joined into the main temp table.
@@ -366,7 +359,6 @@ t.dispense_site,
 t.date_entered,
 t.user_entered,
 t.age_at_dispense_date,
-t.dac,
 t.dispensed_to,
 t.dispensed_accompagnateur,
 t.current_art_treatment_line,

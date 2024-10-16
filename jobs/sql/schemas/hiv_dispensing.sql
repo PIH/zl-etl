@@ -8,7 +8,6 @@ create table hiv_dispensing
     date_entered                DATETIME,
     user_entered                VARCHAR(50),
     age_at_dispense_date        int,
-    dac                         char(1),
     dispensed_to                varchar(100),
     dispensed_accompagnateur    text,
     current_art_treatment_line  varchar(255),
