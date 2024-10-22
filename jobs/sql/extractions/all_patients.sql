@@ -1,4 +1,3 @@
--- --------------- Variables ----------------------------
 set @partition = '${partitionNum}';
 set @locale = 'en';
 
@@ -42,6 +41,8 @@ cause_of_death            varchar(100)
 insert into temp_patients (patient_id) 
 select patient_id from patient p where p.voided = 0;
 
+create index temp_patients_pi on temp_patients(patient_id);
+
 -- person info
 update temp_patients t
 inner join person p on p.person_id = t.patient_id
@@ -49,21 +50,31 @@ set t.gender = p.gender,
 	t.dob = p.birthdate,
 	t.dob_estimated = p.birthdate_estimated,
 	t.dead = p.dead,
-	t.death_date = p.death_date,
+	t.death_date = date(p.death_date),
 	t.cause_of_death_concept_id = p.cause_of_death; 
 
 update temp_patients t set cause_of_death = concept_name(cause_of_death_concept_id,@locale);
 
 -- name info
-update temp_patients t set name = person_given_name(patient_id);
-update temp_patients t set family_name = person_family_name(patient_id);
+update temp_patients t
+inner join person_name n on n.person_name_id =
+	(select n2.person_name_id from person_name n2
+	where n2.person_id = t.patient_id
+	order by preferred desc, date_created desc limit 1)
+set t.name = n.given_name,
+	t.family_name = n.family_name;
 
 -- address info
-update temp_patients t set country = person_address_country(patient_id);
-update temp_patients t set department = person_address_state_province(patient_id);
-update temp_patients t set commune = person_address_city_village(patient_id);
-update temp_patients t set section_communale = person_address_three(patient_id);
-update temp_patients t set localilty = person_address_state_province(patient_id);
+update temp_patients t
+inner join person_address a on a.person_address_id =
+	(select a2.person_address_id from person_address a2
+	where a2.person_id = t.patient_id
+	order by preferred desc, date_created desc limit 1)
+set t.country = a.country,
+	t.department = a.state_province,
+	t.commune = a.city_village,
+	t.section_communale = a.address3,
+	t.localilty = a.address1;
 
 -- identifiers
 update temp_patients t set emr_id = patient_identifier(patient_id,'a541af1e-105c-40bf-b345-ba1fd6a59b85');
@@ -76,13 +87,14 @@ update temp_patients t set mothers_first_name = person_attribute_value(patient_i
 
 -- registration encounter
 update temp_patients t set registration_encounter_id = latestEnc(patient_id,'Enregistrement de patient',null);
+create index temp_patients_pri on temp_patients(registration_encounter_id); 
 
 -- registration encounter fields
 update temp_patients t 
 inner join encounter e on e.encounter_id = t.registration_encounter_id
 set t.reg_location_id = e.location_id,
 	t.registration_entry_date = e.date_created,
-	t.registration_date = e.encounter_datetime,
+	t.registration_date = date(e.encounter_datetime),
 	t.creator = e.creator ;
 
 update temp_patients t set reg_location = location_name(reg_location_id);
@@ -91,23 +103,30 @@ update temp_patients t set user_entered = person_name_of_user(creator);
 -- registration obs
 DROP TABLE IF EXISTS temp_obs;
 CREATE TEMPORARY TABLE temp_obs AS
-SELECT o.person_id, o.obs_id ,o.obs_group_id, o.obs_datetime, o.date_created, o.encounter_id, o.value_coded, o.concept_id, o.value_numeric, o.voided, o.value_drug
+SELECT o.person_id, o.obs_id, o.encounter_id, o.value_coded, o.concept_id, o.voided
 FROM temp_patients t INNER JOIN obs o ON t.registration_encounter_id = o.encounter_id
 WHERE o.voided = 0;
-create index temp_obs_ci1 on temp_obs(concept_id);
+create index temp_obs_ci1 on temp_obs(encounter_id, concept_id);
 
-update temp_patients t set civil_status = obs_value_coded_list_from_temp(t.registration_encounter_id, 'PIH','1054',@locale );
-update temp_patients t set occupation = obs_value_coded_list_from_temp(t.registration_encounter_id, 'PIH','1304',@locale );
+set @civilStatus = concept_from_mapping('PIH','1054');
+update temp_patients t
+inner join temp_obs o on o.encounter_id = t.registration_encounter_id and o.concept_id = @civilStatus
+set civil_status = concept_name(o.value_coded, @locale);
+
+set @occupation = concept_from_mapping('PIH','1304');
+update temp_patients t
+inner join temp_obs o on o.encounter_id = t.registration_encounter_id and o.concept_id = @occupation
+set occupation = concept_name(o.value_coded, @locale);
 
 -- first/latest encounter
-update temp_patients t set first_encounter_date = (select min(encounter_datetime) from encounter e where e.patient_id = t.patient_id);
-update temp_patients t set last_encounter_date = (select max(encounter_datetime) from encounter e where e.patient_id = t.patient_id);
+update temp_patients t set first_encounter_date = (select date(min(encounter_datetime)) from encounter e where e.patient_id = t.patient_id);
+update temp_patients t set last_encounter_date = (select date(max(encounter_datetime)) from encounter e where e.patient_id = t.patient_id);
 
 SELECT 
 emr_id,
 hiv_emr_id,
 dossier_id,
-concat(@partition,"-",patient_id)  patient_id,
+concat(@partition,"-",patient_id) patient_id,
 mothers_first_name,
 country,
 department,
