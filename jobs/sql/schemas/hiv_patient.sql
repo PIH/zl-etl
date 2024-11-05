@@ -79,5 +79,5 @@ create table hiv_patient
     next_pickup_date               DATE,
     days_late_to_pickup            FLOAT,
     biometrics_collected             bit,    
-    biometrics_collection_date     DATETIME
+    latest_biometrics_collection_date     DATETIME
 );

@@ -67,7 +67,7 @@ CREATE TEMPORARY TABLE temp_patient
 	art_regimen					VARCHAR(1000),
 	art_start_date				DATETIME,
     biometrics_collected             bit,    
-    biometrics_collection_date     DATETIME
+    latest_biometrics_collection_date     DATETIME
 );
 
 CREATE INDEX temp_patient_patient_id ON temp_patient (patient_id);
@@ -811,18 +811,9 @@ where pi2.identifier_type =
 from hiv.patient_identifier_type pit 
 where uuid = 'e26ca279-8f57-44a5-9ed8-8cc16e90e559')
 and pi2.patient_id=t.patient_id ORDER by  pi2.date_created desc limit 1
-set t.biometrics_collected=IF(pi2.date_created, 1, 0);
+set t.latest_biometrics_collection_date=pi2.date_created,
+t.biometrics_collected=IF(pi2.date_created is null, 0, 1);
 
-
-update temp_patient t 
-inner join  hiv.patient_identifier pi2 
-on t.patient_id =pi2.patient_id
-where pi2.identifier_type =
-(select pit.patient_identifier_type_id 
-from hiv.patient_identifier_type pit 
-where uuid = 'e26ca279-8f57-44a5-9ed8-8cc16e90e559')
-and pi2.patient_id=t.patient_id ORDER by  pi2.date_created desc limit 1
-set t.biometrics_collection_date=pi2.date_created;
  
 
 ### Final Query
@@ -905,7 +896,7 @@ tehd.last_pickup_months_dispensed,
 tehd.last_pickup_treatment_line,
 tehd.next_pickup_date,
 t.biometrics_collected,
-t.biometrics_collection_date,
+t.latest_biometrics_collection_date,
 IF(tehd.days_late_to_pickup > 0, tehd.days_late_to_pickup, 0) days_late_to_pickup
 FROM temp_patient t 
 LEFT JOIN temp_socio_economics tse ON t.patient_id = tse.patient_id
