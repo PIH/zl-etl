@@ -77,5 +77,7 @@ create table hiv_patient
     last_pickup_months_dispensed   FLOAT,
     last_pickup_treatment_line     VARCHAR(5),
     next_pickup_date               DATE,
-    days_late_to_pickup            FLOAT
+    days_late_to_pickup            FLOAT,
+    biometrics_collected             bit,    
+    latest_biometrics_collection_date     DATETIME
 );
