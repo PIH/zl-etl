@@ -1,9 +1,12 @@
 CREATE TABLE all_lab_results
 (
+    lab_obs_id               VARCHAR(50),
     emr_id                   VARCHAR(50),
     visit_id                 VARCHAR(50),
-    loc_registered           TEXT,
+    encounter_id             VARCHAR(50),
+    encounter_type           VARCHAR(255),
     encounter_location       VARCHAR(255),
+    loc_registered           TEXT,
     unknown_patient          VARCHAR(50),
     gender                   VARCHAR(11),
     age_at_enc               FLOAT,
