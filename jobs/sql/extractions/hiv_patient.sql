@@ -802,18 +802,15 @@ inner join temp_partner_status tps on tps_id =
 	order by tps2.status_datetime desc limit 1)
 set t.partner_hiv_status = tps.status;
 
-
+set @biometricsPatientIdentifierType = (select patient_identifier_type_id from patient_identifier_type pit where uuid = 'e26ca279-8f57-44a5-9ed8-8cc16e90e559');
 update temp_patient t 
-inner join  hiv.patient_identifier pi2 
-on t.patient_id =pi2.patient_id
-where pi2.identifier_type =
-(select pit.patient_identifier_type_id 
-from hiv.patient_identifier_type pit 
-where uuid = 'e26ca279-8f57-44a5-9ed8-8cc16e90e559')
-and pi2.patient_id=t.patient_id ORDER by  pi2.date_created desc limit 1
-set t.latest_biometrics_collection_date=pi2.date_created,
-t.biometrics_collected=IF(pi2.date_created is null, 0, 1);
-
+inner join  patient_identifier pi1 on pi1.patient_identifier_id = 
+	(select pi2.patient_identifier_id from patient_identifier pi2
+	where t.patient_id =pi2.patient_id
+	and pi2.identifier_type= @biometricsPatientIdentifierType 
+	ORDER by pi2.date_created desc limit 1)
+set t.latest_biometrics_collection_date=pi1.date_created,
+    t.biometrics_collected=IF(pi1.date_created is null, 0, 1);
  
 
 ### Final Query
