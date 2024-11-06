@@ -60,7 +60,9 @@ CREATE TABLE hiv_patient_summary_status_staging
  last_bp_systolic                 float,
  last_bp_systolic_date            date,
  last_htn_diag                    text,
- last_htn_diag_date               date
+ last_htn_diag_date               date,
+ biometrics_collected             bit,    
+ latest_biometrics_collection_date     datetime
 );
 
 insert into hiv_patient_summary_status_staging (emr_id)
@@ -505,6 +507,12 @@ update t
 set second_to_latest_hiv_visit_date = v.visit_date
     from hiv_patient_summary_status_staging t
 inner join #last_second_to_latest_visit v ON t.emr_id=v.emr_id AND v.rnk=2;
+
+update t
+set biometrics_collected = hp.biometrics_collected,
+latest_biometrics_collection_date=hp.latest_biometrics_collection_date
+    from hiv_patient_summary_status_staging t
+inner join hiv_patient hp on hp.emr_id = t.emr_id ;
 
 alter table hiv_patient_summary_status_staging drop column dispense_before_prescription;
 alter table hiv_patient_summary_status_staging drop column enrollment_date;
