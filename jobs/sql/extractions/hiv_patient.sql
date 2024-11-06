@@ -892,9 +892,9 @@ tehd.last_pickup_date,
 tehd.last_pickup_months_dispensed,
 tehd.last_pickup_treatment_line,
 tehd.next_pickup_date,
+IF(tehd.days_late_to_pickup > 0, tehd.days_late_to_pickup, 0) days_late_to_pickup
 t.biometrics_collected,
 t.latest_biometrics_collection_date,
-IF(tehd.days_late_to_pickup > 0, tehd.days_late_to_pickup, 0) days_late_to_pickup
 FROM temp_patient t 
 LEFT JOIN temp_socio_economics tse ON t.patient_id = tse.patient_id
 LEFT JOIN temp_socio_hiv_intake ts ON t.patient_id = ts.patient_id
