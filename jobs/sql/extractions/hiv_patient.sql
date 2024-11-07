@@ -66,7 +66,8 @@ CREATE TEMPORARY TABLE temp_patient
 	initial_art_regimen			VARCHAR(1000),
 	art_regimen					VARCHAR(1000),
 	art_start_date				DATETIME,
-    biometrics_collected             bit,    
+	biometrics_code             VARCHAR(50),
+    biometrics_collected        BIT,    
     latest_biometrics_collection_date     DATETIME
 );
 
@@ -802,15 +803,16 @@ inner join temp_partner_status tps on tps_id =
 	order by tps2.status_datetime desc limit 1)
 set t.partner_hiv_status = tps.status;
 
-set @biometricsPatientIdentifierType = (select patient_identifier_type_id from patient_identifier_type pit where uuid = 'e26ca279-8f57-44a5-9ed8-8cc16e90e559');
-update temp_patient t 
-inner join  patient_identifier pi1 on pi1.patient_identifier_id = 
-	(select pi2.patient_identifier_id from patient_identifier pi2
-	where t.patient_id =pi2.patient_id
-	and pi2.identifier_type= @biometricsPatientIdentifierType 
-	ORDER by pi2.date_created desc limit 1)
-set t.latest_biometrics_collection_date=pi1.date_created,
-    t.biometrics_collected=IF(pi1.date_created is null, 0, 1);
+update temp_patient 
+set biometrics_code = patient_identifier(patient_id, 'e26ca279-8f57-44a5-9ed8-8cc16e90e559');
+
+update temp_patient 
+inner join patient_identifier pid on pid.identifier = biometrics_code
+set biometrics_collected = 1,
+    latest_biometrics_collection_date = pid.date_created ;
+   
+update temp_patient set  biometrics_collected = 0 where biometrics_collected is null;
+
  
 
 ### Final Query
