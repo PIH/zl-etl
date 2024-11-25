@@ -26,6 +26,7 @@ dob_estimated             bit,
 gender                    varchar(2),   
 dead                      bit,          
 death_date                date,         
-cause_of_death            varchar(100)  
+cause_of_death            varchar(100),
+last_modified_datetime    datetime  
 )
 ;
