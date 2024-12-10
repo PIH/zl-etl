@@ -41,7 +41,8 @@ last_modified_person_datetime     datetime,
 last_modified_name_datetime       datetime,     
 last_modified_address_datetime    datetime,     
 last_modified_attributes_datetime datetime,     
-last_modified_obs_datetime        datetime
+last_modified_obs_datetime        datetime,
+last_modified_registration_datetime datetime
 );
 
 -- load all patients
@@ -112,7 +113,8 @@ inner join encounter e on e.encounter_id = t.registration_encounter_id
 set t.reg_location_id = e.location_id,
 	t.registration_entry_date = e.date_created,
 	t.registration_date = date(e.encounter_datetime),
-	t.creator = e.creator ;
+	t.creator = e.creator,
+    t.last_modified_registration_datetime = e.date_changed ;
 
 update temp_patients t set reg_location = location_name(reg_location_id);
 update temp_patients t set user_entered = person_name_of_user(creator);
@@ -135,25 +137,7 @@ update temp_patients t set civil_status = obs_value_coded_list_from_temp(t.regis
 update temp_patients t set occupation = obs_value_coded_list_from_temp(t.registration_encounter_id, 'PIH','1304',@locale );
 update temp_patients t set last_modified_obs_datetime = 
 	(select max(o.date_created) from temp_obs o where o.person_id = t.patient_id);
-/*
 
-DROP TABLE IF EXISTS temp_obs;
-CREATE TEMPORARY TABLE temp_obs AS
-SELECT o.person_id, o.obs_id, o.encounter_id, o.value_coded, o.concept_id, o.voided
-FROM temp_patients t INNER JOIN obs o ON t.registration_encounter_id = o.encounter_id
-WHERE o.voided = 0;
-create index temp_obs_ci1 on temp_obs(encounter_id, concept_id);
-
-set @civilStatus = concept_from_mapping('PIH','1054');
-update temp_patients t
-inner join temp_obs o on o.encounter_id = t.registration_encounter_id and o.concept_id = @civilStatus
-set civil_status = concept_name(o.value_coded, @locale);
-
-set @occupation = concept_from_mapping('PIH','1304');
-update temp_patients t
-inner join temp_obs o on o.encounter_id = t.registration_encounter_id and o.concept_id = @occupation
-set occupation = concept_name(o.value_coded, @locale);
-*/
 -- first/latest encounter
 update temp_patients t set first_encounter_date = (select date(min(encounter_datetime)) from encounter e where e.patient_id = t.patient_id);
 update temp_patients t set last_encounter_date = (select date(max(encounter_datetime)) from encounter e where e.patient_id = t.patient_id);
@@ -165,6 +149,7 @@ update temp_patients t set last_modified_datetime =
 			ifnull(last_modified_address_datetime,last_modified_patient),
 			ifnull(last_modified_attributes_datetime,last_modified_patient),
 			ifnull(last_modified_obs_datetime,last_modified_patient),
+            ifnull(last_modified_registration_datetime,last_modified_patient),
 			last_modified_patient);
 
 SELECT 
