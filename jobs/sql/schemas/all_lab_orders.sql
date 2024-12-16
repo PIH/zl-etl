@@ -7,6 +7,7 @@ CREATE TABLE all_lab_orders
     age_at_enc                   FLOAT,
     patient_address              TEXT,
     order_number                 VARCHAR(50),
+    order_reason                 VARCHAR(255),
     Lab_ID                       VARCHAR(50),
     orderable                    VARCHAR(255),
     status                       VARCHAR(50),
