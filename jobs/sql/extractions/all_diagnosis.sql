@@ -47,7 +47,8 @@ CREATE TEMPORARY TABLE temp_diagnoses
  ed                       int(1),         
  age_restricted           int(1),         
  oncology                 int(1),
- retrospective            boolean
+ retrospective            boolean,
+ first_diagnosis          boolean
  );
 
 -- insert diagnoses obs groups for coded dxs
@@ -98,13 +99,34 @@ create index temp_obs_ci1 on temp_obs(obs_group_id, concept_id);
 update temp_diagnoses t set t.diagnosis_entered = concept_name(diagnosis_concept,'en');
 update temp_diagnoses t set t.diagnosis_coded_fr = concept_name(diagnosis_concept,'fr');
 
+set @dx_order =  concept_from_mapping( 'PIH','7537');
 update temp_diagnoses t
-inner join temp_obs o on o.obs_group_id = t.obs_group_id and o.concept_id = concept_from_mapping( 'PIH','7537')
+inner join temp_obs o on o.obs_group_id = t.obs_group_id and o.concept_id = @dx_order
 set t.dx_order = concept_name(o.value_coded, @locale);
 
+set @certainty = concept_from_mapping( 'PIH','1379');
 update temp_diagnoses t
-inner join temp_obs o on o.obs_group_id = t.obs_group_id and o.concept_id = concept_from_mapping( 'PIH','1379')
+inner join temp_obs o on o.obs_group_id = t.obs_group_id and o.concept_id = @certainty
 set t.certainty = concept_name(o.value_coded, @locale);
+
+DROP TEMPORARY TABLE IF EXISTS temp_dx_exist;
+CREATE TEMPORARY TABLE temp_dx_exist
+select patient_id, diagnosis_concept, date(obs_datetime) "obs_date" from temp_diagnoses;
+
+create index temp_dx_exist_p on temp_dx_exist(patient_id,diagnosis_concept);
+
+update temp_diagnoses t
+set first_diagnosis = 0 where t.diagnosis_concept is not null;
+
+update temp_diagnoses t
+set first_diagnosis = 1
+where not exists 
+	(select 1 from temp_dx_exist e 
+	where e.patient_id = t.patient_id
+	and e.diagnosis_concept = t.diagnosis_concept
+	and e.obs_date < date(t.obs_datetime)
+and t.diagnosis_concept is not null);
+
 
 -- diagnosis concept-level info
 DROP TEMPORARY TABLE IF EXISTS temp_dx_concept;
@@ -351,6 +373,7 @@ CONCAT(@partition, '-', d.visit_id) as visit_id,
 d.birthdate,
 d.birthdate_estimated,
 d.encounter_type,
-d.section_communale_CDC_ID
+d.section_communale_CDC_ID,
+d.first_diagnosis
 from temp_diagnoses d
 ;

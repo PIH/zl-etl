@@ -42,6 +42,7 @@ visit_id                 varchar(25),
 birthdate                datetime,     
 birthdate_estimated      bit,          
 encounter_type           varchar(255), 
-section_communale_CDC_ID varchar(11)   
+section_communale_CDC_ID varchar(11),
+first_diagnosis          bit  
 )
 ;
