@@ -17,6 +17,7 @@ visit_checkin		bit,
 visit_reason		varchar(255),
 location_id			int(11),
 visit_location		varchar(255),
+first_visit_this_year boolean,
 index_asc			int,
 index_desc			int);
 
@@ -89,6 +90,19 @@ update temp_visits tv
 inner join temp_users tu on tu.creator = tv.visit_creator
 set tv.visit_user_entered = tu.creator_name;
 
+drop temporary table if exists temp_visits_dates;
+create temporary table temp_visits_dates
+select patient_id, visit_id, visit_date_stopped from temp_visits;
+
+update temp_visits tv 
+set tv.first_visit_this_year = 1
+where not EXISTS 
+	(select 1 from temp_visits_dates vd 
+	where vd.patient_id = tv.patient_id
+	and vd.visit_date_stopped < tv.visit_date_stopped
+	and year(vd.visit_date_stopped) = year(tv.visit_date_stopped)
+	and vd.visit_id <> tv.visit_id);
+
 select 
 emr_id,
 CONCAT(@partition,'-',visit_id) as visit_id,
@@ -101,6 +115,7 @@ visit_type,
 if(checkin_encounter_id is null, null, 1) as visit_checkin,
 visit_reason,
 visit_location,
+first_visit_this_year,
 index_asc,
 index_desc
 from temp_visits;
