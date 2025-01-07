@@ -92,15 +92,15 @@ set tv.visit_user_entered = tu.creator_name;
 
 drop temporary table if exists temp_visits_dates;
 create temporary table temp_visits_dates
-select patient_id, visit_id, visit_date_started from temp_visits;
+select patient_id, visit_id, visit_date_stopped from temp_visits;
 
 update temp_visits tv 
 set tv.first_visit_this_year = 1
 where not EXISTS 
 	(select 1 from temp_visits_dates vd 
 	where vd.patient_id = tv.patient_id
-	and vd.visit_date_started < tv.visit_date_started
-	and year(vd.visit_date_started) = year(tv.visit_date_started)
+	and ifnull(vd.visit_date_stopped,now()) < ifnull(tv.visit_date_stopped,now())
+	and year(ifnull(vd.visit_date_stopped,now())) = year(ifnull(tv.visit_date_stopped,now()))
 	and vd.visit_id <> tv.visit_id);
 
 select 
