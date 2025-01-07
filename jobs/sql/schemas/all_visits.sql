@@ -11,6 +11,7 @@ create table all_visits
     visit_checkin      bit,
     visit_reason       varchar(255),
     visit_location     varchar(255),
+    first_visit_this_year bit,
     index_asc          int,
     index_desc         int
 );
