@@ -59,30 +59,41 @@
         <configZlVersion>1.57.0-SNAPSHOT</configZlVersion>
     </properties>
 
+    <dependencies>
+        <dependency>
+            <groupId>org.pih.openmrs</groupId>
+            <artifactId>openmrs-config-zl</artifactId>
+            <version>${configZlVersion}</version>
+            <type>zip</type>
+        </dependency>
+    </dependencies>
+
     <build>
         <plugins>
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.16.0</version>
+                <configuration>
+                    <generateBackupPoms>false</generateBackupPoms>
+                </configuration>
+            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-dependency-plugin</artifactId>
                 <version>3.2.0</version>
                 <executions>
                     <execution>
-                        <id>unpack</id>
-                        <phase>compile</phase>
+                        <id>unpack-dependencies</id>
+                        <phase>package</phase>
                         <goals>
-                            <goal>unpack</goal>
+                            <goal>unpack-dependencies</goal>
                         </goals>
                         <configuration>
-                            <artifactItems>
-                                <artifactItem>
-                                    <groupId>org.pih.openmrs</groupId>
-                                    <artifactId>openmrs-config-zl</artifactId>
-                                    <version>${configZlVersion}</version>
-                                    <type>zip</type>
-                                    <overWrite>false</overWrite>
-                                    <outputDirectory>${project.build.directory}/openmrs-config-zl</outputDirectory>
-                                </artifactItem>
-                            </artifactItems>
+                            <includes>**/*</includes>
+                            <outputDirectory>${project.build.directory}/openmrs-config-zl</outputDirectory>
+                            <overWriteReleases>true</overWriteReleases>
+                            <overWriteSnapshots>true</overWriteSnapshots>
                         </configuration>
                     </execution>
                 </executions>
