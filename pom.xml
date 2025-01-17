@@ -88,8 +88,8 @@
                 <version>3.2.0</version>
                 <executions>
                     <execution>
-                        <id>unpack-dependencies</id>
-                        <phase>package</phase>
+                        <id>unpack</id>
+                        <phase>compile</phase>
                         <goals>
                             <goal>unpack-dependencies</goal>
                         </goals>
