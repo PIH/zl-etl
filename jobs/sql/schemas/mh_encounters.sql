@@ -2,10 +2,10 @@ CREATE TABLE mh_encounters
 (
 	emr_id                            varchar(50),  
 	dossier_id                        varchar(50),  
-	encounter_id                      int,          
+	encounter_id                      varchar(50),  
 	encounter_datetime                datetime,     
-	patient_id                        int,          
-	visit_id                          int,          
+	patient_id                        varchar(50),  
+	visit_id                          varchar(50),  
 	user_entered                      text,         
 	encounter_location                varchar(255), 
 	entered_datetime                  datetime,     
