@@ -40,8 +40,8 @@ from    mh_patients t inner join #derived_indexes i on i.patient_program_id = t.
 -- update index asc/desc on mh_encounters table
 drop table if exists #derived_indexes;
 select  encounter_id,
-        ROW_NUMBER() over (PARTITION by patient_id order by encounter_date, encounter_id) as index_asc,
-        ROW_NUMBER() over (PARTITION by patient_id order by encounter_date DESC, encounter_id DESC) as index_desc
+        ROW_NUMBER() over (PARTITION by patient_id order by encounter_datetime, encounter_id) as index_asc,
+        ROW_NUMBER() over (PARTITION by patient_id order by encounter_datetime DESC, encounter_id DESC) as index_desc
 into    #derived_indexes
 from    mh_encounters;
 
