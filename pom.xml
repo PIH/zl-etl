@@ -164,6 +164,10 @@
                         <configuration>
                             <fileSets>
                                 <fileSet>
+                                    <sourceFile>${dataExportSqlDir}/mentalHealth.sql</sourceFile>
+                                    <destinationFile>${petlJobExtractionSqlDir}/mh_encounters.sql</destinationFile>
+                                </fileSet>
+                                <fileSet>
                                     <sourceFile>${dataExportSqlDir}/pathology_encounters.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/pathology_encounters.sql</destinationFile>
                                 </fileSet>
