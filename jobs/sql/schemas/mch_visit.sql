@@ -68,6 +68,7 @@ CREATE TABLE mch_visit
     fp_end_date                      DATE,
     implant_date                     DATE,
     condoms_provided                 TEXT,
+    number_of_condoms                INT,
     location_of_delivery             TEXT,
     delivery_datetime                DATETIME,
     risk_factors                     TEXT,
