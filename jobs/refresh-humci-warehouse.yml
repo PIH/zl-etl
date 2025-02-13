@@ -91,7 +91,7 @@ configuration:
           - tableName: "new_medication_dispensing"
             conditional: "select table_exists('medication_dispense')"
           - tableName: "mh_patients"
-          - tableName: "mh_diagnosis"
+          - tableName: "mh_diagnoses"
           - tableName: "oncology_monthly_summary"
           - tableName: "mh_medications"
           - tableName: "mh_encounters"
