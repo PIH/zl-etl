@@ -1,4 +1,4 @@
-CREATE TABLE mh_diagnosis
+CREATE TABLE mh_diagnoses
 (
     encounter_id            varchar(25),
     patient_id              varchar(25),
