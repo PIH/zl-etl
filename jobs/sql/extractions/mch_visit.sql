@@ -86,7 +86,8 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
  fp_start_date                    DATETIME,     
  fp_end_date                      DATETIME,           
  implant_date                     DATETIME,     
- condoms_provided                 VARCHAR(5),   
+ condoms_provided                 VARCHAR(5),
+ number_of_condoms                INT,
  location_of_delivery             VARCHAR(255), 
  delivery_datetime                DATETIME,     
  chlamydia                        BIT,          
@@ -909,6 +910,10 @@ INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CON
 SET t.condoms_provided = CONCEPT_NAME(o.value_coded,'en');
 
 UPDATE temp_obgyn_visit t 
+INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '20151')
+SET t.number_of_condoms = o.value_numeric;
+
+UPDATE temp_obgyn_visit t 
 INNER JOIN temp_obs o ON o.encounter_id =  t.encounter_id AND o.concept_id = CONCEPT_FROM_MAPPING('PIH', '11348')
 SET t.location_of_delivery = CONCEPT_NAME(o.value_coded,'en');
 
@@ -1054,6 +1059,7 @@ SELECT
     fp_end_date,
     implant_date,
     condoms_provided,
+    number_of_condoms,
     location_of_delivery,
     delivery_datetime,
     risk_factors,
