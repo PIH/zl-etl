@@ -65,7 +65,7 @@ configuration:
           - tableName: "user_logins"
             conditional: "select table_exists('authentication_event_log')"
           - tableName: "mh_patients"
-          - tableName: "mh_diagnosis"
+          - tableName: "mh_diagnoses"
           - tableName: "oncology_monthly_summary"
           - tableName: "mh_medications"
           - tableName: "mh_encounters"
