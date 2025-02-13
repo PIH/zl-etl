@@ -172,7 +172,7 @@
                                     <destinationFile>${petlJobExtractionSqlDir}/mh_medications.sql</destinationFile>
                                 </fileSet>                                
                                 <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/mentalHealth.sql</sourceFile>
+                                    <sourceFile>${dataExportSqlDir}/mh_encounters.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/mh_encounters.sql</destinationFile>
                                 </fileSet>
                                 <fileSet>
