@@ -50,9 +50,11 @@ set chemo_regimen_name = concept_name(chemo_regimen_id, 'en');
 update chemo_regimens
 set other_regimen = obs_comments(encounter_id, 'PIH','10506','PIH','5622');
 
+
 select 
 emr_id,
 concat(@partition, '-', obs_id),
 concat(@partition, '-', encounter_id),
-chemo_regimen_name
+chemo_regimen_name,
+other_regimen
 from chemo_regimens;
