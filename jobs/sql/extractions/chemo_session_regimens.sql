@@ -7,6 +7,7 @@ create temporary table chemo_regimens
 obs_id int(11),
 encounter_id int(11),
 patient_id int(11),
+encounter_datetime datetime,
 chemo_regimen_id int(11),
 chemo_regimen_name varchar(255),
 other_regimen text
@@ -14,8 +15,8 @@ other_regimen text
 
 set @chemo_regimen_id = concept_from_mapping('PIH','10506');
 
-insert into chemo_regimens(obs_id, encounter_id, patient_id,chemo_regimen_id)
-select o.obs_id, o.encounter_id,person_id, value_coded from obs o
+insert into chemo_regimens(obs_id, encounter_id, patient_id,chemo_regimen_id, encounter_datetime)
+select o.obs_id, o.encounter_id,person_id, value_coded, e.encounter_datetime from obs o
 inner join encounter e on e.encounter_id = o.encounter_id and e.encounter_type  = @chemo_form
 where o.voided = 0
 and o.concept_id = @chemo_regimen_id
@@ -48,13 +49,14 @@ update chemo_regimens
 set chemo_regimen_name = concept_name(chemo_regimen_id, 'en');
 
 update chemo_regimens
-set other_regimen = obs_comments(encounter_id, 'PIH','10506','PIH','5622');
-
+set other_regimen = obs_comments(encounter_id, 'PIH','10506','PIH','5622')
+where chemo_regimen_name = 'Other';
 
 select 
 emr_id,
 concat(@partition, '-', obs_id),
 concat(@partition, '-', encounter_id),
+encounter_datetime,
 chemo_regimen_name,
 other_regimen
 from chemo_regimens;
