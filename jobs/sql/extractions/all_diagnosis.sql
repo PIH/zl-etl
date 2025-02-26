@@ -36,7 +36,7 @@ CREATE TEMPORARY TABLE temp_diagnoses
  diagnosis_coded_fr       varchar(255),   
  date_created             datetime,      
  icd10_code               varchar(255),   
- notifiable               int(1),         
+ weekly_notifiable        int(1),         
  urgent                   int(1),         
  santeFamn                int(1),         
  psychological            int(1),         
@@ -134,7 +134,7 @@ CREATE TEMPORARY TABLE temp_dx_concept
 (
  diagnosis_concept int(11),       
  icd10_code        varchar(255), 
- notifiable        int(1),       
+ weekly_notifiable int(1),       
  urgent            int(1),       
  santeFamn         int(1),       
  psychological     int(1),       
@@ -156,7 +156,7 @@ create index temp_dx_patient_dc on temp_dx_concept(diagnosis_concept);
 update temp_dx_concept set icd10_code = retrieveICD10(diagnosis_concept);
     
 select concept_id into @non_diagnoses from concept where uuid = 'a2d2124b-fc2e-4aa2-ac87-792d4205dd8d';    
-update temp_dx_concept set notifiable = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','8612'));
+update temp_dx_concept set weekly_notifiable = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7676'));
 update temp_dx_concept set santeFamn = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7957'));
 update temp_dx_concept set urgent = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7679'));
 update temp_dx_concept set psychological = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7942'));
@@ -171,7 +171,7 @@ update temp_dx_concept set oncology = concept_in_set(diagnosis_concept, concept_
 update temp_diagnoses d
 inner join temp_dx_concept dc on dc.diagnosis_concept = d.diagnosis_concept
 set d.icd10_code = dc.icd10_code,
-	d.notifiable = dc.notifiable,
+	d.weekly_notifiable = dc.weekly_notifiable,
 	d.urgent = dc.urgent,
 	d.santeFamn = dc.santeFamn,
 	d.psychological = dc.psychological,
@@ -356,7 +356,7 @@ d.coded,
 d.diagnosis_concept,
 d.diagnosis_coded_fr,
 d.icd10_code,
-d.notifiable,
+d.weekly_notifiable,
 d.urgent,
 d.santeFamn,
 d.psychological,
