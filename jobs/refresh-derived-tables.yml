@@ -14,7 +14,7 @@ configuration:
           - tableName: "deduplicate_tables"
           - tableName: "drug_categories"
     - type: "iterating-job"
-      description: "Create final derived tables"
+      description: "Create derived tables"
       configuration:
         jobTemplate:
           path: "create-derived-table-in-warehouse.yml"
@@ -29,3 +29,10 @@ configuration:
           - tableName: "chemo_session_summary"
           - tableName: "oncology_treatment_plan_summary"
           - tableName: "outpatient_chemo_summary"
+    - type: "iterating-job"
+      description: "Create derived aggregate tables"
+      configuration:
+        jobTemplate:
+          path: "create-derived-table-in-warehouse.yml"
+        iterations:
+          - tableName: "inpatient_census"
