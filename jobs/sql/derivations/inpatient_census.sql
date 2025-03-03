@@ -90,6 +90,7 @@ inner join all_admissions a on a.encounter_location = l.location and a.site = l.
 		or (start_datetime < FirstDayOfMonth and end_datetime is null))
 ;
 
+-- update columns on slotted table to enable summing totals
 update a
 set total_patient_days = datediff(day, effective_start_datetime, effective_end_datetime)
 from #admission_month_categories a;
@@ -105,7 +106,7 @@ from #admission_month_categories a
 inner join all_admissions aa on aa.encounter_id = a.encounter_id
 where month(end_datetime) = a.reporting_month 
 and year(end_datetime) = a.reporting_year
-and aa.ending_disposition <> 'Death';
+and aa.ending_disposition in ('Transfer out of hospital','Discharged');
 
 update a 
 set died_within_48hrs = 1 
@@ -125,6 +126,7 @@ and year(end_datetime) = a.reporting_year
 and aa.ending_disposition = 'Death'
 and datediff(day, effective_start_datetime, effective_end_datetime) > 2;
 
+-- sum up rows to derive the results
 update c
 set c.total = i.sum_patient_days
 from census_staging c 
@@ -198,20 +200,11 @@ inner join
 	and c.clinical_category = i.clinical_category
  where c.indicator = 'deaths_greater_than_48_hours';
 
+-- update to 0 if there are no results in a row
 update c 
 set c.total = 0
 from census_staging c
 where c.total is null;
-
-select 
-	site,
-	reporting_year,
-	reporting_month,
-	indicator,
-	clinical_category,
-	total
-from census_staging
-order by site, reporting_year, reporting_month, indicator;
 
 -- ------------------------------------------------------------------------------------
 ALTER TABLE census_staging DROP COLUMN FirstDayOfMonth, LastDayOfMOnth;
