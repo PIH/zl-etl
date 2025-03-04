@@ -65,7 +65,7 @@ inner join all_encounters e on e.encounter_id =
 
 -- update rows based on closed visits.  Note that these won't have ending disposition info
 update a
-set end_datetime = v.visit_date_started
+set end_datetime = v.visit_date_stopped
 from all_admissions_staging a
 inner join all_visits v on a.visit_id = v.visit_id
 where end_datetime is null;
