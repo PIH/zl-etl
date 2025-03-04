@@ -63,6 +63,13 @@ inner join all_encounters e on e.encounter_id =
 	and e2.disposition is not null
 	order by e2.encounter_datetime desc, e2.encounter_id desc);	
 
+-- update rows based on closed visits.  Note that these won't have ending disposition info
+update a
+set end_datetime = v.visit_date_started
+from all_admissions_staging a
+inner join all_visits v on a.visit_id = v.visit_id
+where end_datetime is null;
+
 -- ------------------------------------------------------------------------------------
 DROP TABLE IF EXISTS all_admissions;
 EXEC sp_rename 'all_admissions_staging', 'all_admissions';
