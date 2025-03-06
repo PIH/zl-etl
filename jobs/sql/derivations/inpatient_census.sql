@@ -29,7 +29,7 @@ values
 ('humci','Sal Aprè Operasyon | Sante Fanm','surgery'),
 ('humci','Sal Aprè Akouchman','maternity'),
 ('humci','Sal Reyabilitasyon','other'),
-('humci','Sal Aprè Operasyon','pediatric'),
+('humci','Sal Aprè Operasyon','surgery'),
 ('humci','Sal Fanm','internal_medicine'),
 ('humci','COVID-19 | Izolman','other'),
 ('humci','UMI','other'),
@@ -77,11 +77,11 @@ died_greater_48hrs int,
 total_patient_days int,
 total_days_hospitalized int);
 
-insert into #admission_month_categories(reporting_year, reporting_month, site, encounter_location, clinical_category, indicator, encounter_id,effective_start_datetime, effective_end_datetime)
-select reporting_year, reporting_month, a.site, encounter_location,c.clinical_category,c.indicator, a.encounter_id,
+insert into #admission_month_categories(reporting_year, reporting_month, site, encounter_location, clinical_category, encounter_id,effective_start_datetime, effective_end_datetime)
+select reporting_year, reporting_month, a.site, encounter_location,c.clinical_category, a.encounter_id,
 iif(start_datetime < FirstDayOfMonth, FirstDayOfMonth, start_datetime) "effective_start_datetime",
-iif(end_datetime > LastDayOfMonth or end_datetime is null, dateadd(day,1,LastDayOfMonth), end_datetime) "effective_end_datetime"
-	from census_staging c
+iif(end_datetime > LastDayOfMonth or end_datetime is null, dateadd(day,1,iif(LastDayOfMonth < getdate(), LastDayOfMonth, getdate())), end_datetime) "effective_end_datetime"
+	from (select distinct cs.site, cs.reporting_year , cs.reporting_month, cs.FirstDayOfMonth, cs.LastDayOfMonth, cs.clinical_category from census_staging cs) c
 inner join #location_mapping l on l.clinical_category = c.clinical_category
 inner join all_admissions a on a.encounter_location = l.location and a.site = l.site
 	and ((start_datetime >= FirstDayOfMonth and start_datetime <= LastDayOfMonth)
@@ -149,6 +149,7 @@ inner join
 	group by site, reporting_year, reporting_month, clinical_category, indicator) i
 	on c.site = i.site 
 	and c.reporting_year = i.reporting_year
+	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
  where c.indicator = 'days_hospitalized';
 
@@ -161,6 +162,7 @@ inner join
 	group by site, reporting_year, reporting_month, clinical_category, indicator) i
 	on c.site = i.site 
 	and c.reporting_year = i.reporting_year
+	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
  where c.indicator = 'hospitalizations';
 
@@ -173,6 +175,7 @@ inner join
 	group by site, reporting_year, reporting_month, clinical_category, indicator) i
 	on c.site = i.site 
 	and c.reporting_year = i.reporting_year
+	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
  where c.indicator = 'discharges';
 
@@ -185,6 +188,7 @@ inner join
 	group by site, reporting_year, reporting_month, clinical_category, indicator) i
 	on c.site = i.site 
 	and c.reporting_year = i.reporting_year
+	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
  where c.indicator = 'deaths_less_than_48_hours';
 
@@ -197,6 +201,7 @@ inner join
 	group by site, reporting_year, reporting_month, clinical_category, indicator) i
 	on c.site = i.site 
 	and c.reporting_year = i.reporting_year
+	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
  where c.indicator = 'deaths_greater_than_48_hours';
 
