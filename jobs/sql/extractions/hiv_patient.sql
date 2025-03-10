@@ -31,6 +31,7 @@ CREATE TEMPORARY TABLE temp_patient
     birthplace_locality         VARCHAR(100),
     birthplace_province         VARCHAR(100),
     patient_registration_date	DATE,
+    user_entered	        VARCHAR(100),
     initial_enrollment_location VARCHAR(100),
     program_location_id         INT,
     latest_enrollment_location VARCHAR(100),
@@ -68,7 +69,8 @@ CREATE TEMPORARY TABLE temp_patient
 	art_start_date				DATETIME,
 	biometrics_code             VARCHAR(50),
     biometrics_collected        BIT,    
-    latest_biometrics_collection_date     DATETIME
+    latest_biometrics_collection_date     DATETIME,
+    biometrics_collector VARCHAR(100)
 );
 
 CREATE INDEX temp_patient_patient_id ON temp_patient (patient_id);
@@ -151,6 +153,12 @@ select encounter_type_id into @regEncId from encounter_type where uuid = '873f96
 update temp_patient t 
 set patient_registration_date =
 	(select min(date(encounter_datetime)) from encounter e where e.patient_id = t.patient_id and e.voided = 0 and e.encounter_type = @regEncId limit 1);
+
+
+update temp_patient t 
+set user_entered =
+	(select person_name_of_user(e.creator) from encounter e where e.patient_id = t.patient_id and e.voided = 0 and e.encounter_type = @regEncId limit 1);
+
 
 set @civil_status = CONCEPT_FROM_MAPPING('PIH','CIVIL STATUS');
 set @occupation = CONCEPT_FROM_MAPPING('PIH','Occupation');
@@ -809,11 +817,11 @@ set biometrics_code = patient_identifier(patient_id, 'e26ca279-8f57-44a5-9ed8-8c
 update temp_patient 
 inner join patient_identifier pid on pid.identifier = biometrics_code
 set biometrics_collected = 1,
-    latest_biometrics_collection_date = pid.date_created ;
+    latest_biometrics_collection_date = pid.date_created,
+    biometrics_collector = person_name_of_user(pid.creator);
    
-update temp_patient set  biometrics_collected = 0 where biometrics_collected is null;
+update temp_patient set  biometrics_collected = 0, biometrics_collector = null where biometrics_collected is null;
 
- 
 
 ### Final Query
 SELECT 
@@ -831,6 +839,7 @@ t.birthplace_sc,
 t.birthplace_locality,
 t.birthplace_province,
 t.patient_registration_date,
+t.user_entered,
 t.initial_enrollment_location,
 t.latest_enrollment_location,
 t.marital_status,
@@ -896,7 +905,8 @@ tehd.last_pickup_treatment_line,
 tehd.next_pickup_date,
 IF(tehd.days_late_to_pickup > 0, tehd.days_late_to_pickup, 0) days_late_to_pickup,
 t.biometrics_collected,
-t.latest_biometrics_collection_date
+t.latest_biometrics_collection_date,
+t.biometrics_collector
 FROM temp_patient t 
 LEFT JOIN temp_socio_economics tse ON t.patient_id = tse.patient_id
 LEFT JOIN temp_socio_hiv_intake ts ON t.patient_id = ts.patient_id
