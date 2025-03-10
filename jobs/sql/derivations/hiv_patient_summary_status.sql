@@ -13,6 +13,7 @@ CREATE TABLE hiv_patient_summary_status_staging
  address                          varchar(1000), 
  locality                         varchar(255),  
  phone_number                     varchar(255),
+ user_entered	                  varchar(100),
  initial_enrollment_date          date,
  dispense_before_prescription     bit,           
  arv_start_date                   date,          
@@ -62,7 +63,8 @@ CREATE TABLE hiv_patient_summary_status_staging
  last_htn_diag                    text,
  last_htn_diag_date               date,
  biometrics_collected             bit,    
- latest_biometrics_collection_date     datetime
+ latest_biometrics_collection_date     datetime,
+ biometrics_collector varchar(100)
 );
 
 insert into hiv_patient_summary_status_staging (emr_id)
@@ -84,6 +86,7 @@ set first_name = p.given_name,
     address = CONCAT(p.address,' ', p.department,' ',p.commune,' ',section_communal) ,
     locality = p.locality,
     phone_number = p.telephone_number,
+    user_entered=p.user_entered,
     site = p.latest_enrollment_location
     from hiv_patient_summary_status_staging t
 inner join hiv_patient p on p.emr_id = t.emr_id
@@ -510,7 +513,8 @@ inner join #last_second_to_latest_visit v ON t.emr_id=v.emr_id AND v.rnk=2;
 
 update t
 set biometrics_collected = hp.biometrics_collected,
-latest_biometrics_collection_date=hp.latest_biometrics_collection_date
+latest_biometrics_collection_date=hp.latest_biometrics_collection_date,
+biometrics_collector=hp.biometrics_collector
     from hiv_patient_summary_status_staging t
 inner join hiv_patient hp on hp.emr_id = t.emr_id ;
 
