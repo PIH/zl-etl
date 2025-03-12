@@ -14,7 +14,7 @@ create table hiv_patient
     birthplace_locality            VARCHAR(255),
     birthplace_province            VARCHAR(255),
     patient_registration_date      DATE,
-    user_entered	               VARCHAR(255),
+    user_entered	               VARCHAR(100),
     initial_enrollment_location    VARCHAR(255),
     latest_enrollment_location     VARCHAR(255),
     marital_status                 CHAR(60),
@@ -81,5 +81,5 @@ create table hiv_patient
     days_late_to_pickup            FLOAT,
     biometrics_collected             bit,    
     latest_biometrics_collection_date     DATETIME,
-    biometrics_collector           VARCHAR(255)
+    biometrics_collector           VARCHAR(100)
 );
