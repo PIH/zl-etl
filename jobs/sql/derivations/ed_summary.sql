@@ -32,7 +32,9 @@ consult_disposition        varchar(255),
 consult_diagnosis1         varchar(255), 
 consult_diagnosis2         varchar(255), 
 consult_diagnosis3         varchar(255), 
-consult_diagnosis_noncoded varchar(255)  
+consult_diagnosis_noncoded varchar(255),
+final_disposition          varchar(255),
+visit_outcome              varchar(255)
 );
 
 insert ed_summary_staging (
@@ -205,6 +207,31 @@ inner join all_diagnosis_past_year d on d.obs_id =
 	where d2.encounter_id = es.consult_enc_id
 	and d2.coded = 0
 	order by obs_id desc);
+
+update es 
+set final_disposition = 
+	case
+		when isnull(consult_datetime,'1900-01-01') > isnull(ednote_datetime,'1900-01-01') then consult_disposition
+		else ednote_disposition
+	end
+from ed_summary_staging es;
+
+update es 
+set visit_outcome = 
+	case
+		when final_disposition = 'Death' then 'Deceased'
+		when final_disposition = 'Transfer out of hospital' then 'Referred'
+		when final_disposition = 'Left without completion of treatment' then 'Left Without Authorization'
+		when final_disposition = 'Left without seeing a clinician' then 'Left Without Authorization'
+		when final_disposition = 'Discharged' then 'Discharged'
+		when final_disposition = 'Admit to hospital' then 'Unknown'			
+		when final_disposition = 'Transfer within hospital' then 'Unknown'			
+		when final_disposition = 'Emergency Department observation' then 'Unknown'		
+		when final_disposition = 'Still hospitalized' then 'Unknown'			
+	end
+from ed_summary_staging es;
+
+ALTER TABLE ed_summary_staging DROP COLUMN final_disposition;
 
 DROP TABLE IF EXISTS ed_summary;
 EXEC sp_rename 'ed_summary_staging', 'ed_summary';
