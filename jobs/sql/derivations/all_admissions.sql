@@ -39,6 +39,13 @@ FROM adt_encounters ae;
 
 DELETE FROM all_admissions_staging WHERE encounter_type='Sortie de soins hospitaliers';
 
+-- update end datetime based on visit end date
+update a
+set end_datetime = visit_date_stopped
+from all_admissions_staging a
+inner join all_visits v on v.visit_id = a.visit_id
+where visit_date_stopped < end_datetime;
+
 update a 
  set previous_disposition_datetime = e.encounter_datetime,
  	 previous_disposition = e.disposition,
