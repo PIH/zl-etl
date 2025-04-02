@@ -2,9 +2,12 @@ CREATE TABLE hiv_viral_load
 (
     emr_id                         VARCHAR(255),
     encounter_id                   VARCHAR(25),
+    order_number                   VARCHAR(50),
     visit_location                 VARCHAR(255),
     date_entered                   DATETIME,
     user_entered                   VARCHAR(50),
+    status                         VARCHAR(255),
+    order_date                     DATETIME,
     vl_sample_taken_date           DATE,
     vl_sample_taken_date_estimated VARCHAR(255),
     vl_result_date                 DATE,
