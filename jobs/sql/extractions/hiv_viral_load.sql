@@ -123,8 +123,8 @@ where order_number is not null;
 ### Final query
 SELECT
         zlemr(tvl.patient_id),
-        concat(@partition,'-',tvl.encounter_id),
-        order_number,
+        concat(@partition,'-',tvl.encounter_id) encounter_id,
+        concat(@partition,'-',tvl.order_number) order_number,
         tvl.visit_location,
         tvl.date_entered,
         tvl.user_entered,
