@@ -37,7 +37,7 @@ site,
 partition_num
 FROM adt_encounters ae;
 
-DELETE FROM all_admissions_staging WHERE encounter_type='Sortie de soins hospitaliers';
+DELETE FROM all_admissions_staging WHERE encounter_type='Exit from Inpatient Care';
 
 -- update end datetime based on visit end date
 update a
