@@ -7,11 +7,7 @@ configuration:
     - type: "iterating-job"
       description: "Refreshing OpenMRS Data for all sites"
       configuration:
-        maxConcurrentJobs: 1
-        errorHandling:
-          maxAttempts: 3
-          retryInterval: 60
-          retryIntervalUnit: "MINUTES"
+        maxConcurrentJobs: 12
         iterations:
           - siteName: "cange"
           - siteName: "hinche"
