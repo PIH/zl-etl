@@ -42,7 +42,9 @@ last_modified_name_datetime       datetime,
 last_modified_address_datetime    datetime,     
 last_modified_attributes_datetime datetime,     
 last_modified_obs_datetime        datetime,
-last_modified_registration_datetime datetime
+last_modified_registration_datetime datetime,
+patient_uuid                      varchar(38),
+patient_url                       text
 );
 
 -- load all patients
@@ -60,7 +62,8 @@ set t.gender = p.gender,
 	t.dead = p.dead,
 	t.death_date = date(p.death_date),
 	t.cause_of_death_concept_id = p.cause_of_death,
-	t.last_modified_person_datetime = COALESCE(date_changed,date_created); 
+	t.last_modified_person_datetime = COALESCE(date_changed,date_created),
+    t.patient_uuid = p.uuid; 
 
 update temp_patients t set cause_of_death = concept_name(cause_of_death_concept_id,@locale);
 
@@ -152,6 +155,12 @@ update temp_patients t set last_modified_datetime =
             ifnull(last_modified_registration_datetime,last_modified_patient),
 			last_modified_patient);
 
+-- patient url
+set @site_url = SUBSTRING_INDEX(global_property_value('host.url',null), "/", 3);
+update temp_patients t 
+set patient_url = concat(@site_url,'/mirebalais/coreapps/clinicianfacing/patient.page?patientId=',patient_uuid);
+
+-- final output
 SELECT 
 emr_id,
 hiv_emr_id,
@@ -180,5 +189,6 @@ gender,
 dead,
 death_date,
 cause_of_death,
-last_modified_datetime
+last_modified_datetime,
+patient_url
 FROM temp_patients;
