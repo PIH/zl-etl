@@ -27,6 +27,7 @@ gender                    varchar(2),
 dead                      bit,          
 death_date                date,         
 cause_of_death            varchar(100),
-last_modified_datetime    datetime  
+last_modified_datetime    datetime,
+patient_url               text
 )
 ;
