@@ -156,9 +156,9 @@ update temp_patients t set last_modified_datetime =
 			last_modified_patient);
 
 -- patient url
-set @site_url = SUBSTRING_INDEX(global_property_value('host.url',null), "/", 3);
+set @site_url = SUBSTRING_INDEX(global_property_value('host.url',null), "/", 4);
 update temp_patients t 
-set patient_url = concat(@site_url,'/mirebalais/coreapps/clinicianfacing/patient.page?patientId=',patient_uuid);
+set patient_url = concat(@site_url,'/coreapps/clinicianfacing/patient.page?patientId=',patient_uuid);
 
 -- final output
 SELECT 
