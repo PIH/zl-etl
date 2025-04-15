@@ -94,6 +94,8 @@ drop temporary table if exists temp_visits_dates;
 create temporary table temp_visits_dates
 select patient_id, visit_id, visit_date_started from temp_visits;
 
+create index temp_visits_dates_c1 on temp_visits_dates(patient_id,visit_date_started);
+
 update temp_visits tv 
 set tv.first_visit_this_year = 1
 where not EXISTS 
