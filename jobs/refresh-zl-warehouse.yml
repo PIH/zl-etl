@@ -9,6 +9,8 @@ configuration:
       configuration:
         maxConcurrentJobs: 5
         iterations:
+          - siteName: "mirebalais"
+          - siteName: "hiv"
           - siteName: "cange"
           - siteName: "hinche"
           - siteName: "saint_marc_hsn"
@@ -18,8 +20,6 @@ configuration:
           - siteName: "belladere"
           - siteName: "boucancarre"
           - siteName: "cercalasource"
-          - siteName: "mirebalais"
-          - siteName: "hiv"
         jobTemplate:
           path: "refresh-${siteName}.yml"
 
