@@ -28,6 +28,7 @@ dead                      bit,
 death_date                date,         
 cause_of_death            varchar(100),
 last_modified_datetime    datetime,
+patient_uuid              char(38),
 patient_url               text
 )
 ;
