@@ -7,7 +7,7 @@ configuration:
     - type: "iterating-job"
       description: "Refreshing OpenMRS Data for all sites"
       configuration:
-        maxConcurrentJobs: 5
+        maxConcurrentJobs: 3
         iterations:
           - siteName: "mirebalais"
           - siteName: "hiv"
