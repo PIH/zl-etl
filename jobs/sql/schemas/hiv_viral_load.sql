@@ -1,7 +1,8 @@
 CREATE TABLE hiv_viral_load
 (
-    hiv_vl_id                      INT,
-    emr_id                         VARCHAR(255),
+    hiv_vl_id                      VARCHAR(30),
+    emr_id                         VARCHAR(30),
+    patient_id                     VARCHAR(30),
     order_encounter_id             VARCHAR(25),
     specimen_encounter_id          VARCHAR(25),
     order_number                   VARCHAR(50),
