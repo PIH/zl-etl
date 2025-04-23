@@ -10,6 +10,7 @@ DROP TEMPORARY TABLE IF EXISTS temp_hiv_vl;
 CREATE TEMPORARY TABLE temp_hiv_vl
 (
     hiv_vl_id                       INT(11) NOT NULL AUTO_INCREMENT,
+    emr_id                          VARCHAR(30),
 	patient_id                      INT(11),
     order_encounter_id              INT(11),
     specimen_encounter_id           INT(11),
@@ -40,6 +41,7 @@ CREATE TEMPORARY TABLE temp_hiv_vl
     index_asc                       INT,
 PRIMARY KEY (hiv_vl_id)    
 );
+
 -- -------------------------------------------------------------------- add rows from orders
 set @VL_panel = concept_from_mapping('PIH','15124');
 INSERT INTO temp_hiv_vl (patient_id, order_encounter_id, order_number, date_activated, date_stopped, auto_expire_date, fulfiller_status, vl_type_concept_id)
@@ -143,10 +145,15 @@ UPDATE temp_hiv_vl t SET status =
     END 
 ;
 
+update temp_hiv_vl t SET emr_id = zlemr(patient_id);
+
+
+
 ### Final query
 SELECT
-        concat(@partition,'-',hiv_vl_id) hiv_vl_id,   
-        zlemr(tvl.patient_id),
+        concat(@partition,'-',hiv_vl_id) hiv_vl_id, 
+        emr_id,
+        concat(@partition,'-',patient_id) patient_id,  
         concat(@partition,'-',tvl.order_encounter_id) order_encounter_id,        
         concat(@partition,'-',tvl.specimen_encounter_id) specimen_encounter_id,
         concat(@partition,'-',tvl.order_number) order_number,
