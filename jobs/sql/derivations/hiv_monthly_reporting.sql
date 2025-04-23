@@ -77,7 +77,7 @@ WHERE  ( arv_1_med IS NOT NULL
 ;
 
 CREATE OR ALTER VIEW all_reporting_viral AS
-SELECT  hvl.encounter_id ,hvl.emr_id ,x.reporting_date ,hvl.vl_coded_results,hvl.viral_load,hvl.vl_sample_taken_date, hvl.vl_result_date 
+SELECT  hvl.specimen_encounter_id ,hvl.emr_id ,x.reporting_date ,hvl.vl_coded_results,hvl.viral_load,hvl.vl_sample_taken_date, hvl.vl_result_date 
 FROM hiv_viral_load hvl INNER JOIN (
     SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd) x
                                    on EOMONTH(hvl.vl_sample_taken_date) <= x.reporting_date
