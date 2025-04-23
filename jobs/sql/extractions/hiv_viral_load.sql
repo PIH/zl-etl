@@ -9,7 +9,8 @@ DROP TEMPORARY TABLE IF EXISTS temp_hiv_vl;
 ### hiv vl constructs table
 CREATE TEMPORARY TABLE temp_hiv_vl
 (
-    patient_id                      INT(11),
+    hiv_vl_id                       INT(11) NOT NULL AUTO_INCREMENT,
+	patient_id                      INT(11),
     order_encounter_id              INT(11),
     specimen_encounter_id           INT(11),
     order_number                    TEXT,
@@ -36,7 +37,8 @@ CREATE TEMPORARY TABLE temp_hiv_vl
     vl_type                         VARCHAR(50),
     days_since_vl                   INT,
     index_desc                      INT,
-    index_asc                       INT
+    index_asc                       INT,
+PRIMARY KEY (hiv_vl_id)    
 );
 -- -------------------------------------------------------------------- add rows from orders
 set @VL_panel = concept_from_mapping('PIH','15124');
@@ -143,6 +145,7 @@ UPDATE temp_hiv_vl t SET status =
 
 ### Final query
 SELECT
+        concat(@partition,'-',hiv_vl_id) hiv_vl_id,   
         zlemr(tvl.patient_id),
         concat(@partition,'-',tvl.order_encounter_id) order_encounter_id,        
         concat(@partition,'-',tvl.specimen_encounter_id) specimen_encounter_id,
