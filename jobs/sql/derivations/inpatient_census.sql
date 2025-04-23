@@ -146,7 +146,7 @@ select reporting_year, reporting_month, a.site, encounter_location,c.clinical_ca
 iif(start_datetime < FirstDayOfMonth, FirstDayOfMonth, start_datetime) "effective_start_datetime",
 iif(end_datetime > LastDayOfMonth or end_datetime is null, dateadd(day,1,iif(LastDayOfMonth < getdate(), LastDayOfMonth, getdate())), end_datetime) "effective_end_datetime"
 	from (select distinct cs.site, cs.reporting_year , cs.reporting_month, cs.FirstDayOfMonth, cs.LastDayOfMonth, cs.clinical_category from census_staging cs) c
-inner join #location_mapping l on l.clinical_category = c.clinical_category
+inner join #location_mapping l on l.clinical_category = c.clinical_category and c.site = l.site
 inner join all_admissions a on a.encounter_location = l.location and a.site = l.site
 	and ((start_datetime >= FirstDayOfMonth and start_datetime <= LastDayOfMonth)
 		or (end_datetime >= FirstDayOfMonth and end_datetime <= LastDayOfMonth)
