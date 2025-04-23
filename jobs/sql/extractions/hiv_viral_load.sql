@@ -5,14 +5,16 @@ SET sql_safe_updates = 0;
 SET @detected_viral_load = CONCEPT_FROM_MAPPING("CIEL", "1301");
 set @partition = '${partitionNum}';
 
-DROP TEMPORARY TABLE IF EXISTS temp_hiv_construct_encounters;
+DROP TEMPORARY TABLE IF EXISTS temp_hiv_vl;
 ### hiv vl constructs table
-CREATE TEMPORARY TABLE temp_hiv_construct_encounters
+CREATE TEMPORARY TABLE temp_hiv_vl
 (
-    patient_id                      INT,
-    encounter_id                    INT,
+    patient_id                      INT(11),
+    order_encounter_id              INT(11),
+    specimen_encounter_id           INT(11),
     order_number                    TEXT,
     visit_id                        INT,
+    location_id                     INT(11), 
     visit_location                  VARCHAR(255),
     status                          VARCHAR(255),
     date_activated                  DATETIME,
@@ -21,6 +23,7 @@ CREATE TEMPORARY TABLE temp_hiv_construct_encounters
     fulfiller_status                VARCHAR(255),
     vl_sample_taken_date            DATETIME,
     date_entered                    DATETIME,
+    creator                         INT(11),
     user_entered                    VARCHAR(50),
     vl_sample_taken_date_estimated  VARCHAR(11),
     vl_result_date                  DATE,
@@ -29,101 +32,120 @@ CREATE TEMPORARY TABLE temp_hiv_construct_encounters
     vl_result_detectable            INT,
     viral_load                      INT,
     ldl_value                       INT,
+    vl_type_concept_id              INT(11),
     vl_type                         VARCHAR(50),
+    days_since_vl                   INT,
     index_desc                      INT,
     index_asc                       INT
 );
-
--- add patient and encounter IDs 
-set @vl_construct = CONCEPT_FROM_MAPPING("PIH", "HIV viral load construct");
-INSERT INTO temp_hiv_construct_encounters (patient_id, encounter_id)
-SELECT person_id, encounter_id FROM obs WHERE voided = 0 AND concept_id = @vl_construct;
-
--- add VL orders from lab module
+-- -------------------------------------------------------------------- add rows from orders
 set @VL_panel = concept_from_mapping('PIH','15124');
-INSERT INTO temp_hiv_construct_encounters (patient_id, order_number, date_activated, date_stopped, auto_expire_date, fulfiller_status)
-select ord.patient_id, ord.order_number, date_activated, date_stopped, auto_expire_date, fulfiller_status from orders ord
+INSERT INTO temp_hiv_vl (patient_id, order_encounter_id, order_number, date_activated, date_stopped, auto_expire_date, fulfiller_status, vl_type_concept_id)
+select ord.patient_id, ord.encounter_id, ord.order_number, date_activated, date_stopped, auto_expire_date, fulfiller_status, order_reason 
+from orders ord
 where ord.concept_id = @VL_panel;
 
+create index temp_hiv_vl_oei on temp_hiv_vl(order_encounter_id);
+
+update temp_hiv_vl t
+set t.vl_type = concept_name(vl_type_concept_id, @locale);
+
 set @order_num = concept_from_mapping('PIH','10781');
-update temp_hiv_construct_encounters t
+update temp_hiv_vl t
 inner join obs o on o.concept_id = @order_num and o.value_text = t.order_number and o.voided = 0
-set t.encounter_id = o.encounter_id;
+set t.specimen_encounter_id = o.encounter_id;
 
+-- -------------------------------------------------------------------- add rows from non-orders
+set @vl_construct = CONCEPT_FROM_MAPPING("PIH", "HIV viral load construct");
+INSERT INTO temp_hiv_vl (patient_id, specimen_encounter_id)
+SELECT person_id, encounter_id FROM obs WHERE voided = 0 AND concept_id = @vl_construct;
 
--- specimen collection date, visit id
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN encounter e ON tvl.encounter_id = e.encounter_id
-SET	vl_sample_taken_date = e.encounter_datetime, 
-    tvl.visit_id = e.visit_id;
+create index temp_hiv_vl_sei on temp_hiv_vl(specimen_encounter_id);
 
--- date encounter was created
-UPDATE temp_hiv_construct_encounters tvl JOIN encounter e ON tvl.encounter_id = e.encounter_id
-SET	tvl.date_entered = e.date_created, tvl.user_entered = username(e.creator);
+-- -------------------------------------------------------------------- specimen, result details
+update temp_hiv_vl t
+inner join encounter e on e.encounter_id = t.specimen_encounter_id
+set t.location_id = e.location_id,
+	t.date_entered = e.date_created,
+	t.creator = e.creator,
+    t.vl_sample_taken_date = e.encounter_datetime, 
+    t.visit_id = e.visit_id;
 
-## Delete test patients
-DELETE FROM temp_hiv_construct_encounters WHERE
-patient_id IN (
-               SELECT
-                      a.person_id
-                      FROM person_attribute a
-                      INNER JOIN person_attribute_type t ON a.person_attribute_type_id = t.person_attribute_type_id
-                      AND a.value = 'true' AND t.name = 'Test Patient'
-               );
+update temp_hiv_vl t
+inner join encounter e on e.encounter_id = t.order_encounter_id
+set t.location_id = e.location_id,
+	t.date_entered = e.date_created,
+	t.creator = e.creator
+where t.specimen_encounter_id is null;
 
--- visit location
-update temp_hiv_construct_encounters tvl
-set visit_location = location_name(hivEncounterLocationId(encounter_id));
+DROP TABLE IF EXISTS temp_obs;
+CREATE TEMPORARY TABLE temp_obs AS
+SELECT o.person_id, o.obs_id , o.obs_datetime , o.encounter_id, o.voided, o.value_coded, o.concept_id, o.value_numeric, o.value_datetime, o.date_created
+FROM obs o 
+INNER JOIN temp_hiv_vl tvl ON tvl.specimen_encounter_id=o.encounter_id
+WHERE o.voided =0;
+
+create index temp_obs_c1 on temp_obs(encounter_id, concept_id);
 
 -- is specimen collection date estimated
 set @collDateEst = concept_from_mapping('PIH','11781');
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @collDateEst
-SET vl_sample_taken_date_estimated =  concept_name(o.value_coded , 'en');
+UPDATE temp_hiv_vl 
+SET vl_sample_taken_date_estimated =  obs_value_coded_list_from_temp_using_concept_id(specimen_encounter_id, @collDateEst, @locale);
 
 -- lab result date
 set @testResultsDate = concept_from_mapping('PIH', 'Date of test results');
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @testResultsDate
-SET vl_result_date =  DATE(o.value_datetime);
+UPDATE temp_hiv_vl  
+SET vl_result_date =  obs_value_datetime_from_temp_using_concept_id(specimen_encounter_id, @testResultsDate);
 
 -- specimen number
 set @specNumber = concept_from_mapping('CIEL', '162086');
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id =  @specNumber 
- SET specimen_number =  o.value_text;
+UPDATE temp_hiv_vl  
+SET specimen_number =  obs_value_datetime_from_temp_using_concept_id(specimen_encounter_id, @specNumber);
 
 -- viral load results (coded, concept name)
 set @vlCoded = concept_from_mapping('CIEL', '1305');
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @vlCoded 
-SET vl_coded_results =  concept_name(o.value_coded, 'en');
+UPDATE temp_hiv_vl 
+SET vl_coded_results =  obs_value_coded_list_from_temp_using_concept_id(specimen_encounter_id, @vlCoded, @locale);
 
 -- viral load results (numeric)
 set @vlNumeric = concept_from_mapping('CIEL', '856');
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @vlNumeric
-SET viral_load =  o.value_numeric;
+UPDATE temp_hiv_vl  
+SET viral_load =  obs_value_numeric_from_temp_using_concept_id(specimen_encounter_id, @vlNumeric);
+
 
 -- detected lower limit
 set @lowLimit = concept_from_mapping('PIH', '11548');
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @lowLimit
-SET ldl_value  =  o.value_numeric;
+UPDATE temp_hiv_vl  
+SET ldl_value =  obs_value_numeric_from_temp_using_concept_id(specimen_encounter_id, @lowLimit);
 
--- viral load type
-set @vlType = concept_from_mapping('CIEL', '164126');
-UPDATE temp_hiv_construct_encounters tvl INNER JOIN obs o ON o.voided = 0 AND tvl.encounter_id = o.encounter_id AND concept_id = @vlType
-SET vl_type = concept_name(o.value_coded, 'en');
 
-UPDATE temp_hiv_construct_encounters t SET status =
+-- -------------------------------------------------------------------- updates to shared columns
+update temp_hiv_vl t
+set t.visit_location = location_name(location_id);
+ 
+update temp_hiv_vl t
+set t.user_entered = person_name_of_user(creator);
+
+update temp_hiv_vl t
+set t.days_since_vl = DATEDIFF(NOW(), COALESCE(vl_sample_taken_date,date_activated));
+
+UPDATE temp_hiv_vl t SET status =
     CASE
-       WHEN t.date_stopped IS NOT NULL AND encounter_id IS NULL THEN 'Cancelled'
-       WHEN t.auto_expire_date < CURDATE() AND encounter_id IS NULL THEN 'Expired'
+       WHEN t.vl_result_date is not null then 'Reported'
+	   WHEN t.date_stopped IS NOT NULL AND specimen_encounter_id IS NULL THEN 'Cancelled'
+       WHEN t.auto_expire_date < CURDATE() AND specimen_encounter_id IS NULL THEN 'Expired'
        WHEN t.fulfiller_status = 'COMPLETED' THEN 'Reported'
        WHEN t.fulfiller_status = 'IN_PROGRESS' THEN 'Collected'
        WHEN t.fulfiller_status = 'EXCEPTION' THEN 'Not Performed'
        ELSE 'Ordered'
     END 
-where order_number is not null;
+;
 
 ### Final query
 SELECT
         zlemr(tvl.patient_id),
-        concat(@partition,'-',tvl.encounter_id) encounter_id,
+        concat(@partition,'-',tvl.order_encounter_id) order_encounter_id,        
+        concat(@partition,'-',tvl.specimen_encounter_id) specimen_encounter_id,
         concat(@partition,'-',tvl.order_number) order_number,
         tvl.visit_location,
         tvl.date_entered,
@@ -138,7 +160,7 @@ SELECT
         viral_load,
         ldl_value,
         vl_type,
-        DATEDIFF(NOW(), tvl.vl_sample_taken_date) days_since_vl,
+        days_since_vl,
         index_desc,
         index_asc
-FROM temp_hiv_construct_encounters tvl;
+FROM temp_hiv_vl tvl;
