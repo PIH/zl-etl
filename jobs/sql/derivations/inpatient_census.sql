@@ -148,10 +148,8 @@ iif(end_datetime > LastDayOfMonth or end_datetime is null, dateadd(day,1,iif(Las
 	from (select distinct cs.site, cs.reporting_year , cs.reporting_month, cs.FirstDayOfMonth, cs.LastDayOfMonth, cs.clinical_category from census_staging cs) c
 inner join #location_mapping l on l.clinical_category = c.clinical_category and c.site = l.site
 inner join all_admissions a on a.encounter_location = l.location and a.site = l.site
-	and ((start_datetime >= FirstDayOfMonth and start_datetime <= LastDayOfMonth)
-		or (end_datetime >= FirstDayOfMonth and end_datetime <= LastDayOfMonth)
-		or (start_datetime < FirstDayOfMonth and end_datetime >= LastDayOfMonth)
-		or (start_datetime < FirstDayOfMonth and end_datetime is null))
+	and (cast(start_datetime as date) <= LastDayOfMonth
+	     and (cast(end_datetime as date) >=  FirstDayOfMonth or end_datetime is null))	
 ;
 
 -- update columns on slotted table to enable summing totals
