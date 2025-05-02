@@ -12,6 +12,7 @@ SET @hiv_followup_encounter_type = ENCOUNTER_TYPE('HIV Followup');
 SET @hiv_dispensing_encounter = ENCOUNTER_TYPE('HIV drug dispensing');
 SET @mothers_first_name = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'First Name of Mother');
 SET @telephone_number = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'Telephone Number');
+SET @transfer_to_zl=concept_from_mapping('PIH','13275');
 
 DROP TEMPORARY TABLE IF EXISTS temp_patient;
 CREATE TEMPORARY TABLE temp_patient
@@ -70,7 +71,9 @@ CREATE TEMPORARY TABLE temp_patient
 	biometrics_code             VARCHAR(50),
     biometrics_collected        BIT,    
     latest_biometrics_collection_date     DATETIME,
-    biometrics_collector VARCHAR(100)
+    biometrics_collector VARCHAR(100),
+    transfer_from_location VARCHAR(100),
+    transfer_from_date DATE
 );
 
 CREATE INDEX temp_patient_patient_id ON temp_patient (patient_id);
@@ -823,6 +826,15 @@ set biometrics_collected = 1,
 update temp_patient set  biometrics_collected = 0, biometrics_collector = null where biometrics_collected is null;
 
 
+update temp_patient t
+inner join patient_program pp on p.patient_id = t.patient_id 
+    where pp.outcome_concept_id = @transfer_to_zl
+    and pp.voided = 0
+    order by pp.date_enrolled DESC 
+    limit 1
+set transfer_from_location = location_name(pp.location_id),
+    transfer_from_date = pp.date_completed;
+
 ### Final Query
 SELECT 
 t.zl_emr_id,
@@ -906,7 +918,9 @@ tehd.next_pickup_date,
 IF(tehd.days_late_to_pickup > 0, tehd.days_late_to_pickup, 0) days_late_to_pickup,
 t.biometrics_collected,
 t.latest_biometrics_collection_date,
-t.biometrics_collector
+t.biometrics_collector,
+t.transfer_from_location,
+t.transfer_from_date
 FROM temp_patient t 
 LEFT JOIN temp_socio_economics tse ON t.patient_id = tse.patient_id
 LEFT JOIN temp_socio_hiv_intake ts ON t.patient_id = ts.patient_id

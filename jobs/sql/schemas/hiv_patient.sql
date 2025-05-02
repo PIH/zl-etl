@@ -81,5 +81,7 @@ create table hiv_patient
     days_late_to_pickup            FLOAT,
     biometrics_collected             bit,    
     latest_biometrics_collection_date     DATETIME,
-    biometrics_collector           VARCHAR(100)
+    biometrics_collector           VARCHAR(100),
+    transfer_from_location        VARCHAR(100),
+    transfer_from_date              DATE
 );
