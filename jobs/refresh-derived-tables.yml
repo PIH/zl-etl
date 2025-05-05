@@ -3,6 +3,13 @@ description: "Refresh Derived Tables"
 configuration:
   jobs:
     - type: "iterating-job"
+      description: "Create destination views and functions"
+      configuration:
+        jobTemplate:
+          path: "create-derived-table-in-warehouse.yml"
+        iterations:
+          - tableName: "current_pipeline_summary"
+    - type: "iterating-job"
       description: "Create derived setup tables"
       configuration:
         jobTemplate:
