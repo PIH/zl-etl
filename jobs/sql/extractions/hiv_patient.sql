@@ -827,13 +827,13 @@ update temp_patient set  biometrics_collected = 0, biometrics_collector = null w
 
 
 update temp_patient t
-inner join patient_program pp on p.patient_id = t.patient_id 
-    where pp.outcome_concept_id = @transfer_to_zl
-    and pp.voided = 0
-    order by pp.date_enrolled DESC 
+inner join patient_program p on p.patient_id = t.patient_id 
+    where p.outcome_concept_id = @transfer_to_zl
+    and p.voided = 0
+    order by p.date_enrolled DESC 
     limit 1
-set transfer_from_location = location_name(pp.location_id),
-    transfer_from_date = pp.date_completed;
+set transfer_from_location = location_name(p.location_id),
+    transfer_from_date = p.date_completed;
 
 ### Final Query
 SELECT 
