@@ -21,6 +21,6 @@ CREATE TABLE all_lab_results
     results_date             DATE,
     results_entry_date       DATETIME,
     result                   TEXT,
-    units                    VARCHAR(11),
+    units                    VARCHAR(255),
     reason_not_performed     VARCHAR(255)
 );
