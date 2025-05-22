@@ -18,6 +18,7 @@ CREATE TABLE all_lab_results
     LOINC                    VARCHAR(50),
     specimen_collection_date DATE,
     specimen_collection_entry_date DATETIME,
+    user_entered             TEXT,
     results_date             DATE,
     results_entry_date       DATETIME,
     result                   TEXT,
