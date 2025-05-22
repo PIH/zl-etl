@@ -136,9 +136,10 @@ set t.days_since_vl = DATEDIFF(NOW(), COALESCE(vl_sample_taken_date,date_activat
 UPDATE temp_hiv_vl t SET status =
     CASE
        WHEN t.vl_result_date is not null then 'Reported'
-	   WHEN t.date_stopped IS NOT NULL AND specimen_encounter_id IS NULL THEN 'Cancelled'
+       when t.specimen_encounter_id is not null then 'Collected'
+	   WHEN t.date_stopped IS NOT NULL THEN 'Cancelled'
        WHEN t.auto_expire_date < CURDATE() AND specimen_encounter_id IS NULL THEN 'Expired'
-       WHEN t.fulfiller_status = 'COMPLETED' THEN 'Reported'
+       WHEN t.fulfiller_status = 'COMPLETED' THEN 'Reported' -- not sure these are needed
        WHEN t.fulfiller_status = 'IN_PROGRESS' THEN 'Collected'
        WHEN t.fulfiller_status = 'EXCEPTION' THEN 'Not Performed'
        ELSE 'Ordered'
