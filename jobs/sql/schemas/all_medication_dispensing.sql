@@ -20,6 +20,6 @@ quantity_dispensed int,
 quantity_unit varchar(30),
 order_id int, 
 instructions text,
-index_asc,
-index_desc
+index_asc int,
+index_desc int
 );
