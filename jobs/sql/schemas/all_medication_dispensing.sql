@@ -19,5 +19,7 @@ frequency varchar(50),
 quantity_dispensed int,
 quantity_unit varchar(30),
 order_id int, 
-instructions text
+instructions text,
+index_asc,
+index_desc
 );
