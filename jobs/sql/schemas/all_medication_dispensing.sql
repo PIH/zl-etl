@@ -1,5 +1,6 @@
 CREATE TABLE all_medication_dispensing
 (
+dispensing_id varchar(50),
 form varchar(10),
 patient_id varchar(50),
 emr_id varchar(50),
