@@ -6,7 +6,6 @@ CREATE TABLE all_lab_orders
     unknown_patient              VARCHAR(11),
     gender                       VARCHAR(50),
     age_at_enc                   FLOAT,
-    patient_address              TEXT,
     order_number                 VARCHAR(50),
     order_reason                 VARCHAR(255),
     Lab_ID                       VARCHAR(50),
