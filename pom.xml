@@ -150,6 +150,10 @@
                                     <destinationFile>${petlJobExtractionSqlDir}/mh_diagnoses.sql</destinationFile>
                                 </fileSet>
                                 <fileSet>
+                                    <sourceFile>${dataExportSqlDir}/j9CaseRegistration.sql</sourceFile>
+                                    <destinationFile>${petlJobExtractionSqlDir}/mch_j9_case_registration.sql</destinationFile>
+                                </fileSet>                                
+                                <fileSet>
                                     <sourceFile>${dataExportSqlDir}/mh_medications.sql</sourceFile>
                                     <destinationFile>${petlJobExtractionSqlDir}/mh_medications.sql</destinationFile>
                                 </fileSet>                                
