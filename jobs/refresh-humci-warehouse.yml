@@ -66,6 +66,7 @@ configuration:
           - tableName: "mch_status"
           - tableName: "mch_visit"
           - tableName: "mch_j9_data"
+          - tableName: "mch_j9_case_registration"
           - tableName: "summary_db_restore"
           - tableName: "vaccinations_anc"
           - tableName: "tb_lab_results"
