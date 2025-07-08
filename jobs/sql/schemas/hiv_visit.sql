@@ -2,6 +2,7 @@ CREATE TABLE hiv_visit
 (                                                           
 encounter_id                         VARCHAR(25),
 visit_id                             VARCHAR(25),
+hiv_program_id                       VARCHAR(25),
 emr_id                               VARCHAR(25),           
 hivemr_v1                            VARCHAR(25),           
 encounter_type                       VARCHAR(255),          
