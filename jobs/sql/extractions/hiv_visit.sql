@@ -3,6 +3,7 @@ set @partition = '${partitionNum}';
 set @locale = 'en';
 SET @hiv_intake = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d306a-40c4-11e7-a919-92ebcb67fe33');
 SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'c31d3312-40c4-11e7-a919-92ebcb67fe33');
+set @hiv_program = (select program_id from program WHERE uuid = 'b1cb1fc1-5190-4f7a-af08-48870975dafc');
 
 DROP TEMPORARY TABLE IF EXISTS temp_hiv_visit;
 CREATE TEMPORARY TABLE temp_hiv_visit
@@ -10,7 +11,8 @@ CREATE TEMPORARY TABLE temp_hiv_visit
 encounter_id                         INT(11),      
 visit_id                             INT(11),      
 patient_id                           INT(11),      
-emr_id                               VARCHAR(25),  
+emr_id                               VARCHAR(25),
+hiv_program_id                       INT(11),
 hivemr_v1                            VARCHAR(25),  
 encounter_type_id                    INT(11),      
 encounter_type                       VARCHAR(255), 
@@ -446,9 +448,13 @@ update temp_hiv_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @with_sex_worker
 set t.with_sex_worker = value_coded_as_boolean(o.obs_id);
 
+update temp_hiv_visit t
+set hiv_program_id = patient_program_id_from_encounter(patient_id, @hiv_program, encounter_id);
+
 SELECT
 	concat(@partition, '-', encounter_id),
 	concat(@partition, '-', visit_id),
+	concat(@partition, '-', hiv_program_id),
 	emr_id,
 	hivemr_v1,
 	encounter_type,
