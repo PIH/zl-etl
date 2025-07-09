@@ -2,64 +2,80 @@ SET sql_safe_updates = 0;
 set @partition = '${partitionNum}';
 SET @mch_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'd83e98fd-dc7b-420f-aa3f-36f648b4483d');
 SET @pregnancy_id:=0;
+set @mch_program = (select program_id from program where uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73');
 
 DROP TEMPORARY TABLE IF EXISTS temp_mch_pregnancy;
 CREATE TEMPORARY TABLE temp_mch_pregnancy(
-                                            pregnancy_id                    INT,
-                                            encounter_id                    INT,
-                                            patient_id                      INT,
-                                            emr_id                          VARCHAR(25),
-                                            encounter_date                  DATE,
-                                            date_entered                    DATETIME,
-                                            user_entered                    VARCHAR(50),
-                                            gravidity                       INT,
-                                            parity                          INT,
-                                            num_abortions                   INT,
-                                            num_living_children             INT,
-                                            last_period_date                DATE,
-                                            expected_delivery_date          DATE,
-                                            calculated_gestational_age      DOUBLE,
-                                            pregnancy_1_birth_order         INT,
-                                            pregnancy_1_delivery_type       VARCHAR(150),
-                                            pregnancy_1_outcome             TEXT,
-                                            pregnancy_2_birth_order         INT,
-                                            pregnancy_2_delivery_type       VARCHAR(150),
-                                            pregnancy_2_outcome             TEXT,
-                                            pregnancy_3_birth_order         INT,
-                                            pregnancy_3_delivery_type       VARCHAR(150),
-                                            pregnancy_3_outcome             TEXT,
-                                            pregnancy_4_birth_order         INT,
-                                            pregnancy_4_delivery_type       VARCHAR(150),
-                                            pregnancy_4_outcome             TEXT,
-                                            pregnancy_5_birth_order         INT,
-                                            pregnancy_5_delivery_type       VARCHAR(150),
-                                            pregnancy_5_outcome             TEXT,
-                                            pregnancy_6_birth_order         INT,
-                                            pregnancy_6_delivery_type       VARCHAR(150),
-                                            pregnancy_6_outcome             TEXT,
-                                            pregnancy_7_birth_order         INT,
-                                            pregnancy_7_delivery_type       VARCHAR(150),
-                                            pregnancy_7_outcome             TEXT,
-                                            pregnancy_8_birth_order         INT,
-                                            pregnancy_8_delivery_type       VARCHAR(150),
-                                            pregnancy_8_outcome             TEXT,
-                                            pregnancy_9_birth_order         INT,
-                                            pregnancy_9_delivery_type       VARCHAR(150),
-                                            pregnancy_9_outcome             TEXT,
-                                            pregnancy_10_birth_order        INT,
-                                            pregnancy_10_delivery_type      VARCHAR(150),
-                                            pregnancy_10_outcome            TEXT,
-                                            pmtct_club                      VARCHAR(5),
-                                            delivery_location_plan          VARCHAR(15)
+    pregnancy_id                    INT,
+    encounter_id                    INT,
+    patient_id                      INT,
+    emr_id                          VARCHAR(25),
+    mch_program_id                  INT(11),
+    encounter_date                  DATE,    
+    date_entered                    DATETIME,
+    user_entered                    VARCHAR(50),
+    gravidity                       INT,
+    parity                          INT,
+    num_abortions                   INT,
+    num_living_children             INT,
+    last_period_date                DATE,
+    expected_delivery_date          DATE,
+    calculated_gestational_age      DOUBLE,
+    pregnancy_1_birth_order         INT,
+    pregnancy_1_delivery_type       VARCHAR(150),
+    pregnancy_1_outcome             TEXT,
+    pregnancy_2_birth_order         INT,
+    pregnancy_2_delivery_type       VARCHAR(150),
+    pregnancy_2_outcome             TEXT,
+    pregnancy_3_birth_order         INT,
+    pregnancy_3_delivery_type       VARCHAR(150),
+    pregnancy_3_outcome             TEXT,
+    pregnancy_4_birth_order         INT,
+    pregnancy_4_delivery_type       VARCHAR(150),
+    pregnancy_4_outcome             TEXT,
+    pregnancy_5_birth_order         INT,
+    pregnancy_5_delivery_type       VARCHAR(150),
+    pregnancy_5_outcome             TEXT,
+    pregnancy_6_birth_order         INT,
+    pregnancy_6_delivery_type       VARCHAR(150),
+    pregnancy_6_outcome             TEXT,
+    pregnancy_7_birth_order         INT,
+    pregnancy_7_delivery_type       VARCHAR(150),
+    pregnancy_7_outcome             TEXT,
+    pregnancy_8_birth_order         INT,
+    pregnancy_8_delivery_type       VARCHAR(150),
+    pregnancy_8_outcome             TEXT,
+    pregnancy_9_birth_order         INT,
+    pregnancy_9_delivery_type       VARCHAR(150),
+    pregnancy_9_outcome             TEXT,
+    pregnancy_10_birth_order        INT,
+    pregnancy_10_delivery_type      VARCHAR(150),
+    pregnancy_10_outcome            TEXT,
+    pmtct_club                      VARCHAR(5),
+    delivery_location_plan          VARCHAR(15)
 );
 
-## return latest encounters for antenatal visit
+-- Return latest encounters for antenatal visit
 INSERT INTO temp_mch_pregnancy (encounter_id, patient_id, emr_id, pregnancy_id)
-SELECT encounter_id, person_id, ZLEMR(person_id), @pregnancy_id:=@pregnancy_id + 1 AS pregnacy_id FROM obs o WHERE o.concept_id =
-    CONCEPT_FROM_MAPPING('PIH', 'Type of HUM visit') AND o.voided = 0
-                                                                                                               AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'ANC VISIT') AND o.encounter_id IN
-                                                                                                                 (SELECT MAX(encounter_id) FROM encounter WHERE encounter_type = @mch_encounter AND
-    voided = 0 GROUP BY patient_id);
+SELECT
+    encounter_id,
+    person_id,
+    ZLEMR(person_id),
+    @pregnancy_id := @pregnancy_id + 1 AS pregnancy_id
+FROM obs o
+WHERE o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Type of HUM visit')
+  AND o.voided = 0
+  AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'ANC VISIT')
+  AND o.encounter_id IN (
+    SELECT MAX(encounter_id)
+    FROM encounter
+    WHERE encounter_type = @mch_encounter AND voided = 0
+    GROUP BY patient_id
+);
+
+UPDATE temp_mch_pregnancy t 
+SET mch_program_id = patient_program_id_from_encounter(patient_id, @mch_program, encounter_id);
+
 
 UPDATE  temp_mch_pregnancy t inner join encounter e on t.encounter_id = e.encounter_id
     SET     t.encounter_date = date(e.encounter_datetime), t.date_entered = e.date_created, t.user_entered = username(e.creator);
@@ -118,6 +134,7 @@ UPDATE temp_mch_pregnancy t SET  delivery_location_plan = OBS_VALUE_CODED_LIST(t
 SELECT
 pregnancy_id,
 concat(@partition,'-',encounter_id),
+concat(@partition, '-', mch_program_id),
 emr_id,
 encounter_date,
 date_entered,
