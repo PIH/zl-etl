@@ -7,6 +7,7 @@ SET @diagnosis_order = CONCEPT_FROM_MAPPING('PIH', 'Diagnosis order');
 SET @primary_diagnosis = CONCEPT_FROM_MAPPING('PIH', 'primary');
 SET @secondary_diagnosis = CONCEPT_FROM_MAPPING('PIH', 'secondary');
 SET @diagnosis = CONCEPT_FROM_MAPPING('PIH', 'DIAGNOSIS');
+set @mch_program = (select program_id from program where uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73');
 
 DROP TEMPORARY TABLE IF EXISTS temp_obgyn_visit;
 CREATE TEMPORARY TABLE temp_obgyn_visit
@@ -14,6 +15,7 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
  patient_id                       INT,          
  encounter_id                     INT,          
  emr_id                           VARCHAR(25),  
+ mch_program_id                   INT(11),
  visit_date                       DATE,         
  visit_site                       VARCHAR(100), 
  age_at_visit                     DOUBLE,       
@@ -141,8 +143,9 @@ WHERE o.voided = 0;
 CREATE INDEX temp_obs_concept_id ON temp_obs(concept_id);
 CREATE INDEX temp_obs_ei ON temp_obs(encounter_id);
 
-           
-           
+UPDATE temp_obgyn_visit t 
+SET mch_program_id = patient_program_id_from_encounter(patient_id, @mch_program, encounter_id);
+                      
 UPDATE temp_obgyn_visit t 
 SET 
     previous_history = (SELECT 
@@ -993,6 +996,7 @@ set t.other_sti = o.stis;
 SELECT
     ZLEMR(patient_id),
     CONCAT(@partition,'-',encounter_id),
+    concat(@partition, '-', mch_program_id),
     visit_date,
     visit_site,
     visit_type,
