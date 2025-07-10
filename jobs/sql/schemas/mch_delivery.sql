@@ -2,6 +2,7 @@ create table mch_delivery
 (
     dossierId                            varchar(50),
     emr_id                               varchar(50),
+    mch_program_id                       varchar(25),
     loc_registered                       varchar(255),
     encounter_datetime                   datetime,
     encounter_location                   varchar(255),
