@@ -43,7 +43,7 @@ configuration:
           - tableName: "hiv_tests"
           - tableName: "hiv_viral_load"
           - tableName: "hiv_visit"
-          - tableName: "hiv_visit_v1"
+          - tableName: "hiv_pmtct_visit"
           - tableName: "ovc_program_encounters"
           - tableName: "pmtct_infant_delivery"
           - tableName: "pmtct_contacts"

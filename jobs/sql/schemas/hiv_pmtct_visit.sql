@@ -1,4 +1,4 @@
-CREATE TABLE hiv_visit_v1
+CREATE TABLE hiv_pmtct_visit
 (                                                           
 encounter_id                         VARCHAR(25),
 visit_id                             VARCHAR(25),

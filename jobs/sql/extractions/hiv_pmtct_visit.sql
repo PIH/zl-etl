@@ -7,8 +7,8 @@ SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '
 SET @initial_pmtct_encounter = ENCOUNTER_TYPE('584124b9-1f10-4757-ba09-91fc9075af92');
 SET @followup_pmtct_encounter =  ENCOUNTER_TYPE('95e03e7d-9aeb-4a99-bd7a-94e8591ec2c5');
 
-DROP TEMPORARY TABLE IF EXISTS temp_hiv_visit_v1;
-CREATE TEMPORARY TABLE temp_hiv_visit_v1
+DROP TEMPORARY TABLE IF EXISTS temp_hiv_pmtct_visit;
+CREATE TEMPORARY TABLE temp_hiv_pmtct_visit
 (
 encounter_id                         INT(11),      
 visit_id                             INT(11),      
@@ -73,14 +73,14 @@ index_asc                            INT,
 index_desc                           INT           
 );
 
-INSERT INTO temp_hiv_visit_v1(patient_id, encounter_id, visit_id, visit_date, date_entered, creator, encounter_location_id, encounter_type_id)
+INSERT INTO temp_hiv_pmtct_visit(patient_id, encounter_id, visit_id, visit_date, date_entered, creator, encounter_location_id, encounter_type_id)
 SELECT patient_id, encounter_id, visit_id, encounter_datetime, date_created, creator, location_id, encounter_type  FROM encounter  WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup,@nitial_pmtct_encounter,@followup_pmtct_encounter)
 ;
 
-CREATE INDEX temp_hiv_visit_v1_pid ON temp_hiv_visit_v1 (patient_id);
-CREATE INDEX temp_hiv_visit_v1_eid ON temp_hiv_visit_v1 (encounter_id);
+CREATE INDEX temp_hiv_pmtct_visit_pid ON temp_hiv_pmtct_visit (patient_id);
+CREATE INDEX temp_hiv_pmtct_visit_eid ON temp_hiv_pmtct_visit (encounter_id);
 	
-DELETE FROM temp_hiv_visit_v1 
+DELETE FROM temp_hiv_pmtct_visit 
 WHERE patient_id IN (SELECT
         a.person_id
     FROM
@@ -91,7 +91,7 @@ WHERE patient_id IN (SELECT
 	            AND t.name = 'Test Patient');
 
 	           
-update temp_hiv_visit_v1 t	
+update temp_hiv_pmtct_visit t	
 inner join encounter_type et on et.encounter_type_id = t.encounter_type_id  
 set encounter_type = et.name ;	           
 	           
@@ -105,46 +105,46 @@ hivemr_v1						VARCHAR(25)
 );
 
 INSERT INTO temp_identifiers(patient_id)
-select distinct patient_id from temp_hiv_visit_v1;
+select distinct patient_id from temp_hiv_pmtct_visit;
 
 update temp_identifiers t set hivemr_v1  = patient_identifier(patient_id, '139766e8-15f5-102d-96e4-000c29c2a5d7');          
 update temp_identifiers t set emr_id  = zlemr(patient_id);	
 
 CREATE INDEX temp_identifiers_p ON temp_identifiers (patient_id);
 
-update temp_hiv_visit_v1 thv 
+update temp_hiv_pmtct_visit thv 
 inner join temp_identifiers ti on ti.patient_id = thv.patient_id
 set thv.emr_id = ti.emr_id,
 	thv.hivemr_v1 = ti.hivemr_v1;
 
-update temp_hiv_visit_v1 t set visit_location = location_name(encounter_location_id);   
-update temp_hiv_visit_v1 t set user_entered = username(creator);   
+update temp_hiv_pmtct_visit t set visit_location = location_name(encounter_location_id);   
+update temp_hiv_pmtct_visit t set user_entered = username(creator);   
 
 
 drop temporary table if exists temp_obs;
 create temporary table temp_obs 
 select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.comments, o.date_created  
 from obs o
-inner join temp_hiv_visit_v1 t on t.encounter_id = o.encounter_id
+inner join temp_hiv_pmtct_visit t on t.encounter_id = o.encounter_id
 where o.voided = 0;
 
 create index temp_obs_ci1 on temp_obs(concept_id, encounter_id);
 create index temp_obs_ci2 on temp_obs(concept_id,obs_group_id);
 
 set @chw = concept_from_mapping('PIH','11631');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @chw  and o.voided = 0
 set	chw = o.value_text;
 
 set @who_stage = concept_from_mapping('PIH','5356');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @who_stage  and o.voided = 0
 set	who_stage = concept_name(o.value_coded,@locale);
 
 set @pregStatus = concept_from_mapping('PIH','PREGNANCY STATUS') ;
 set @yesID =concept_from_mapping('PIH','YES');
 set @noID = concept_from_mapping('PIH','NO');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @pregStatus and o.voided = 0
 set	pregnant =	
 	 CASE o.value_coded
@@ -153,41 +153,41 @@ set	pregnant =
 	END;
 
 set @returnVD = concept_from_mapping('PIH','RETURN VISIT DATE');
-UPDATE temp_hiv_visit_v1 t
+UPDATE temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @returnVD	and o.voided = 0
 set	next_visit_date = o.value_datetime;
 
 -- transfers, referrals IN:
 set @tranRefer = concept_from_mapping('PIH','13169');
-UPDATE 	temp_hiv_visit_v1 t
+UPDATE 	temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @tranRefer and o.voided = 0
 set	rt_in_obs_group_id = o.obs_id;
 
 set @tranReferIn = concept_from_mapping('PIH','13712');
-UPDATE temp_hiv_visit_v1 t
+UPDATE temp_hiv_pmtct_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id = @tranReferIn and o.voided = 0
 set	referral_transfer_in = concept_name(o.value_coded,@locale);
 
 set @inExIn = concept_from_mapping('PIH','6401');
-UPDATE temp_hiv_visit_v1 t
+UPDATE temp_hiv_pmtct_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id = @inExIn and o.voided = 0
 set	internal_external_in = concept_name(o.value_coded, @locale);
 
 set @tranReferLoc = concept_from_mapping('PIH','8621');
 set @zlSite = concept_from_mapping('PIH','8855');
-UPDATE temp_hiv_visit_v1 t
+UPDATE temp_hiv_pmtct_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id = @tranReferLoc and o.voided = 0
 set referral_transfer_location_in = location_name(o.value_text)
 where internal_external_in = concept_name(@zlSite,@locale);
 
 set @exLocName = concept_from_mapping('PIH','11483');
-UPDATE temp_hiv_visit_v1 t
+UPDATE temp_hiv_pmtct_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_in_obs_group_id and o.concept_id = @exLocName and o.voided = 0
 set referral_transfer_location_in = o.value_text
 where internal_external_in <> concept_name(@zlSite,@locale);
 
 set @refWomensHealth = concept_from_mapping('PIH','13679');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @refWomensHealth and o.voided = 0
 set	referred_by_womens_health_in =	
 	 CASE o.value_coded
@@ -196,7 +196,7 @@ set	referred_by_womens_health_in =
 	END;
 
 set @pepfarSite = concept_from_mapping('PIH','13168');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id =@pepfarSite and o.voided = 0
 set referral_transfer_pepfar_partner_in =	
 	 CASE o.value_coded
@@ -206,36 +206,36 @@ set referral_transfer_pepfar_partner_in =
 
 -- transfers, referrals OUT:
 set @tranOtherLoc = concept_from_mapping('PIH','13170');
-UPDATE 	temp_hiv_visit_v1 t
+UPDATE 	temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @tranOtherLoc and o.voided = 0
 set rt_out_obs_group_id = o.obs_id;
 
 set @refTranOut = concept_from_mapping('PIH','13712');
-UPDATE temp_hiv_visit_v1 t
+UPDATE temp_hiv_pmtct_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id and o.concept_id = @refTranOut and o.voided = 0
 set	referral_transfer_out = concept_name(o.value_coded,	@locale);
 
 set @inExOut = concept_from_mapping('PIH','8854');
-UPDATE temp_hiv_visit_v1 t
+UPDATE temp_hiv_pmtct_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id and o.concept_id = @inExOut and o.voided = 0
 set	internal_external_out = concept_name(o.value_coded,	@locale);
 
 set @refTranLocOut = concept_from_mapping('PIH','8621');
-UPDATE temp_hiv_visit_v1 t
+UPDATE temp_hiv_pmtct_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id	and o.concept_id = @refTranLocOut and o.voided = 0
 set referral_transfer_location_out = location_name(o.value_text)
 where
 	internal_external_out = concept_name(@zlSite,@locale);
 
 set @exLocName = concept_from_mapping('PIH','11483');
-UPDATE temp_hiv_visit_v1 t
+UPDATE temp_hiv_pmtct_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id and o.concept_id = @exLocName and o.voided = 0
 set	referral_transfer_location_out = o.value_text
 where
 	internal_external_out <> concept_name(@zlSite,@locale);
 
 
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.obs_group_id = t.rt_out_obs_group_id and o.concept_id = @pepfarSite and o.voided = 0
 set	referral_transfer_pepfar_partner_out =	
 	 CASE o.value_coded
@@ -250,7 +250,7 @@ set @assignART = concept_from_mapping('PIH','2222');
 set @denial = concept_from_mapping('PIH','14666');
 set @treatPostponed_nonmed = concept_from_mapping('PIH','14842');
 
-UPDATE temp_hiv_visit_v1 t 
+UPDATE temp_hiv_pmtct_visit t 
 	inner join temp_obs tobs on tobs.encounter_id = t.encounter_id and concept_id = @eligART
 	and tobs.value_coded in 
 		(@refTreat,
@@ -262,12 +262,12 @@ set reason_not_on_ARV = concept_name(tobs.value_coded,@locale);
 
 set @feedPlan = concept_from_mapping('PIH','13642');
 -- breastfeeding data
-UPDATE 	temp_hiv_visit_v1 t
+UPDATE 	temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @feedPlan and o.voided = 0
 set breastfeeding_status = concept_name(o.value_coded, @locale);
 
 set @weanDate = concept_from_mapping('PIH','6889');
-UPDATE 	temp_hiv_visit_v1 t
+UPDATE 	temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @weanDate and o.voided = 0
 set last_breastfeeding_date = o.value_datetime;
 
@@ -292,7 +292,7 @@ and o.obs_group_id in
 	@prevProphConstruct,
 	@currProphConstruct)
 ))
-and encounter_id in (select encounter_id from temp_hiv_visit_v1);
+and encounter_id in (select encounter_id from temp_hiv_pmtct_visit);
 
 set @inhLine = concept_from_mapping('PIH', '13786');
 update temp_hiv_inh i 
@@ -324,7 +324,7 @@ update temp_hiv_inh i join obs o on i.encounter_id = o.encounter_id and o.obs_gr
 @treatmentStopDate)
 set i.inh_end_date = date(value_datetime);
 
-update temp_hiv_visit_v1 t  join temp_hiv_inh i on t.encounter_id = i.encounter_id
+update temp_hiv_pmtct_visit t  join temp_hiv_inh i on t.encounter_id = i.encounter_id
 set t.inh_line = i.inh_line,
 	t.inh_start_date = i.inh_start_date,
     t.inh_end_date = i.inh_end_date;
@@ -335,69 +335,69 @@ drop temporary table if exists temp_obs;
 create temporary table temp_obs 
 select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.date_created  
 from obs o
-inner join temp_hiv_visit_v1 t on t.encounter_id = o.encounter_id
+inner join temp_hiv_pmtct_visit t on t.encounter_id = o.encounter_id
 where o.voided = 0
 and o.concept_id = @hiv_risks;
 
 create index temp_obs_ci1 on temp_obs(encounter_id,concept_id,value_coded);
 
 set @sexuallyActiveWithMen = concept_from_mapping('PIH','10870');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @sexuallyActiveWithMen
 set t.sexually_active_with_men = if(o.obs_id is null, null,1);
 
 set @sexually_active_with_women = concept_from_mapping('PIH','10872');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @sexually_active_with_women
 set t.sexually_active_with_women = if(o.obs_id is null, null,1);
 
 set @intravenous_drug_use = concept_from_mapping('PIH','105');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @intravenous_drug_use
 set t.intravenous_drug_use = if(o.obs_id is null, null,1);
 
 set @blood_transfusion = concept_from_mapping('PIH','1063');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @blood_transfusion
 set t.blood_transfusion = if(o.obs_id is null, null,1);
 
 set @maternal_to_fetal_transmission = concept_from_mapping('PIH','11042');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @maternal_to_fetal_transmission
 set t.maternal_to_fetal_transmission = if(o.obs_id is null, null,1);
 
 set @accidental_exposure_to_blood = concept_from_mapping('PIH','11044');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @accidental_exposure_to_blood
 set t.accidental_exposure_to_blood = if(o.obs_id is null, null,1);
 
 set @sex_with_infected = concept_from_mapping('PIH','11060');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @sex_with_infected
 set t.sex_with_infected = if(o.obs_id is null, null,1);
 
 set @sex_with_drug_user = concept_from_mapping('PIH','11534');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @sex_with_drug_user
 set t.sex_with_drug_user = if(o.obs_id is null, null,1);
 
 set @heterosexual_sex_bisexual = concept_from_mapping('PIH','13001');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @heterosexual_sex_bisexual
 set t.heterosexual_sex_bisexual = if(o.obs_id is null, null,1);
 
 set @heterosexual_sex_blood_transfusion = concept_from_mapping('PIH','13000');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @heterosexual_sex_blood_transfusion
 set t.heterosexual_sex_blood_transfusion = if(o.obs_id is null, null,1);
 
 set @other_mode_of_transmission = concept_from_mapping('PIH','5622');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @other_mode_of_transmission
 set t.other_mode_of_transmission = if(o.obs_id is null, null,1);
 
 set @other_risk_factor = concept_from_mapping('PIH','11406');
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.value_coded = @other_risk_factor
 set t.other_risk_factor = if(o.obs_id is null, null,1);
 
@@ -414,7 +414,7 @@ drop temporary table if exists temp_obs;
 create temporary table temp_obs 
 select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.date_created  
 from obs o
-inner join temp_hiv_visit_v1 t on t.encounter_id = o.encounter_id
+inner join temp_hiv_pmtct_visit t on t.encounter_id = o.encounter_id
 where o.voided = 0
 and o.concept_id IN 
 	(@history_of_syphilis,
@@ -427,40 +427,40 @@ and o.concept_id IN
 
 create index temp_obs_ci on temp_obs(concept_id); 
 
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @history_of_syphilis
 set t.history_of_syphilis = value_coded_as_boolean(o.obs_id);
 
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @history_of_other_sti
 set t.history_of_other_sti = value_coded_as_boolean(o.obs_id);
 
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @victim_of_gbv
 set t.victim_of_gbv = value_coded_as_boolean(o.obs_id);
 
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @multiple_partners
 set t.multiple_partners = value_coded_as_boolean(o.obs_id);
 
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @without_condom
 set t.without_condom = value_coded_as_boolean(o.obs_id);
 
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @anal_sex
 set t.anal_sex = value_coded_as_boolean(o.obs_id);
 
-update temp_hiv_visit_v1 t
+update temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = @with_sex_worker
 set t.with_sex_worker = value_coded_as_boolean(o.obs_id);
 
 
 -- expected delivery date
-UPDATE  temp_hiv_visit_v1 t SET expected_delivery_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', '5596');
+UPDATE  temp_hiv_pmtct_visit t SET expected_delivery_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', '5596');
 
 -- Hiv test date
-UPDATE  temp_hiv_visit_v1 t SET hiv_test_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', 'HIV TEST DATE');
+UPDATE  temp_hiv_pmtct_visit t SET hiv_test_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', 'HIV TEST DATE');
 
 
 -- contacts
@@ -468,7 +468,7 @@ SET @relationship = CONCEPT_FROM_MAPPING('PIH', '13265');
 SET @first_name = CONCEPT_FROM_MAPPING('PIH', 'FIRST NAME');
 SET @last_name = CONCEPT_FROM_MAPPING('PIH', 'LAST NAME');
 SET @phone = CONCEPT_FROM_MAPPING('PIH', 'TELEPHONE NUMBER OF CONTACT');
-UPDATE temp_hiv_visit_v1 t SET has_provided_contact = (SELECT 1 FROM temp_obs o WHERE voided = 0 AND o.encounter_id = t.encounter_id AND 
+UPDATE temp_hiv_pmtct_visit t SET has_provided_contact = (SELECT 1 FROM temp_obs o WHERE voided = 0 AND o.encounter_id = t.encounter_id AND 
 o.concept_id IN (@relationship, @first_name, @last_name, @phone) GROUP BY o.encounter_id); 
 
 
@@ -491,7 +491,7 @@ tb_screening_date DATETIME
 );
 
 INSERT INTO temp_pmtct_tb_visits (patient_id, encounter_id)
-SELECT patient_id, encounter_id FROM temp_hiv_visit_v1;
+SELECT patient_id, encounter_id FROM temp_hiv_pmtct_visit;
 
 SET @present = CONCEPT_FROM_MAPPING('PIH','11563'); 
 SET @fever_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '11565');
@@ -527,11 +527,11 @@ UPDATE temp_pmtct_tb_visits t SET tb_screening_date = IF(cough_result_concept = 
               IF(chest_pain_result_concept = @present, t.obs_date,
                 NULL)))))))); 
 
-UPDATE temp_hiv_visit_v1 t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id);
+UPDATE temp_hiv_pmtct_visit t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id);
 
 set @yes = concept_from_mapping('PIH','1065');
 set @no = concept_from_mapping('PIH','1066');
-UPDATE 	temp_hiv_visit_v1 t
+UPDATE 	temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','14990') and o.voided = 0
 set delivery = 
 	CASE  o.value_coded
@@ -540,7 +540,7 @@ set delivery =
 	END;
 	
 
-UPDATE 	temp_hiv_visit_v1 t
+UPDATE 	temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','5599') and o.voided = 0
 set delivery_datetime = o.value_datetime;
 
@@ -602,4 +602,4 @@ SELECT
 	index_asc,
 	index_desc
 FROM
-	temp_hiv_visit_v1 t;
+	temp_hiv_pmtct_visit t;
