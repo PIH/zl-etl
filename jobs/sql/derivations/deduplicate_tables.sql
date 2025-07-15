@@ -144,3 +144,13 @@ from ncd_heart_failure_patient t
 inner join ncd_patient_table npt on npt.emr_id = t.emr_id
 inner join ncd_heart_failure_patient_staging nhfp on nhfp.emr_id = npt.emr_id and nhfp.site = npt.site
 ;
+
+
+-- -------------- deduplicate mch_patient_table -------------------
+-- since the mch_patient table is simply a row per patient with the most recent information
+-- if there is a record for the same patient at a different site, it should just remove the older one
+delete mch_patient 
+where exists
+(select 1 from mch_patient m2
+where m2.emr_id = mch_patient.emr_id 
+and mch_patient.latest_encounter_date  < m2.latest_encounter_date);
