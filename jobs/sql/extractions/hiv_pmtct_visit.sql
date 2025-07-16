@@ -74,7 +74,7 @@ index_desc                           INT
 );
 
 INSERT INTO temp_hiv_pmtct_visit(patient_id, encounter_id, visit_id, visit_date, date_entered, creator, encounter_location_id, encounter_type_id)
-SELECT patient_id, encounter_id, visit_id, encounter_datetime, date_created, creator, location_id, encounter_type  FROM encounter  WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup,@nitial_pmtct_encounter,@followup_pmtct_encounter)
+SELECT patient_id, encounter_id, visit_id, encounter_datetime, date_created, creator, location_id, encounter_type  FROM encounter  WHERE voided = 0 AND encounter_type IN (@hiv_intake, @hiv_followup,@initial_pmtct_encounter,@followup_pmtct_encounter)
 ;
 
 CREATE INDEX temp_hiv_pmtct_visit_pid ON temp_hiv_pmtct_visit (patient_id);
