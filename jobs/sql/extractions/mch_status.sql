@@ -1,7 +1,7 @@
 SET sql_safe_updates = 0;
 set @partition = '${partitionNum}';
 SET @mch_emr_id = (SELECT patient_identifier_type_id FROM patient_identifier_type WHERE uuid = 'a541af1e-105c-40bf-b345-ba1fd6a59b85');
-SET @mch_patient_program_id = (SELECT program_id FROM program WHERE uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73');
+SET @mch_program_id = (SELECT program_id FROM program WHERE uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73');
 SET @obgyn_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'd83e98fd-dc7b-420f-aa3f-36f648b4483d');
 
 ## patient
@@ -10,7 +10,7 @@ CREATE TEMPORARY TABLE temp_mch_status
 (
     patient_state_id            INT(11) NOT NULL AUTO_INCREMENT,
     patient_id                  INT(11),
-    patient_program_id          INT(11),
+    mch_program_id              INT(11),
     emr_id                      VARCHAR(15),
     location_id                 INT(11),
     enrollment_location         VARCHAR(255),
@@ -29,7 +29,7 @@ PRIMARY KEY (patient_state_id)
 
 insert into temp_mch_status
 	(patient_id,
-	patient_program_id,
+	mch_program_id,
 	state_id,
 	program_date_enrolled,
 	program_date_completed,
@@ -49,7 +49,7 @@ select
 	pp.location_id
 from patient_program pp 
 left outer join patient_state ps on pp.patient_program_id = ps.patient_program_id and ps.voided = 0
-where pp.program_id = @mch_patient_program_id 
+where pp.program_id = @mch_program_id 
 and pp.voided = 0 ;
 
 select * from patient_program pp ;
@@ -82,7 +82,7 @@ SET t.outcome = concept_name(outcome_concept_id , @locale);
 ### Final Query
 SELECT
 	concat(@partition,'-',t.patient_state_id) "patient_state_id",
-	concat(@partition,'-',t.patient_program_id) "patient_program_id",
+	concat(@partition,'-',t.mch_program_id) "mch_program_id",
 	emr_id,
     enrollment_location,
     program_date_enrolled,

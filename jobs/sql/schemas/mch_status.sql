@@ -1,7 +1,7 @@
 CREATE TABLE mch_status
 (
  patient_state_id       varchar(50),  
- patient_program_id     varchar(50),  
+ mch_program_id         varchar(50),  
  emr_id                 varchar(25),  
  enrollment_location    varchar(255), 
  program_date_enrolled  date,         
