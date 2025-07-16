@@ -17,6 +17,8 @@ CREATE TABLE pmtct_visits
     next_visit_date		    DATETIME,
     delivery                BIT,
     delivery_datetime       DATETIME,
+    index_asc               INT,
+    index_desc              INT
     index_program_asc       INT,
     index_program_desc      INT
 );
