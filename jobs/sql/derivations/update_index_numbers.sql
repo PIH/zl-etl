@@ -170,9 +170,9 @@ and avi.start_date = av.start_date;
 
 -- update index asc/desc on hiv_status table
 drop table if exists #hiv_status_prog_indexes;
-select  patient_program_id, start_date, status_id,
-ROW_NUMBER() over (PARTITION by patient_program_id order by start_date asc, status_id asc ) "index_asc",
-ROW_NUMBER() over (PARTITION by patient_program_id order by start_date desc, status_id desc ) "index_desc"
+select  hiv_program_id, start_date, status_id,
+ROW_NUMBER() over (PARTITION by hiv_program_id order by start_date asc, status_id asc ) "index_asc",
+ROW_NUMBER() over (PARTITION by hiv_program_id order by start_date desc, status_id desc ) "index_desc"
 into #hiv_status_prog_indexes
 from hiv_status av ;
 
@@ -180,14 +180,14 @@ update  av
 set av.index_program_ascending = avi.index_asc,
 	av.index_program_descending = avi.index_desc 
 from hiv_status av
-inner join #hiv_status_prog_indexes avi on avi.patient_program_id = av.patient_program_id
+inner join #hiv_status_prog_indexes avi on avi.hiv_program_id = av.hiv_program_id
 and avi.start_date = av.start_date
 and avi.status_id = av.status_id; 
 
 drop table if exists #hiv_status_pat_indexes;
-select  emr_id, start_date, patient_program_id, status_id,
-ROW_NUMBER() over (PARTITION by emr_id order by start_date ASC, patient_program_id ASC,  status_id ASC) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id order by start_date desc, patient_program_id desc,  status_id desc) "index_desc"
+select  emr_id, start_date, hiv_program_id, status_id,
+ROW_NUMBER() over (PARTITION by emr_id order by start_date ASC, hiv_program_id ASC,  status_id ASC) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id order by start_date desc, hiv_program_id desc,  status_id desc) "index_desc"
 into #hiv_status_pat_indexes
 from hiv_status av ;
 
@@ -196,7 +196,7 @@ set av.index_patient_ascending = avi.index_asc,
 	av.index_patient_descending = avi.index_desc 
 from hiv_status av
 inner join #hiv_status_pat_indexes avi on avi.emr_id = av.emr_id
-and avi.patient_program_id = av.patient_program_id
+and avi.hiv_program_id = av.hiv_program_id
 and avi.start_date = av.start_date
 and avi.status_id = av.status_id; 
 
