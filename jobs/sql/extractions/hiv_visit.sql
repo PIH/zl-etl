@@ -62,6 +62,8 @@ without_condom                       BIT,
 anal_sex                             BIT,          
 with_sex_worker                      BIT,          
 other_risk_factor                    BIT,          
+index_asc                            INT,          
+index_desc                           INT  
 index_program_asc                    INT,          
 index_program_desc                   INT           
 );
@@ -500,6 +502,8 @@ SELECT
 	anal_sex,
 	with_sex_worker,
 	other_risk_factor,
+	index_asc,
+	index_desc,
 	index_program_asc,
 	index_program_desc
 FROM
