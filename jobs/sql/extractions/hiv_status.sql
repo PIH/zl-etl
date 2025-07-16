@@ -9,7 +9,7 @@ CREATE TEMPORARY TABLE temp_status
 (
 status_id INT(11) AUTO_INCREMENT,
 patient_id INT(11),
-patient_program_id INT(11),
+hiv_program_id INT(11),
 location_id INT(11),
 outcome INT(1),
 status_concept_id INT(11),
@@ -34,7 +34,7 @@ PRIMARY KEY (status_id)
 
 
 -- load all enrollments into temp table
-INSERT INTO temp_status (patient_id, patient_program_id, location_id, start_date)
+INSERT INTO temp_status (patient_id, hiv_program_id, location_id, start_date)
 SELECT patient_id, patient_program_id, location_id, date_enrolled
 FROM patient_program
 WHERE program_id = @hiv_program
@@ -42,7 +42,7 @@ AND voided = 0;
 
 
 -- load all status changes into temp table
-INSERT INTO temp_status (patient_id, patient_program_id, status_concept_id, location_id, start_date)
+INSERT INTO temp_status (patient_id, hiv_program_id, status_concept_id, location_id, start_date)
 SELECT pp.patient_id, ps.patient_program_id, pws.concept_id, pp.location_id,ps.start_date
 FROM patient_state ps
 INNER JOIN patient_program pp ON pp.patient_program_id = ps.patient_program_id AND pp.program_id = @hiv_program
@@ -50,7 +50,7 @@ INNER JOIN program_workflow_state pws WHERE pws.program_workflow_state_id = ps.s
 AND ps.voided = 0;
 
 -- load all outcomes into temp table
-INSERT INTO temp_status (patient_id, patient_program_id, status_concept_id, location_id, start_date, end_date, outcome)
+INSERT INTO temp_status (patient_id, hiv_program_id, status_concept_id, location_id, start_date, end_date, outcome)
 SELECT patient_id, patient_program_id, outcome_concept_id, location_id, date_completed, date_completed,1
 FROM patient_program
 WHERE program_id = @hiv_program
@@ -134,7 +134,7 @@ FROM (SELECT
       FROM temp_status,
                     (SELECT @r:= 1) AS r,
                     (SELECT @u:= 0) AS u
-            ORDER BY patient_id ASC, start_date ASC, patient_program_id ASC,  status_id ASC
+            ORDER BY patient_id ASC, start_date ASC, hiv_program_id ASC,  status_id ASC
         ) index_program_ascending );
 /*
 UPDATE temp_status t
@@ -231,7 +231,7 @@ INSERT INTO temp_hiv_latest_transfer
         end_date,
         index_patient_ascending
 )
-SELECT patient_id, patient_program_id, location_id, status_concept_id, start_date, end_date, index_patient_ascending
+SELECT patient_id, hiv_program_id, location_id, status_concept_id, start_date, end_date, index_patient_ascending
 FROM temp_status WHERE status_concept_id = 
 (SELECT concept_id FROM concept_name WHERE voided = 0 AND name = "Transfer to another ZL site" AND concept_name_type = "FULLY_SPECIFIED" AND locale = "en") ORDER BY patient_id;
 
@@ -255,7 +255,7 @@ SELECT
     DATE(end_date),
     IFNULL(return_to_care,0) "return_to_care",
     IFNULL(currently_late_for_pickup,0) "currently_late_for_pickup",
-    patient_program_id,
+    hiv_program_id,
     index_program_ascending,
     index_program_descending,
     index_patient_ascending,
