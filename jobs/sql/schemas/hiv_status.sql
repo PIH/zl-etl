@@ -9,7 +9,7 @@ create table hiv_status
     end_date                  date,
     return_to_care            int,
     currently_late_for_pickup int,
-    patient_program_id        int,
+    hiv_program_id        int,
     index_program_ascending   int,
     index_program_descending  int,
     index_patient_ascending   int,

@@ -238,14 +238,14 @@ inner join #hiv_viral_load_indexes avi on av.hiv_vl_id = avi.hiv_vl_id
 -- update index asc/desc on hiv_visit table
 drop table if exists #hiv_visit_indexes;
 select  emr_id, visit_date, encounter_id,
-ROW_NUMBER() over (PARTITION by emr_id order by visit_date ASC, encounter_id ASC) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id order by visit_date desc, encounter_id desc ) "index_desc"
+ROW_NUMBER() over (PARTITION by hiv_program_id order by visit_date ASC, encounter_id ASC) "index_program_asc",
+ROW_NUMBER() over (PARTITION by hiv_program_id order by visit_date desc, encounter_id desc ) "index_program_desc"
 into #hiv_visit_indexes
 from hiv_visit av ;
 
 update av
-set av.index_asc = avi.index_asc,
-	av.index_desc = avi.index_desc 
+set av.index_program_asc = avi.index_program_asc,
+	av.index_program_desc = avi.index_program_desc 
 from hiv_visit av
 inner join #hiv_visit_indexes avi on avi.emr_id = av.emr_id
 and avi.encounter_id = av.encounter_id
@@ -317,14 +317,14 @@ and avi.pmtct_enrollment_date = av.pmtct_enrollment_date;
 -- update index asc/desc on pmtct_visits table
 drop table if exists #pmtct_visits_indexes;
 select  emr_id, visit_date,visit_id,encounter_id,
-ROW_NUMBER() over (PARTITION by emr_id order by visit_date asc, visit_id asc, encounter_id asc) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id order by visit_date DESC, visit_id DESC, encounter_id DESC) "index_desc"
+ROW_NUMBER() over (PARTITION by hiv_program_id order by visit_date asc, visit_id asc, encounter_id asc) "index_program_asc",
+ROW_NUMBER() over (PARTITION by hiv_program_id order by visit_date DESC, visit_id DESC, encounter_id DESC) "index_program_desc"
 into #pmtct_visits_indexes
 from pmtct_visits av ;
 
 update av
-set av.index_asc = avi.index_asc,
-	av.index_desc = avi.index_desc 
+set av.index_program_asc = avi.index_program_asc,
+	av.index_program_desc = avi.index_program_desc 
 from pmtct_visits av
 inner join #pmtct_visits_indexes avi on avi.emr_id = av.emr_id
 and avi.visit_date = av.visit_date
