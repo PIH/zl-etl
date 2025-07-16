@@ -25,7 +25,9 @@ CREATE TEMPORARY TABLE temp_pmtct_visit (
  last_breastfeeding_date DATETIME,     
  next_visit_date         DATETIME,     
  delivery                BOOLEAN,      
- delivery_datetime       DATETIME,     
+ delivery_datetime       DATETIME,  
+ index_asc               INT,          
+ index_desc              INT   	
  index_program_asc       INT,          
  index_program_desc      INT           
 );
@@ -255,6 +257,8 @@ last_breastfeeding_date,
 next_visit_date,
 delivery,
 delivery_datetime,
+index_asc,
+index_desc	
 index_program_asc,
 index_program_desc
 FROM temp_pmtct_visit ORDER BY patient_id, visit_date, visit_id;
