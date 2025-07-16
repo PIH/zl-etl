@@ -9,7 +9,7 @@ drop temporary table if exists temp_j9;
 create temporary table temp_j9
 (
 patient_id                      int,          
-patient_program_id              int,          
+mch_program_id                  int,          
 patient_age                     int,          
 date_enrolled                   datetime,     
 date_completed                  datetime,     
@@ -59,7 +59,7 @@ prenatal_teas                   varchar(255)
 );
 
 -- insert one row for every patient enrollment row 
-insert into temp_j9 (patient_id,patient_program_id,date_enrolled,date_completed)
+insert into temp_j9 (patient_id,mch_program_id,date_enrolled,date_completed)
 select patient_id,patient_program_id,date_enrolled,date_completed 
 from patient_program pp 
 where program_id = @mchProgram
@@ -183,7 +183,7 @@ create index temp_obs_ci6 on temp_obs(obs_group_id, concept_id);
 create index temp_obs_oi on temp_obs(obs_id);
  
 update temp_j9 t
-set program_state = currentProgramState(t.patient_program_id, @mchWorkflow, @locale);
+set program_state = currentProgramState(t.mch_program_id, @mchWorkflow, @locale);
 
 -- mothers group
 update temp_j9 t 
@@ -330,7 +330,7 @@ set number_family_planning_visits =
 
 -- final output
 Select
-concat(@partition,'-',t.patient_program_id) "patient_program_id",
+concat(@partition,'-',t.mch_program_id) "mch_program_id",
 zlemr(patient_id) "emr_id",
 patient_age,
 date_enrolled,
