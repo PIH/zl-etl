@@ -27,7 +27,7 @@ CREATE TEMPORARY TABLE temp_pmtct_visit (
  delivery                BOOLEAN,      
  delivery_datetime       DATETIME,  
  index_asc               INT,          
- index_desc              INT   	
+ index_desc              INT,   	
  index_program_asc       INT,          
  index_program_desc      INT           
 );
