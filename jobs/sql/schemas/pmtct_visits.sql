@@ -18,7 +18,7 @@ CREATE TABLE pmtct_visits
     delivery                BIT,
     delivery_datetime       DATETIME,
     index_asc               INT,
-    index_desc              INT
+    index_desc              INT,
     index_program_asc       INT,
     index_program_desc      INT
 );
