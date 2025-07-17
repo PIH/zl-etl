@@ -412,7 +412,7 @@ set @with_sex_worker = concept_from_mapping('PIH','11045');
 
 drop temporary table if exists temp_obs;
 create temporary table temp_obs 
-select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.date_created  
+select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.date_created, o.value_text,o.value_datetime, o.comments, o.obs_datetime  
 from obs o
 inner join temp_hiv_pmtct_visit t on t.encounter_id = o.encounter_id
 where o.voided = 0
