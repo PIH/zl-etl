@@ -376,8 +376,8 @@ set current_outcome = pp.outcome,
     current_outcome_date = pp.date_completed,
     enrollment_date = pp.date_enrolled
     from hiv_patient_summary_status_staging t
-inner join hiv_patient_program pp on pp.patient_program_id  =
-    (select top 1 patient_program_id from hiv_patient_program pp2
+inner join hiv_patient_program pp on pp.hiv_program_id  =
+    (select top 1 hiv_program_id from hiv_patient_program pp2
     where pp2.emr_id = t.emr_id
     and pp2.date_enrolled <= GETDATE()
     order by pp2.date_enrolled desc,  isnull(pp2.date_completed,'9999-12-31')  desc)
@@ -386,8 +386,8 @@ where pp.date_completed is not null;
 update t
 set enrollment_date = pp.date_enrolled
     from hiv_patient_summary_status_staging t
-inner join hiv_patient_program pp on pp.patient_program_id  =
-    (select top 1 patient_program_id from hiv_patient_program pp2
+inner join hiv_patient_program pp on pp.hiv_program_id  =
+    (select top 1 hiv_program_id from hiv_patient_program pp2
     where pp2.emr_id = t.emr_id
     and pp2.date_enrolled <= GETDATE()
     order by pp2.date_enrolled desc,  isnull(pp2.date_completed,'9999-12-31')  desc)
