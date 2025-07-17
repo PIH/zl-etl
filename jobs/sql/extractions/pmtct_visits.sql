@@ -258,7 +258,7 @@ next_visit_date,
 delivery,
 delivery_datetime,
 index_asc,
-index_desc	
+index_desc,	
 index_program_asc,
 index_program_desc
 FROM temp_pmtct_visit ORDER BY patient_id, visit_date, visit_id;
