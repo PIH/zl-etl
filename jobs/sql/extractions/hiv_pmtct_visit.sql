@@ -7,6 +7,8 @@ SET @hiv_followup = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '
 SET @initial_pmtct_encounter = ENCOUNTER_TYPE('584124b9-1f10-4757-ba09-91fc9075af92');
 SET @followup_pmtct_encounter =  ENCOUNTER_TYPE('95e03e7d-9aeb-4a99-bd7a-94e8591ec2c5');
 
+set @hiv_program = (select program_id from program WHERE uuid = 'b1cb1fc1-5190-4f7a-af08-48870975dafc');
+
 DROP TEMPORARY TABLE IF EXISTS temp_hiv_pmtct_visit;
 CREATE TEMPORARY TABLE temp_hiv_pmtct_visit
 (
@@ -14,6 +16,7 @@ encounter_id                         INT(11),
 visit_id                             INT(11),      
 patient_id                           INT(11),      
 emr_id                               VARCHAR(25),  
+hiv_program_id                       INT(11),
 hivemr_v1                            VARCHAR(25),  
 encounter_type_id                    INT(11),      
 encounter_type                       VARCHAR(255), 
@@ -70,7 +73,9 @@ has_provided_contact    BIT,
 delivery                BOOLEAN,      
 delivery_datetime       DATETIME,    
 index_asc                            INT,          
-index_desc                           INT           
+index_desc                           INT,
+index_program_asc                    INT,          
+index_program_desc                   INT            
 );
 
 INSERT INTO temp_hiv_pmtct_visit(patient_id, encounter_id, visit_id, visit_date, date_entered, creator, encounter_location_id, encounter_type_id)
@@ -544,10 +549,14 @@ UPDATE 	temp_hiv_pmtct_visit t
 inner join temp_obs o on o.encounter_id = t.encounter_id and o.concept_id = concept_from_mapping('PIH','5599') and o.voided = 0
 set delivery_datetime = o.value_datetime;
 
+update temp_hiv_pmtct_visit t
+set hiv_program_id = patient_program_id_from_encounter(patient_id, @hiv_program, encounter_id);
+
 
 SELECT
 	concat(@partition, '-', encounter_id),
 	concat(@partition, '-', visit_id),
+	concat(@partition, '-', hiv_program_id),
 	emr_id,
 	hivemr_v1,
 	encounter_type,
@@ -600,6 +609,8 @@ SELECT
 	delivery,      
 	delivery_datetime,
 	index_asc,
-	index_desc
+	index_desc,
+	index_program_asc,
+	index_program_desc
 FROM
 	temp_hiv_pmtct_visit t;

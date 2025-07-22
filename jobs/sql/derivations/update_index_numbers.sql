@@ -453,3 +453,20 @@ set ce.index_asc = cei.index_asc,
 	ce.index_desc = cei.index_desc 
 from hiv_psychosocial_encounter ce
 inner join #hiv_psychosocial_encounter_indexes cei on cei.encounter_id = ce.encounter_id; 
+
+
+-- update program index asc/desc on hiv_pmtct_visit table
+drop table if exists #hiv_pmtct_visit_indexes;
+select  emr_id, visit_date, encounter_id,
+ROW_NUMBER() over (PARTITION by hiv_program_id order by visit_date ASC, encounter_id ASC) "index_program_asc",
+ROW_NUMBER() over (PARTITION by hiv_program_id order by visit_date desc, encounter_id desc ) "index_program_desc"
+into #hiv_pmtct_visit_indexes
+from hiv_pmtct_visit av ;
+
+update av
+set av.index_program_asc = avi.index_program_asc,
+	av.index_program_desc = avi.index_program_desc 
+from hiv_pmtct_visit av
+inner join #hiv_pmtct_visit_indexes avi on avi.emr_id = av.emr_id
+and avi.encounter_id = av.encounter_id
+and avi.visit_date = av.visit_date; 
