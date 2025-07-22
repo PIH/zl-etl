@@ -2,6 +2,7 @@ CREATE TABLE hiv_pmtct_visit
 (                                                           
 encounter_id                         VARCHAR(25),
 visit_id                             VARCHAR(25),
+hiv_program_id                       VARCHAR(25),
 emr_id                               VARCHAR(25),           
 hivemr_v1                            VARCHAR(25),           
 encounter_type                       VARCHAR(255),          
@@ -54,5 +55,7 @@ has_provided_contact    BIT,
 delivery                BIT,
 delivery_datetime       DATETIME,
 index_asc                            INT,                   
-index_desc                           INT                    
+index_desc                           INT,
+index_program_asc                    INT,                   
+index_program_desc                   INT                         
 );                                                          
