@@ -6,6 +6,7 @@ CREATE TABLE user_logins
     date_logged_out         datetime,
     date_expired            datetime,
     active_duration_minutes int,
+    ip_address              varchar(40),
     index_asc               int,
     index_desc              int
 );
