@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Cerca La Source Mental Health Data"
+configuration:
+  iterations:
+    - siteName: "cercalasource_mh"
+      partitionNum: "15"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"

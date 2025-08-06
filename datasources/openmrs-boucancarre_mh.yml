@@ -1,0 +1,8 @@
+databaseType: "mysql"
+host: ${datasources.openmrs.boucancarre_mh.host}
+port: ${datasources.openmrs.boucancarre_mh.port}
+databaseName: ${datasources.openmrs.boucancarre_mh.databaseName}
+user: ${datasources.openmrs.boucancarre_mh.user}
+password: ${datasources.openmrs.boucancarre_mh.password}
+options: ${datasources.openmrs.boucancarre_mh.options}
+containerName: ${datasources.openmrs.boucancarre_mh.containerName}

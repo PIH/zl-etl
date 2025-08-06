@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Boucan Carre Mental Health Data"
+configuration:
+  iterations:
+    - siteName: "boucancarre_mh"
+      partitionNum: "14"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"
