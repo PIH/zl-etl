@@ -84,6 +84,7 @@ SELECT patient_id, encounter_id, visit_id, encounter_datetime, date_created, cre
 
 CREATE INDEX temp_hiv_pmtct_visit_pid ON temp_hiv_pmtct_visit (patient_id);
 CREATE INDEX temp_hiv_pmtct_visit_eid ON temp_hiv_pmtct_visit (encounter_id);
+
 	
 DELETE FROM temp_hiv_pmtct_visit 
 WHERE patient_id IN (SELECT
@@ -462,10 +463,12 @@ set t.with_sex_worker = value_coded_as_boolean(o.obs_id);
 
 
 -- expected delivery date
-UPDATE  temp_hiv_pmtct_visit t SET expected_delivery_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', '5596');
+SET @expected_delivery_date_ci = concept_from_mapping('PIH', '5596');
+UPDATE  temp_hiv_pmtct_visit t SET expected_delivery_date = obs_value_datetime_from_temp_using_concept_id(t.encounter_id, @expected_delivery_date_ci);
 
 -- Hiv test date
-UPDATE  temp_hiv_pmtct_visit t SET hiv_test_date = obs_value_datetime_from_temp(t.encounter_id, 'PIH', 'HIV TEST DATE');
+SET @hiv_test_cate_ci = concept_from_mapping('PIH', 'HIV TEST DATE');
+UPDATE  temp_hiv_pmtct_visit t SET hiv_test_date = obs_value_datetime_from_temp_using_concept_id(t.encounter_id, @hiv_test_cate_ci);
 
 
 -- contacts
@@ -508,6 +511,8 @@ SET @bloody_cough_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '970');
 SET @dyspnea_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '5960');
 SET @chest_pain_result_concept_id = CONCEPT_FROM_MAPPING('PIH', '136');
 
+create index temp_pmtct_tb_visits_ei on temp_pmtct_tb_visits(encounter_id);
+
 UPDATE temp_pmtct_tb_visits t
 INNER JOIN temp_obs o ON t.encounter_id = o.encounter_id AND value_coded IN 
 (
@@ -532,7 +537,7 @@ UPDATE temp_pmtct_tb_visits t SET tb_screening_date = IF(cough_result_concept = 
               IF(chest_pain_result_concept = @present, t.obs_date,
                 NULL)))))))); 
 
-UPDATE temp_hiv_pmtct_visit t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id);
+UPDATE temp_hiv_pmtct_visit t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id); 
 
 set @yes = concept_from_mapping('PIH','1065');
 set @no = concept_from_mapping('PIH','1066');
