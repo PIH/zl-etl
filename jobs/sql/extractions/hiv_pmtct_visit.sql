@@ -537,7 +537,6 @@ UPDATE temp_pmtct_tb_visits t SET tb_screening_date = IF(cough_result_concept = 
               IF(chest_pain_result_concept = @present, t.obs_date,
                 NULL)))))))); 
 
-
 UPDATE temp_hiv_pmtct_visit t SET tb_screening_date = (SELECT tb_screening_date FROM temp_pmtct_tb_visits tp WHERE tp.encounter_id = t.encounter_id); 
 
 set @yes = concept_from_mapping('PIH','1065');
