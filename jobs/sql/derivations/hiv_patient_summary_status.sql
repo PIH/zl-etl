@@ -31,7 +31,9 @@ CREATE TABLE hiv_patient_summary_status_staging
  next_visit_date                  date,          
  next_med_pickup_date             date,          
  days_late_for_next_visit         int,           
- days_late_for_next_med_pickup    int,           
+ days_late_for_next_med_pickup    int,
+ last_viral_load_order_date       date,
+ last_viral_load_status           varchar(255),
  last_viral_load_collection_date  date,         
  last_viral_load_results_date     date,          
  last_viral_load_numeric          int,           
@@ -285,10 +287,14 @@ update t
 set last_viral_load_collection_date = hv.vl_sample_taken_date ,
 	last_viral_load_results_date = hv.vl_result_date ,
     last_viral_load_numeric = hv.viral_load ,
-    last_viral_load_undetected = IIF(hv.vl_coded_results <> 'Detected','t',null)
+    last_viral_load_undetected = IIF(hv.vl_coded_results <> 'Detected','t',null),
+    last_viral_load_order_date = hv.order_date,
+    last_viral_load_status = hv.status        
     from hiv_patient_summary_status_staging t
 inner join hiv_viral_load hv on hv.emr_id = t.emr_id and hv.order_desc  = 1
 ;
+
+
 
 update t
 set months_since_last_viral_load = DATEDIFF(month, t.last_viral_load_collection_date , GETDATE())

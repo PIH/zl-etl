@@ -18,6 +18,9 @@ create table hiv_monthly_reporting_staging
     latest_expected_dispensing_date       DATETIME,
     dispensing_days_late                  INT,
     latest_months_dispensed               INT,
+    latest_hiv_vl_id                      VARCHAR(50),
+    latest_hiv_viral_load_order_date      DATE,
+    latest_hiv_viral_load_status          VARCHAR(50),
     latest_hiv_viral_load_collection_date DATETIME,
     latest_hiv_viral_load_results_date    DATETIME,
     latest_hiv_viral_load_coded           VARCHAR(255),
@@ -75,13 +78,6 @@ WHERE  ( arv_1_med IS NOT NULL
     OR  arv_2_med IS NOT NULL
     OR arv_3_med IS NOT NULL)
 ;
-
-CREATE OR ALTER VIEW all_reporting_viral AS
-SELECT  hvl.specimen_encounter_id ,hvl.emr_id ,x.reporting_date ,hvl.vl_coded_results,hvl.viral_load,hvl.vl_sample_taken_date, hvl.vl_result_date 
-FROM hiv_viral_load hvl INNER JOIN (
-    SELECT DISTINCT dd.LastDayofMonth reporting_date  FROM Dim_Date dd) x
-                                   on EOMONTH(hvl.vl_sample_taken_date) <= x.reporting_date
-                                       AND x.reporting_date <= EOMONTH(CAST(GETDATE() AS date));
 
 CREATE OR ALTER VIEW all_reporting_reg AS
 SELECT hr.encounter_id ,hr.emr_id ,x.reporting_date ,hr.encounter_datetime ,hr.art_treatment_line
@@ -196,28 +192,24 @@ ON t1.emr_id =  ad.emr_id
     AND t1.latest_dispensing_date=ad.dispense_date;
 
 -- ############################### HIV Viral Data ##################################################################
-
 UPDATE t1
-SET t1.latest_hiv_viral_load_collection_date = x.vl_sample_taken_date,
-	t1.latest_hiv_viral_load_results_date = x.vl_result_date
-    FROM  hiv_monthly_reporting_staging t1 
-LEFT OUTER JOIN 
-(
-	SELECT emr_id,reporting_date,max(vl_sample_taken_date)  vl_sample_taken_date, max(vl_result_date) vl_result_date FROM all_reporting_viral
-	GROUP BY emr_id,reporting_date
-) x
-ON t1.emr_id =  x.emr_id AND t1.reporting_date=x.reporting_date;
+SET t1.latest_hiv_vl_id = vl.hiv_vl_id 
+from hiv_monthly_reporting_staging t1
+inner join hiv_viral_load vl on vl.hiv_vl_id = 
+	(select top 1 vl2.hiv_vl_id from hiv_viral_load vl2
+	where vl2.emr_id = t1.emr_id
+	and coalesce(vl_sample_taken_date, date_entered ) <= t1.reporting_date
+	order by vl_sample_taken_date desc, date_entered desc);
 
-
-UPDATE t1
-SET t1.latest_hiv_viral_load_coded = avl.vl_coded_results,
-    t1.latest_hiv_viral_load=avl.viral_load
-    FROM  hiv_monthly_reporting_staging t1 
-LEFT OUTER JOIN all_reporting_viral avl
-ON t1.emr_id =  avl.emr_id
-    AND t1.reporting_date=avl.reporting_date
-    AND t1.latest_hiv_viral_load_collection_date=avl.vl_sample_taken_date;
-
+UPDATE t1 
+SET t1.latest_hiv_viral_load_collection_date = vl.vl_sample_taken_date,
+	t1.latest_hiv_viral_load_results_date = vl.vl_result_date,
+	t1.latest_hiv_viral_load_order_date = vl.order_date,
+	t1.latest_hiv_viral_load_status = vl.status
+from hiv_monthly_reporting_staging t1 
+inner join hiv_viral_load vl on vl.hiv_vl_id = t1.latest_hiv_vl_id 
+;
+	
 -- ############################### HIV Regimens ##################################################################
 
 UPDATE t1
@@ -433,6 +425,6 @@ update hiv_monthly_reporting_staging set htn_diagnosis = 0;
 update hiv_monthly_reporting_staging set htn_diagnosis = 1 where latest_htn_diagnosis_date is not null;
 
 -- ############################### rename table ##################################################################
-
+alter table hiv_monthly_reporting_staging drop column latest_hiv_vl_id ;
 DROP TABLE IF EXISTS hiv_monthly_reporting;
 EXEC sp_rename 'hiv_monthly_reporting_staging', 'hiv_monthly_reporting';
