@@ -166,7 +166,38 @@ set av.index_ascending_patient = avi.index_asc,
 from hiv_regimens av
 inner join #hiv_regimens_pat_indexes avi on avi.emr_id = av.emr_id
 and avi.order_id = av.order_id
-and avi.start_date = av.start_date; 
+and avi.start_date = av.start_date;
+
+-- update index on asc/desc on hiv_patient_program table grouped by patient and sorted by date_enrolled, date_completed and hiv_program_id
+drop table if exists #hiv_patient_program_pat_indexes;
+    select emr_id, date_enrolled, date_completed, hiv_program_id,
+    ROW_NUMBER() over (PARTITION by emr_id
+        order by
+            date_enrolled asc,
+            CASE
+                WHEN date_completed IS NULL THEN 1
+                ELSE 0
+            END asc,
+            date_completed asc,
+            hiv_program_id  asc) "index_asc",
+    ROW_NUMBER() over (PARTITION by emr_id
+            order by
+                date_enrolled desc,
+                CASE
+                    WHEN date_completed IS NULL THEN 1
+                    ELSE 0
+                END desc,
+                date_completed desc,
+                hiv_program_id desc) "index_desc"
+into  #hiv_patient_program_pat_indexes
+from hiv_patient_program av ;
+
+update  av
+set av.index_asc = avi.index_asc,
+    av.index_desc = avi.index_desc
+    from hiv_patient_program av
+inner join #hiv_patient_program_pat_indexes avi
+on av.hiv_program_id = avi.hiv_program_id;
 
 -- update index asc/desc on hiv_status table
 drop table if exists #hiv_status_prog_indexes;
