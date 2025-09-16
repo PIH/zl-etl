@@ -5,5 +5,7 @@ create table hiv_patient_program
     date_enrolled      DATE,
     date_completed     DATE,
     location           VARCHAR(255),
-    outcome            VARCHAR(255)
+    outcome            VARCHAR(255),
+    index_asc          INT,
+    index_desc         INT
 );

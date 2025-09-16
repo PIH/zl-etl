@@ -9,7 +9,9 @@ CREATE TEMPORARY TABLE temp_hiv_patient_program
   location_id int,
   location varchar(255),
   outcome_concept_id int,
-  outcome varchar(255)
+  outcome varchar(255),
+  index_asc	int,
+  index_desc int
 );
 
 INSERT into temp_hiv_patient_program (hiv_program_id, patient_id, date_enrolled, date_completed, location_id,outcome_concept_id)
@@ -38,5 +40,7 @@ select
        date_enrolled,
        date_completed,
        location,
-       outcome
+       outcome,
+       index_asc,
+       index_desc
 from temp_hiv_patient_program;
