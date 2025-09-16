@@ -171,8 +171,8 @@ and avi.start_date = av.start_date;
 -- update index on asc/desc on hiv_patient_program table grouped by patient and sorted by date_enrolled, date_completed and hiv_program_id
 drop table if exists #hiv_patient_program_pat_indexes;
     select emr_id, date_enrolled, date_completed, hiv_program_id,
-ROW_NUMBER() over (PARTITION by emr_id order by hiv_program_id asc, date_completed asc, date_enrolled asc) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id order by hiv_program_id desc, date_completed desc, date_enrolled desc) "index_desc"
+ROW_NUMBER() over (PARTITION by emr_id order by date_enrolled asc, date_completed asc, hiv_program_id  asc) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id order by date_enrolled desc, date_completed desc, hiv_program_id desc) "index_desc"
 into  #hiv_patient_program_pat_indexes
 from hiv_patient_program av ;
 
