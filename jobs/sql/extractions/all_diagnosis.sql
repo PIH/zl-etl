@@ -33,7 +33,8 @@ CREATE TEMPORARY TABLE temp_diagnoses
  certainty                varchar(255),   
  coded                    varchar(255),   
  diagnosis_concept        int(11),        
- diagnosis_coded_fr       varchar(255),   
+ diagnosis_coded_fr       varchar(255),  
+ diagnosis_coded_en       varchar(255),
  date_created             datetime,      
  icd10_code               varchar(255),   
  weekly_notifiable        int(1),         
@@ -96,8 +97,9 @@ create index temp_obs_ogi on temp_obs(obs_group_id);
 create index temp_obs_ci1 on temp_obs(obs_group_id, concept_id);
 
  -- details for coded diagnoses
-update temp_diagnoses t set t.diagnosis_entered = concept_name(diagnosis_concept,'en');
+update temp_diagnoses t set t.diagnosis_entered = concept_name(diagnosis_concept,'fr');
 update temp_diagnoses t set t.diagnosis_coded_fr = concept_name(diagnosis_concept,'fr');
+update temp_diagnoses t set t.diagnosis_coded_en = concept_name(diagnosis_concept,'en');
 
 set @dx_order =  concept_from_mapping( 'PIH','7537');
 update temp_diagnoses t
@@ -355,6 +357,7 @@ d.certainty,
 d.coded,
 d.diagnosis_concept,
 d.diagnosis_coded_fr,
+d.diagnosis_coded_en,
 d.icd10_code,
 d.weekly_notifiable,
 d.urgent,
