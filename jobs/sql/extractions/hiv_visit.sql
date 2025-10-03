@@ -42,7 +42,9 @@ encounter_location_id                INT(11),
 visit_location                       VARCHAR(255), 
 inh_line                             VARCHAR(50),  
 inh_start_date                       DATE,         
-inh_end_date                         DATE,         
+inh_end_date                         DATE,     
+rif_and_inh_start_date               DATE,
+rif_and_inh_end_date                 DATE,
 sexually_active_with_men             BIT,          
 sexually_active_with_women           BIT,          
 intravenous_drug_use                 BIT,          
@@ -271,17 +273,19 @@ drop temporary table if exists temp_hiv_inh;
 create temporary table temp_hiv_inh
 (obs_group_id int, 
 encounter_id int, 
+drug int,
 inh_line varchar(50), 
 inh_start_date date, 
 inh_end_date date);
 
 set @isoniazid = concept_from_mapping('PIH', 'ISONIAZID');
+set @rif_inh = concept_from_mapping('PIH','20468');
 set @prevProphConstruct = concept_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT');
 set @currProphConstruct = concept_from_mapping('PIH', 'CURRENT PROPHYLAXIS TREATMENT CONSTRUCT');
 
-insert into temp_hiv_inh(obs_group_id, encounter_id)
-select obs_group_id, encounter_id from obs o where voided = 0 and 
-value_coded = @isoniazid
+insert into temp_hiv_inh(obs_group_id, encounter_id, drug)
+select obs_group_id, encounter_id, value_coded from obs o where voided = 0 and 
+value_coded in (@isoniazid, @rif_inh)
 and o.obs_group_id in
 ((select obs_id from obs where voided = 0 and concept_id in (
 	@prevProphConstruct,
@@ -295,7 +299,8 @@ set inh_line =
 	(select concept_name(value_coded, @locale) from obs o 
 	where o.obs_group_id = i.obs_group_id 
 	and voided = 0
-	and concept_id = @inhLine);
+	and concept_id = @inhLine)
+where drug = @isoniazid;
 
 set @drugStartDate = concept_from_mapping('PIH', 'HISTORICAL DRUG START DATE');
 set @treatmentStartDate = concept_from_mapping('PIH', '11131');
@@ -319,10 +324,16 @@ update temp_hiv_inh i join obs o on i.encounter_id = o.encounter_id and o.obs_gr
 @treatmentStopDate)
 set i.inh_end_date = date(value_datetime);
 
-update temp_hiv_visit t  join temp_hiv_inh i on t.encounter_id = i.encounter_id
+update temp_hiv_visit t inner join temp_hiv_inh i on t.encounter_id = i.encounter_id
+and i.drug = @isoniazid
 set t.inh_line = i.inh_line,
 	t.inh_start_date = i.inh_start_date,
     t.inh_end_date = i.inh_end_date;
+
+update temp_hiv_visit t inner join temp_hiv_inh i on t.encounter_id = i.encounter_id
+and i.drug = @rif_inh
+set t.rif_and_inh_start_date = i.inh_start_date,
+    t.rif_and_inh_end_date = i.inh_end_date;
 
  -- HIV RISKS
 set @hiv_risks = concept_from_mapping('PIH','11046');   
@@ -480,6 +491,8 @@ SELECT
 	inh_line,
 	inh_start_date,
 	inh_end_date,
+	rif_and_inh_start_date,
+	rif_and_inh_end_date,
 	DATE(visit_date),
 	next_visit_date,
 	visit_location,
