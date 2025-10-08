@@ -195,11 +195,6 @@ inner join hiv_dispensing hd on hd.encounter_id =
 	and (hd2.arv_1_med is not null or hd2.arv_2_med is not null or hd2.arv_3_med is not null)
 	order by hd2.dispense_date desc, hd2.encounter_id desc); 
 	
-/*
- prophylactic_regimen             varchar(255),
- prophylactic_start_date          date,
- prophylactic_end_date			  date,
- */	
 -- inh_start_date
 -- use inh_start_date from entered info on hiv visit,
 -- otherwise use information from hiv regimens	
