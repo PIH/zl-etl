@@ -6,7 +6,7 @@
     <name>ZL ETL</name>
     <description>ETL Project for Zanmi Lasante(ZL) OpenMRS instances</description>
     <url>https://github.com/PIH/zl-etl</url>
-    <version>1.22.0-SNAPSHOT</version>
+    <version>1.23.0-SNAPSHOT</version>
     <packaging>pom</packaging>
 
     <developers>
@@ -38,7 +38,7 @@
         <liquibaseSourceDir>${project.build.directory}/openmrs-config-zl/pih/liquibase/sql/</liquibaseSourceDir>
         <liquibaseDestDir>${project.build.directory}/zl-etl/jobs/sql/utils/</liquibaseDestDir>
         <petlJobExtractionSqlDir>${project.build.directory}/zl-etl/jobs/sql/extractions/</petlJobExtractionSqlDir>
-        <configZlVersion>1.71.0</configZlVersion>
+        <configZlVersion>1.72.0-SNAPSHOT</configZlVersion>
     </properties>
 
     <dependencies>
