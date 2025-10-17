@@ -29,7 +29,6 @@ configuration:
           - tableName: "chemo_session_summary"
           - tableName: "oncology_treatment_plan_summary"
           - tableName: "outpatient_chemo_summary"
-          - tablename: "dispensed_medication_summary"
     - type: "iterating-job"
       description: "Create derived aggregate tables"
       configuration:
