@@ -19,7 +19,7 @@ dose_unit varchar(50),
 frequency varchar(50),
 quantity_dispensed int,
 quantity_unit varchar(30),
-order_id int, 
+order_id varchar(50),
 instructions text,
 index_asc int,
 index_desc int
