@@ -103,6 +103,20 @@ UPDATE temp_mch_birth SET birth_neonatal_resuscitation = obs_from_group_id_value
 UPDATE temp_mch_birth SET birth_macerated_fetus = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'CIEL','135437',@locale);
 
 update temp_mch_birth set Type_of_delivery = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'PIH','11663',@locale);
+-- note in older versions of the form, Type of Delivery is saved outside of a obs group
+-- so the following will populate Type_of_delivery in these cases:
+set @type_of_delivery = concept_from_mapping('PIH','11663');
+update temp_mch_birth t
+inner join 
+  (select o.encounter_id, group_concat(concept_name(o.value_coded,@locale) separator '|') "type_of_delivery"
+   from temp_obs o
+   where o.voided =0
+   and o.concept_id =@type_of_delivery
+   and o.obs_group_id is null
+   group by o.encounter_id) et on et.encounter_id = t.encounter_id 
+ set t.Type_of_delivery = et.type_of_delivery
+ where t.Type_of_delivery is null;
+
 update temp_mch_birth t set c_section_maternal_reasons = obs_from_group_id_value_coded_list_from_temp(birth_obs_group_id,'PIH','13571',@locale);
 
 -- TO DO: the following could use obs_from_group_id_comment_from_temp function but that function needs to be rewritten
