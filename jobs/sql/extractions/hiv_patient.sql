@@ -923,6 +923,7 @@ IF(tehd.days_late_to_pickup > 0, tehd.days_late_to_pickup, 0) days_late_to_picku
 t.biometrics_collected,
 t.latest_biometrics_collection_date,
 t.biometrics_collector,
+t.biometrics_code,
 t.transfer_from_location,
 t.transfer_from_date
 FROM temp_patient t 
