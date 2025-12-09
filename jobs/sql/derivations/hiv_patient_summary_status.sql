@@ -197,6 +197,7 @@ inner join hiv_dispensing hd on hd.encounter_id =
 -- inh_start_date
 -- use inh_start_date from entered info on hiv visit,
 -- otherwise use information from hiv regimens	
+-- the logic is to use the information entered with the most recent start date
 drop table if exists #temp_prophylatic_dates;
 create table #temp_prophylatic_dates
 (prophylactic_id         int IDENTITY(1,1) PRIMARY KEY,
