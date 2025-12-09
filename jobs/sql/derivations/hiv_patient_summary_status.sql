@@ -72,8 +72,7 @@ CREATE TABLE hiv_patient_summary_status_staging
 
 insert into hiv_patient_summary_status_staging (emr_id)
 select distinct emr_id from hiv_patient_program
-where emr_id is not null
-;
+where emr_id is not null;
 
 update t
 set legacy_emr_id = hp.hivemr_v1_id
@@ -198,45 +197,55 @@ inner join hiv_dispensing hd on hd.encounter_id =
 -- inh_start_date
 -- use inh_start_date from entered info on hiv visit,
 -- otherwise use information from hiv regimens	
-update t
-set t.prophylactic_start_date = l.inh_start_date,
-	t.prophylactic_end_date = l.inh_end_date,
-	t.prophylactic_regimen = 'Isoniazid'
-    from hiv_patient_summary_status_staging t
+-- the logic is to use the information entered with the most recent start date
+drop table if exists #temp_prophylatic_dates;
+create table #temp_prophylatic_dates
+(prophylactic_id         int IDENTITY(1,1) PRIMARY KEY,
+ emr_id                  varchar(25),
+ prophylactic_regimen    varchar(255),
+ prophylactic_start_date datetime,
+ prophylactic_end_date   datetime);
+
+insert into #temp_prophylatic_dates (emr_id, prophylactic_regimen, prophylactic_start_date, prophylactic_end_date)
+select l.emr_id,
+    'Isoniazid',
+    l.inh_start_date,
+	l.inh_end_date
+from hiv_patient_summary_status_staging t
 inner join hiv_visit l on l.encounter_id =
     (select top 1 l2.encounter_id from hiv_visit l2
     where l2.emr_id = t.emr_id and inh_start_date is not null
     order by l2.visit_date desc, l2.index_desc );
 
-update t
-set t.prophylactic_start_date = l.rif_and_inh_start_date,
-	t.prophylactic_end_date = l.rif_and_inh_end_date,
-	t.prophylactic_regimen = 'Rifapentine + Isoniazid'
-    from hiv_patient_summary_status_staging t
+insert into #temp_prophylatic_dates (emr_id, prophylactic_regimen, prophylactic_start_date, prophylactic_end_date)
+select l.emr_id,
+    'Rifapentine + Isoniazid', 
+    l.rif_and_inh_start_date,
+	l.rif_and_inh_end_date
+from hiv_patient_summary_status_staging t
 inner join hiv_visit l on l.encounter_id =
     (select top 1 l2.encounter_id from hiv_visit l2
     where l2.emr_id = t.emr_id and rif_and_inh_start_date is not null
     order by l2.visit_date desc, l2.index_desc );
 
-update t
-set t.prophylactic_start_date = i.min_start_date,
-	t.prophylactic_end_date = i.max_end_date,
-	t.prophylactic_regimen = 'Isoniazid'
+insert into #temp_prophylatic_dates (emr_id, prophylactic_regimen, prophylactic_start_date, prophylactic_end_date)
+select r.emr_id,
+    r.drug_short_name,
+    r.start_date,
+	r.end_date 
 from hiv_patient_summary_status_staging t
-inner join 
- (select emr_id, min(start_date) min_start_date, max(end_date) max_end_date from hiv_regimens 
- where drug_short_name = 'Isoniazid'
- group by emr_id) i on i.emr_id = t.emr_id;
- 
-update t
-set t.prophylactic_start_date = i.min_start_date,
-	t.prophylactic_end_date = i.max_end_date,
-	t.prophylactic_regimen = 'Rifapentine + Isoniazid'
-from hiv_patient_summary_status_staging t
-inner join 
- (select emr_id, min(start_date) min_start_date, max(end_date) max_end_date from hiv_regimens 
- where drug_short_name  = 'Rifapentine + Isoniazid'
- group by emr_id) i on i.emr_id = t.emr_id;
+inner join hiv_regimens r on r.emr_id = t.emr_id and r.drug_short_name in ('Isoniazid','Rifapentine + Isoniazid');
+
+update h
+	set h.prophylactic_regimen = d.prophylactic_regimen,
+		h.prophylactic_start_date = d.prophylactic_start_date,
+		h.prophylactic_end_date = d.prophylactic_end_date
+from hiv_patient_summary_status_staging h 
+inner join #temp_prophylatic_dates d  on d.prophylactic_id =
+	(select top 1 d2.prophylactic_id
+	from #temp_prophylatic_dates d2 
+	where d2.emr_id = d.emr_id
+	order by prophylactic_start_date desc, prophylactic_id desc);
 
 -- last_visit_date and next_visit_date should consider hiv, eid and pmtct notes
 update t
