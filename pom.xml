@@ -33,58 +33,8 @@
         <url>scm:git:git@github.com:PIH/zl-etl.git</url>
     </scm>
 
-    <properties>
-        <dataExportSqlDir>${project.build.directory}/openmrs-config-zl/reports/reportdescriptors/dataexports/sql/</dataExportSqlDir>
-        <liquibaseSourceDir>${project.build.directory}/openmrs-config-zl/pih/liquibase/sql/</liquibaseSourceDir>
-        <liquibaseDestDir>${project.build.directory}/zl-etl/jobs/sql/utils/</liquibaseDestDir>
-        <petlJobExtractionSqlDir>${project.build.directory}/zl-etl/jobs/sql/extractions/</petlJobExtractionSqlDir>
-        <configZlVersion>1.73.0-SNAPSHOT</configZlVersion>
-    </properties>
-
-    <dependencies>
-        <dependency>
-            <groupId>org.pih.openmrs</groupId>
-            <artifactId>openmrs-config-zl</artifactId>
-            <version>${configZlVersion}</version>
-            <type>zip</type>
-        </dependency>
-    </dependencies>
-
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>versions-maven-plugin</artifactId>
-                <version>2.16.0</version>
-                <configuration>
-                    <allowSnapshots>true</allowSnapshots>
-                    <allowMajorUpdates>true</allowMajorUpdates>
-                    <allowMinorUpdates>true</allowMinorUpdates>
-                    <allowIncrementalUpdates>true</allowIncrementalUpdates>
-                    <generateBackupPoms>false</generateBackupPoms>
-                </configuration>
-            </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-dependency-plugin</artifactId>
-                <version>3.2.0</version>
-                <executions>
-                    <execution>
-                        <id>unpack</id>
-                        <phase>compile</phase>
-                        <goals>
-                            <goal>unpack-dependencies</goal>
-                        </goals>
-                        <configuration>
-                            <includes>**/*</includes>
-                            <outputDirectory>${project.build.directory}/openmrs-config-zl</outputDirectory>
-                            <overWriteReleases>true</overWriteReleases>
-                            <overWriteSnapshots>true</overWriteSnapshots>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <artifactId>maven-resources-plugin</artifactId>
                 <version>3.2.0</version>
@@ -110,119 +60,8 @@
                             <outputDirectory>${project.build.directory}/zl-etl/</outputDirectory>
                         </configuration>
                     </execution>
-                    <execution>
-                        <id>copy-liquibase-sql-to-petl</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy-resources</goal>
-                        </goals>
-                        <configuration>
-                            <encoding>UTF-8</encoding>
-                            <resources>
-                                <resource>
-                                    <directory>${liquibaseSourceDir}</directory>
-                                    <includes>
-                                        <include>*.sql</include>
-                                    </includes>
-                                </resource>
-                            </resources>
-                            <outputDirectory>${liquibaseDestDir}</outputDirectory>
-                        </configuration>
-                    </execution>
                 </executions>
             </plugin>
-
-            <plugin>
-                <groupId>com.coderplus.maven.plugins</groupId>
-                <artifactId>copy-rename-maven-plugin</artifactId>
-                <version>1.0</version>
-                <executions>
-                    <execution>
-                        <id>copy-report-sql-to-petl</id>
-                        <phase>package</phase>
-                        <goals>
-                            <goal>copy</goal>
-                        </goals>
-                        <configuration>
-                            <fileSets>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/mh_diagnoses.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/mh_diagnoses.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/j9CaseRegistration.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/mch_j9_case_registration.sql</destinationFile>
-                                </fileSet>                                
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/mh_medications.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/mh_medications.sql</destinationFile>
-                                </fileSet>                                
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/mh_encounters.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/mh_encounters.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/pathology_encounters.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/pathology_encounters.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/pathology_procedures.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/pathology_procedures.sql</destinationFile>
-                                </fileSet>                                
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/echocardiogram_encounters.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/echocardiogram_encounters.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/delivery.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/mch_delivery.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/diagnoses.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/diagnoses.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/labOrdersReport.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/all_lab_orders.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/labResultsExport.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/all_lab_results.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/users.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/users.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/user_roles.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/user_roles.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/user_logins.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/user_logins.sql</destinationFile>
-             			    	</fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/all_medication_prescribed.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/all_medication_prescribed.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/summary_db_restore.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/summary_db_restore.sql</destinationFile>
-                                </fileSet>                                
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/all_medication_dispensing.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/all_medication_dispensing.sql</destinationFile>
-                                </fileSet>
-                                <fileSet>
-                                    <sourceFile>${dataExportSqlDir}/socialEconomics.sql</sourceFile>
-                                    <destinationFile>${petlJobExtractionSqlDir}/socioeconomic_encounter.sql</destinationFile>
-                                </fileSet>    
-                            </fileSets>
-                        </configuration>
-                    </execution>
-                </executions>
-            </plugin>
-
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <version>3.3.0</version>
@@ -241,7 +80,6 @@
                     </execution>
                 </executions>
             </plugin>
-
             <plugin>
                 <groupId>org.sonatype.central</groupId>
                 <artifactId>central-publishing-maven-plugin</artifactId>
