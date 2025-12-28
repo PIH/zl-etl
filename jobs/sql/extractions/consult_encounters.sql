@@ -87,9 +87,9 @@ max(case when concept_id = @trauma_type then concept_name(value_coded,@locale) e
 max(case when concept_id = @return_visit_date then value_datetime end) "return_visit_date",
 max(case when concept_id = @disposition then concept_name(value_coded,@locale) end) "disposition",
 max(case when concept_id = @disposition then value_coded end) "disposition_code",
-max(case when concept_id = @location_within then location_name(value_text) end) "location_within",
+max(case when concept_id = @location_within then location_name(if(value_text<999,value_text,null)) end) "location_within",
 max(case when concept_id = @location_out then concept_name(value_coded,@locale) end) "location_out",
-max(case when concept_id = @adm_location then location_name(value_text) end) "adm_location"
+max(case when concept_id = @adm_location then location_name(if(value_text<999,value_text,null)) end) "adm_location"
 from temp_obs
 group by encounter_id;
 
