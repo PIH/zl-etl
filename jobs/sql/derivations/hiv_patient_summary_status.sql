@@ -247,7 +247,7 @@ inner join #temp_prophylatic_dates d  on d.prophylactic_id =
 	(select top 1 d2.prophylactic_id
 	from #temp_prophylatic_dates d2 
 	where d2.emr_id = h.emr_id
-	order by prophylactic_start_date desc, prophylactic_id desc);
+	order by isnull(prophylactic_end_date,'1900-01-01') desc, prophylactic_start_date desc, prophylactic_id desc);
 
 -- last_visit_date and next_visit_date should consider hiv, eid and pmtct notes
 update t
