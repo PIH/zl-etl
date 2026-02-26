@@ -1,5 +1,6 @@
 SELECT encounter_type_id  INTO @disp_enc_type FROM encounter_type et WHERE uuid='8ff50dea-18a1-4609-b4c9-3f8f2d611b84';
 SET @partition = '${partitionNum}';
+set @locale = 'fr';
 
 DROP TEMPORARY TABLE IF EXISTS all_medication_dispensing;
 CREATE TEMPORARY TABLE all_medication_dispensing
@@ -160,10 +161,10 @@ dispenser,
 location_id,
 drug_id ,
 dose quantity_per_dose,
-concept_name(dose_units,'en') dose_units,
-concept_name(of2.concept_id ,'en') frequency,
+concept_name(dose_units, @locale) dose_units,
+concept_name(of2.concept_id , @locale) frequency,
 quantity quantity_dispensed,
-concept_name(quantity_units,'en') AS quantity_unit, 
+concept_name(quantity_units, @locale) AS quantity_unit, 
 drug_order_id AS order_id, 
 dosing_instructions prescription
 FROM medication_dispense md 
