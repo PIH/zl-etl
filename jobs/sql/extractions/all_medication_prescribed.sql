@@ -1,5 +1,6 @@
 set sql_safe_updates = 0;
 set @partition = '${partitionNum}';
+set @locale = 'fr';
 
 drop table if exists temp_medication_orders;
 create table temp_medication_orders
@@ -88,11 +89,11 @@ max(o.encounter_id) "encounter_id",
 max(case when o.concept_id = @med or o.concept_id = @mh_med then value_coded end) "drug_concept_id",
 max(case when o.concept_id = @med or o.concept_id = @mh_med then value_drug end) "drug_id",
 max(case when o.concept_id = @order_dose then value_numeric end) "order_dose",
-max(case when o.concept_id = @dosing_units then concept_name(value_coded,'en') end) "order_dose_unit",
+max(case when o.concept_id = @dosing_units then concept_name(value_coded, @locale) end) "order_dose_unit",
 max(case when o.concept_id = @dosing_instructions then value_text end) "dosing_instructions",
-max(case when o.concept_id = @frequency then concept_name(value_coded,'en') end) "order_frequency",
+max(case when o.concept_id = @frequency then concept_name(value_coded, @locale) end) "order_frequency",
 max(case when o.concept_id = @duration then value_numeric end) "order_duration",
-max(case when o.concept_id = @dur_units then concept_name(value_coded,'en') end) "order_duration_units",
+max(case when o.concept_id = @dur_units then concept_name(value_coded, @locale) end) "order_duration_units",
 max(case when o.concept_id = @order_qty then value_numeric end) "order_quantity"
 FROM temp_medication_orders t
 INNER JOIN obs o ON o.obs_group_id = t.prescription_obs_group_id
@@ -169,15 +170,15 @@ update temp_medication_orders tm  set product_code = openboxesCode(drug_id);
 update temp_medication_orders tm  set prescriber = provider(tm.encounter_id);
 
 update temp_medication_orders tm set encounter_type = encounter_type_name(encounter_id) where order_id is not null;
-update temp_medication_orders tm set order_drug = concept_name(drug_concept_id, 'en');
+update temp_medication_orders tm set order_drug = concept_name(drug_concept_id, @locale);
 update temp_medication_orders tm set order_formulation_non_coded = (select drug_non_coded from drug_order d where d.order_id = tm.order_id) where order_id is not null;
-update temp_medication_orders tm set order_quantity_units = concept_name(order_quantity_units_id, 'en') where order_id is not null;
-update temp_medication_orders tm set order_dose_unit = concept_name(order_dose_units_id, 'en') where order_id is not null;
-update temp_medication_orders tm set order_route = concept_name(order_route_id, 'en') where order_id is not null;
-update temp_medication_orders tm set order_frequency = (select concept_name(concept_id, 'en') from order_frequency d where d.order_frequency_id = tm.order_frequency_id) where order_id is not null;
-update temp_medication_orders tm set order_reason = concept_name(order_reason_concept, 'en') where order_id is not null;
+update temp_medication_orders tm set order_quantity_units = concept_name(order_quantity_units_id, @locale) where order_id is not null;
+update temp_medication_orders tm set order_dose_unit = concept_name(order_dose_units_id, @locale) where order_id is not null;
+update temp_medication_orders tm set order_route = concept_name(order_route_id, @locale) where order_id is not null;
+update temp_medication_orders tm set order_frequency = (select concept_name(concept_id, @locale) from order_frequency d where d.order_frequency_id = tm.order_frequency_id) where order_id is not null;
+update temp_medication_orders tm set order_reason = concept_name(order_reason_concept, @locale) where order_id is not null;
 update temp_medication_orders tm  set order_comments = obs_value_text(tm.encounter_id, 'PIH', 'Medication comments (text)') where order_id is not null;
-update temp_medication_orders tm  set order_duration_units = concept_name(order_duration_units_id, 'en') where order_id is not null;
+update temp_medication_orders tm  set order_duration_units = concept_name(order_duration_units_id, @locale) where order_id is not null;
 
 
 -- final query
