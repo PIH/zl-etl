@@ -253,18 +253,17 @@ and avi.date_created = av.date_created
 -- update index asc/desc on hiv_viral_load table
 drop table if exists #hiv_viral_load_indexes;
 select  hiv_vl_id,
-ROW_NUMBER() over (PARTITION by emr_id order by vl_sample_taken_date ASC, order_date ASC, hiv_vl_id ASC ) "index_asc",
-ROW_NUMBER() over (PARTITION by emr_id order by vl_sample_taken_date DESC, order_date DESC, hiv_vl_id DESC) "index_desc"
+ROW_NUMBER() over (PARTITION by emr_id order by vl_sample_taken_date ASC, vl_result_date ASC, hiv_vl_id ASC ) "index_asc",
+ROW_NUMBER() over (PARTITION by emr_id order by vl_sample_taken_date DESC, vl_result_date DESC, hiv_vl_id DESC) "index_desc"
 into #hiv_viral_load_indexes
-from hiv_viral_load av ;
+from hiv_viral_load av;
 
 
 update av
 set av.order_asc = avi.index_asc,
 	av.order_desc = avi.index_desc 
 from hiv_viral_load av
-inner join #hiv_viral_load_indexes avi on av.hiv_vl_id = avi.hiv_vl_id
-;
+inner join #hiv_viral_load_indexes avi on av.hiv_vl_id = avi.hiv_vl_id;
 
 -- update index asc/desc on hiv_visit table
 drop table if exists #hiv_visit_indexes;
@@ -501,3 +500,4 @@ from hiv_pmtct_visit av
 inner join #hiv_pmtct_visit_indexes avi on avi.emr_id = av.emr_id
 and avi.encounter_id = av.encounter_id
 and avi.visit_date = av.visit_date; 
+
