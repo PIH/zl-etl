@@ -30,7 +30,8 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
  next_visit_date                  DATE,         
  triage_level                     VARCHAR(11),  
  referral_type                    VARCHAR(255), 
- referral_type_other              VARCHAR(255), 
+ referral_type_other              VARCHAR(255),
+ referred_from_facility           VARCHAR(100),
  implant_inserted                 BIT,          
  IUD_inserted                     BIT,          
  tubal_ligation_completed         BIT,          
@@ -278,6 +279,12 @@ UPDATE temp_obgyn_visit te
         AND value_coded = CONCEPT_FROM_MAPPING('PIH', 'OTHER') 
 SET 
     referral_type_other = o.comments;
+
+UPDATE temp_obgyn_visit t
+    INNER JOIN temp_obs o ON o.encounter_id = t.encounter_id
+    AND o.voided = 0
+    AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '160535')
+    SET t.referred_from_facility = LOCATION_NAME(o.value_text);
 
 UPDATE temp_obgyn_visit te
         JOIN
@@ -1014,6 +1021,7 @@ SELECT
     triage_level,
     referral_type,
     referral_type_other,
+    referred_from_facility,
     implant_inserted,
     IUD_inserted,
     tubal_ligation_completed,
