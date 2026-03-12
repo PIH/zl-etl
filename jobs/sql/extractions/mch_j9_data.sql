@@ -45,17 +45,22 @@ partner_support_anc_obs_id      int(11),
 partner_support_anc             boolean,      
 number_living_children_obs_id   int(11),      
 number_living_children          int,           
-number_household_members_obs_id int(11),      
-number_household_members        int,          
-address_department              varchar(255), 
-address_commune                 varchar(255), 
-address_section_communale       varchar(255), 
-address_locality                varchar(255), 
-address_street_landmark         varchar(255), 
-traditional_healer_obs_id       int(11),      
-traditional_healer              varchar(255), 
-prenatal_teas_obs_id            int(11),      
-prenatal_teas                   varchar(255)  
+number_household_members_obs_id int(11),
+number_household_members        int,
+address_department              varchar(255),
+address_commune                 varchar(255),
+address_section_communale       varchar(255),
+address_locality                varchar(255),
+address_street_landmark         varchar(255),
+traditional_healer_obs_id       int(11),
+traditional_healer              varchar(255),
+prenatal_teas_obs_id            int(11),
+prenatal_teas                   varchar(255),
+referral_type                   VARCHAR(255),
+referral_type_other_obs_id      int(11),
+referral_type_other             VARCHAR(255),
+referred_from_facility_obs_id   int(11),
+referred_from_facility          VARCHAR(100)
 );
 
 -- insert one row for every patient enrollment row 
@@ -322,11 +327,37 @@ set @fp_visit = concept_from_mapping('PIH','5483');
 update temp_j9 t
 set number_family_planning_visits =
 	(select count(*) from temp_obs o
-	where o.person_id = t.patient_id 
+	where o.person_id = t.patient_id
 	and o.concept_id = @type_opd_visit
 	and o.value_coded = @fp_visit
 	and o.obs_datetime >= date_enrolled
 	and o.obs_datetime <= ifnull(date_completed,now()));
+
+-- all "referral type" answers during program enrollment
+update temp_j9 t
+set referral_type =
+        (select group_concat(distinct concept_name(o.value_coded, @locale) separator ' | ')
+         from temp_obs o
+         where o.person_id = t.patient_id
+           and o.concept_id = concept_from_mapping('PIH','Type of referring service')
+           and o.obs_datetime >= date_enrolled
+           and o.obs_datetime <= ifnull(date_completed,now()));
+
+--most recent "referred from other" during program enrollment
+update temp_j9
+set referral_type_other_obs_id  = latest_obs_with_answer_from_temp_between_dates(patient_id,'PIH','Type of referring service','PIH','OTHER',date_enrolled, ifnull(date_completed, now()));
+update temp_j9
+set referral_type_other = comments_from_temp(referral_type_other_obs_id);
+
+
+--most recent "referred from facility" during program enrollment
+update temp_j9
+set referred_from_facility_obs_id = latest_obs_from_temp_between_dates(patient_id,'CIEL','160535',date_enrolled, ifnull(date_completed, now()));
+update temp_j9
+set referred_from_facility = location_name(value_text_from_temp(referred_from_facility_obs_id));
+
+
+
 
 -- final output
 Select
@@ -366,6 +397,9 @@ address_section_communale,
 address_locality,
 address_street_landmark,
 traditional_healer,
-prenatal_teas
-from temp_j9 t 
+prenatal_teas,
+referral_type,
+referral_type_other,
+referred_from_facility
+from temp_j9 t
 ;
