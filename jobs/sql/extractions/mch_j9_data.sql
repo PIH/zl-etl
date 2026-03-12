@@ -343,7 +343,7 @@ set referral_type =
            and o.obs_datetime >= date_enrolled
            and o.obs_datetime <= ifnull(date_completed,now()));
 
---most recent "referred from other" during program enrollment
+--most recent "referral type other" during program enrollment
 update temp_j9
 set referral_type_other_obs_id  = latest_obs_with_answer_from_temp_between_dates(patient_id,'PIH','Type of referring service','PIH','OTHER',date_enrolled, ifnull(date_completed, now()));
 update temp_j9
