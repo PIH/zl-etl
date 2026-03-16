@@ -3351,36 +3351,6 @@ BEGIN
     
 END
 #
-/*
-This function accepts a patient id, source & code of a concept question, and source & code of a concept answer
-It will return the obs_id of the single latest obs recorded for that concept with that answer from temp_obs table between the dates provided
-*/
-#
-DROP FUNCTION IF EXISTS latest_obs_with_answer_from_temp_between_dates;
-#
-CREATE FUNCTION latest_obs_with_answer_from_temp_between_dates(_patient_id int(11), _source varchar(50), _term varchar(255), _source1 varchar(50), _term1 varchar(50), _startDatetime datetime, _endDatetime datetime)
-    RETURNS int
-    DETERMINISTIC
-
-BEGIN
-
-    DECLARE ret int(11);
-
-select      o.obs_id into ret
-from        temp_obs o
-where       o.voided = 0
-  and o.person_id = _patient_id
-  and o.concept_id = concept_from_mapping(_source, _term)
-  and o.value_coded = concept_from_mapping(_source1, _term1)
-  and o.obs_datetime >= _startDatetime
-  and o.obs_datetime <= _endDatetime
-order by obs_datetime desc limit 1 ;
-
-RETURN ret;
-
-END
-#
-#
 -- This function accepts encounter_id, mapping source, mapping code
 -- It will find a single, best observation that matches this, and return the value_text
 -- from the temporary table temp_obs
@@ -3776,28 +3746,6 @@ BEGIN
     where       o.obs_id = _obs_id;
 
     RETURN ret;
-
-END
-#
-/*
-This function accepts an obs_id
-It will return the comments of that obs from the table temp_obs
-*/
-DROP FUNCTION IF EXISTS comments_from_temp;
-#
-CREATE FUNCTION comments_from_temp(_obs_id int(11))
-    RETURNS text
-    DETERMINISTIC
-
-BEGIN
-
-    DECLARE ret text;
-
-select      comments into ret
-from        temp_obs o
-where       o.obs_id = _obs_id;
-
-RETURN ret;
 
 END
 #

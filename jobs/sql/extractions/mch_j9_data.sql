@@ -57,9 +57,7 @@ traditional_healer              varchar(255),
 prenatal_teas_obs_id            int(11),
 prenatal_teas                   varchar(255),
 referral_type                   VARCHAR(255),
-referral_type_other_obs_id      int(11),
 referral_type_other             VARCHAR(255),
-referred_from_facility_obs_id   int(11),
 referred_from_facility          VARCHAR(100)
 );
 
@@ -334,30 +332,38 @@ set number_family_planning_visits =
 	and o.obs_datetime <= ifnull(date_completed,now()));
 
 -- all "referral type" answers during program enrollment
+set @referral_type_id = concept_from_mapping('PIH','Type of referring service');
 update temp_j9 t
 set referral_type =
         (select group_concat(distinct concept_name(o.value_coded, @locale) separator ' | ')
          from temp_obs o
          where o.person_id = t.patient_id
-           and o.concept_id = concept_from_mapping('PIH','Type of referring service')
+           and o.concept_id = @referral_type_id
            and o.obs_datetime >= date_enrolled
            and o.obs_datetime <= ifnull(date_completed,now()));
 
---most recent "referral type other" during program enrollment
-update temp_j9
-set referral_type_other_obs_id  = latest_obs_with_answer_from_temp_between_dates(patient_id,'PIH','Type of referring service','PIH','OTHER',date_enrolled, ifnull(date_completed, now()));
-update temp_j9
-set referral_type_other = comments_from_temp(referral_type_other_obs_id);
+--all "referral type other" answers during program enrollment
+set @other_id = concept_from_mapping('PIH','OTHER');
+update temp_j9 t
+set referral_type_other =
+        (select group_concat(distinct o.comments separator ' | ')
+         from temp_obs o
+         where o.person_id = t.patient_id
+           and o.concept_id = @referral_type_id
+           and o.value_coded = @other_id
+           and o.obs_datetime >= date_enrolled
+           and o.obs_datetime <= ifnull(date_completed,now()));
 
-
---most recent "referred from facility" during program enrollment
-update temp_j9
-set referred_from_facility_obs_id = latest_obs_from_temp_between_dates(patient_id,'CIEL','160535',date_enrolled, ifnull(date_completed, now()));
-update temp_j9
-set referred_from_facility = location_name(value_text_from_temp(referred_from_facility_obs_id));
-
-
-
+--most all "referred from facility" during program enrollment
+set @referred_from_facility_id = concept_from_mapping('CIEL','160535');
+update temp_j9 t
+set referred_from_facility =
+        (select group_concat(distinct location_name(o.value_text) separator ' | ')
+         from temp_obs o
+         where o.person_id = t.patient_id
+           and o.concept_id = @referred_from_facility_id
+           and o.obs_datetime >= date_enrolled
+           and o.obs_datetime <= ifnull(date_completed,now()));
 
 -- final output
 Select

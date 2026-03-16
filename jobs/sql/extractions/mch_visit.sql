@@ -280,10 +280,11 @@ UPDATE temp_obgyn_visit te
 SET 
     referral_type_other = o.comments;
 
+SET @referred_from_facility_id = concept_from_mapping('CIEL','160535');
 UPDATE temp_obgyn_visit t
     INNER JOIN temp_obs o ON o.encounter_id = t.encounter_id
     AND o.voided = 0
-    AND o.concept_id = CONCEPT_FROM_MAPPING('CIEL', '160535')
+    AND o.concept_id = @referred_from_facility_id
     SET t.referred_from_facility = LOCATION_NAME(o.value_text);
 
 UPDATE temp_obgyn_visit te
