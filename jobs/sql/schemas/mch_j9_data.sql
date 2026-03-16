@@ -35,5 +35,8 @@ CREATE TABLE mch_j9_data (
     address_locality               VARCHAR(255),
     address_street_landmark        VARCHAR(255),
     traditional_healer             VARCHAR(255),
-    prenatal_teas                  VARCHAR(255)
+    prenatal_teas                  VARCHAR(255),
+    referral_type                  VARCHAR(255),
+    referral_type_other            VARCHAR(255),
+    referred_from_facility         VARCHAR(100)
 );

@@ -3349,7 +3349,7 @@ BEGIN
 
     RETURN ret;
     
-END  
+END
 #
 -- This function accepts encounter_id, mapping source, mapping code
 -- It will find a single, best observation that matches this, and return the value_text
