@@ -22,6 +22,8 @@ create temporary table temp_all_encounters
     next_appt_date       date,
     disposition          varchar(255),
     voided               bit,
+    users_modified      text,
+    dates_modified      text,
     index_asc			 int,
     index_desc			 int
 );
@@ -165,6 +167,18 @@ set emr_id = patient_identifier(patient_id, 'ZL EMR ID');
 update temp_all_encounters t
 set t.emr_id = zlemrid_from_temp(t.patient_id);
 
+drop temporary table if exists temp_other_modifiers;
+create temporary table temp_other_modifiers
+select o.encounter_id, GROUP_CONCAT(distinct username(o.creator) separator ', ') "other_modifiers", GROUP_CONCAT(distinct date(date_created) separator ', ') "dates_modified" 
+from obs o 
+inner join temp_all_encounters t where t.encounter_id = o.encounter_id  and o.creator <> t.creator
+group by encounter_id;
+
+update temp_all_encounters t
+inner join temp_other_modifiers m on m.encounter_id = t.encounter_id 
+set t.users_modified = m.other_modifiers,
+	t.dates_modified = m.dates_modified;
+
 -- final query
 select emr_id,
        CONCAT(@partition, '-', encounter_id) as encounter_id,
@@ -177,6 +191,8 @@ select emr_id,
        user_entered,
        next_appt_date,
        disposition,
+       users_modified,
+       dates_modified,
        index_asc,
        index_desc
 from temp_all_encounters t
