@@ -11,6 +11,8 @@ create table all_encounters
     user_entered        varchar(255),
     next_appt_date      date,
     disposition         varchar(255),
+    users_modified      text,
+    dates_modified      text,
     index_asc           int,
     index_desc          int
 );
