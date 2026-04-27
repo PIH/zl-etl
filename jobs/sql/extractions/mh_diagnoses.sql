@@ -14,6 +14,8 @@ CREATE TEMPORARY TABLE all_mh_diagnosis
     encounter_location_name varchar(50),
     encounter_creator       text,
     provider                text,
+    age_at_enc              double,
+    gender                  varchar(50),
     diagnosis               varchar(255)
 );
 
@@ -34,8 +36,8 @@ WHERE o.voided =0
 AND o.concept_id = concept_from_mapping('PIH','10594');
 
 
-INSERT INTO all_mh_diagnosis(patient_id,emr_id,encounter_id,encounter_datetime,encounter_location_name,encounter_creator,provider,diagnosis)
-SELECT 
+INSERT INTO all_mh_diagnosis(patient_id,emr_id,encounter_id,encounter_datetime,encounter_location_name,encounter_creator,provider,age_at_enc,gender,diagnosis)
+SELECT
 patient_id,
 zlemr(patient_id) emr_id,
 e.encounter_id,
@@ -43,8 +45,11 @@ e.encounter_datetime ,
 encounter_location_name(e.encounter_id) encounter_location_name,
 encounter_creator(e.encounter_id) encounter_creator,
 provider(e.encounter_id) provider,
+age_at_enc(patient_id, e.encounter_id) age_at_enc,
+gender(patient_id),
 value_coded_name(o.obs_id,'en') diagnosis
-FROM temp_encounter e INNER JOIN temp_obs o ON e.encounter_id=o.encounter_id;
+FROM temp_encounter e INNER JOIN temp_obs o ON e.encounter_id=o.encounter_id
+INNER JOIN person p ON p.person_id = e.patient_id;
 
 SELECT
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
@@ -54,5 +59,7 @@ encounter_datetime,
 encounter_location_name,
 encounter_creator,
 provider,
+age_at_enc,
+gender,
 diagnosis
 FROM all_mh_diagnosis;

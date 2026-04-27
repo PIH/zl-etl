@@ -7,5 +7,7 @@ CREATE TABLE mh_diagnoses
     encounter_location_name varchar(50),
     encounter_creator       text,
     provider                text,
+    age_at_enc              float,
+    gender                  varchar(50),
     diagnosis               varchar(255)
 );
