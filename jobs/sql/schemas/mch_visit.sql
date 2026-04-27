@@ -20,6 +20,7 @@ CREATE TABLE mch_visit
     triage_level                     VARCHAR(10),
     referral_type                    TEXT,
     referral_type_other              TEXT,
+    referred_from_facility           VARCHAR(100),
     implant_inserted                 BIT,
     IUD_inserted                     BIT,
     tubal_ligation_completed         BIT,
