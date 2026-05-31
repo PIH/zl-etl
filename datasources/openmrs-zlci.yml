@@ -1,0 +1,8 @@
+databaseType: "mysql"
+host: ${datasources.openmrs.zlci.host}
+port: ${datasources.openmrs.zlci.port}
+databaseName: ${datasources.openmrs.zlci.databaseName}
+user: ${datasources.openmrs.zlci.user}
+password: ${datasources.openmrs.zlci.password}
+options: ${datasources.openmrs.zlci.options}
+containerName: ${datasources.openmrs.zlci.containerName}
