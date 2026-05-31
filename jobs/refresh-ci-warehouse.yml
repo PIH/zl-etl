@@ -5,8 +5,6 @@
 
 type: "job-pipeline"
 description: "Refreshing ZL CI data"
-schedule:
-  cron: "${executeCron.refreshZlCiWarehouse}"
 parameters:
   siteName: "zlci"
   partitionNum: "1"
