@@ -918,6 +918,44 @@ BEGIN
 END
 #
 /*
+  location_tag_ancestor
+  Walks up the location parent hierarchy from loc_id and returns the name of the
+  first ancestor (inclusive) that carries the given location tag. Returns NULL if
+  no tagged ancestor is found.
+*/
+#
+DROP FUNCTION IF EXISTS location_tag_ancestor;
+#
+CREATE FUNCTION location_tag_ancestor(loc_id INT, tag_name VARCHAR(255))
+    RETURNS VARCHAR(255)
+    DETERMINISTIC
+BEGIN
+    DECLARE current_id INT DEFAULT loc_id;
+    DECLARE loc_name   VARCHAR(255) DEFAULT NULL;
+    DECLARE parent_id  INT DEFAULT NULL;
+    DECLARE has_tag    TINYINT DEFAULT 0;
+
+    WHILE current_id IS NOT NULL DO
+        SELECT l.name, l.parent_location,
+               EXISTS(
+                   SELECT 1 FROM location_tag_map ltm
+                   INNER JOIN location_tag lt ON lt.location_tag_id = ltm.location_tag_id
+                   WHERE ltm.location_id = current_id AND lt.name = tag_name
+               )
+        INTO loc_name, parent_id, has_tag
+        FROM location l WHERE l.location_id = current_id;
+
+        IF has_tag THEN
+            RETURN loc_name;
+        END IF;
+
+        SET current_id = parent_id;
+    END WHILE;
+
+    RETURN NULL;
+END
+#
+/*
 Encounter Date
 */
 #

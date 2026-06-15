@@ -15,6 +15,7 @@ create temporary table temp_all_encounters
     user_entered         varchar(255),
     location_id          int(11),
     encounter_location   varchar(255),
+    facility             varchar(255),
     visit_location_id    int(11),
     visit_location       varchar(255),
     encounter_type_id    int(11),
@@ -88,8 +89,9 @@ set t.encounter_type_name = et.encounter_type_name;
 drop temporary table if exists locations;
 create temporary table locations
 (
-	location_id  int(11),
-	location_name varchar(511)
+	location_id   int(11),
+	location_name varchar(511),
+	facility      varchar(255)
 );
 
 insert into locations(location_id)
@@ -104,10 +106,14 @@ update locations ls
 inner join location l on l.location_id = ls.location_id
 set ls.location_name = name;
 
+update locations ls
+set ls.facility = location_tag_ancestor(ls.location_id, 'Visit Location');
+
 create index temp_all_encounters_li on temp_all_encounters(location_id);
 update temp_all_encounters t
 inner join locations ls on ls.location_id = t.location_id
-set t.encounter_location = ls.location_name;
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
 
 create index temp_all_encounters_vli on temp_all_encounters(visit_location_id);
 update temp_all_encounters t
@@ -199,6 +205,7 @@ select emr_id,
        visit_location,
        encounter_type_name,
        encounter_location,
+       facility,
        encounter_datetime,
        entered_datetime,
        user_entered,

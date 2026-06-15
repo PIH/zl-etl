@@ -7,6 +7,7 @@ create table all_encounters
     visit_location      varchar(255),
     encounter_type_name varchar(50),
     encounter_location  varchar(255),
+    facility            varchar(255),
     encounter_datetime  datetime,
     entered_datetime    datetime,
     user_entered        varchar(255),
