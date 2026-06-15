@@ -15,6 +15,8 @@ create temporary table temp_all_encounters
     user_entered         varchar(255),
     location_id          int(11),
     encounter_location   varchar(255),
+    visit_location_id    int(11),
+    visit_location       varchar(255),
     encounter_type_id    int(11),
     encounter_type_name  varchar(50),
     entered_datetime     datetime,
@@ -48,12 +50,14 @@ create index temp_all_encounters_encounterId ON temp_all_encounters (encounter_i
 -- Load the encounters
 update temp_all_encounters t
 inner join encounter e on t.encounter_id = e.encounter_id
+left join visit v on v.visit_id = e.visit_id
 set t.encounter_datetime = e.encounter_datetime,
-    t.encounter_type_id = e.encounter_type, 
-    t.location_id = e.location_id, 
+    t.encounter_type_id = e.encounter_type,
+    t.location_id = e.location_id,
     t.patient_id = e.patient_id,
     t.visit_id = e.visit_id,
-    t.creator = e.creator, 
+    t.visit_location_id = v.location_id,
+    t.creator = e.creator,
     t.entered_datetime = e.date_created,
     t.voided = e.voided
 ;
@@ -91,6 +95,9 @@ create temporary table locations
 insert into locations(location_id)
 select distinct location_id from temp_all_encounters;
 
+insert into locations(location_id)
+select distinct visit_location_id from temp_all_encounters where visit_location_id is not null;
+
 create index locations_li on locations(location_id);
 
 update locations ls
@@ -101,6 +108,11 @@ create index temp_all_encounters_li on temp_all_encounters(location_id);
 update temp_all_encounters t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name;
+
+create index temp_all_encounters_vli on temp_all_encounters(visit_location_id);
+update temp_all_encounters t
+inner join locations ls on ls.location_id = t.visit_location_id
+set t.visit_location = ls.location_name;
 
 -- update user entered
 drop temporary table if exists user_names;
@@ -184,6 +196,7 @@ select emr_id,
        CONCAT(@partition, '-', encounter_id) as encounter_id,
        CONCAT(@partition, '-', patient_id) as patient_id,
        CONCAT(@partition, '-', visit_id) as visit_id,
+       visit_location,
        encounter_type_name,
        encounter_location,
        encounter_datetime,
