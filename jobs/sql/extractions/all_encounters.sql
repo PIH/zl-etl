@@ -15,6 +15,7 @@ create temporary table temp_all_encounters
     user_entered         varchar(255),
     location_id          int(11),
     encounter_location   varchar(255),
+    facility             varchar(255),
     encounter_type_id    int(11),
     encounter_type_name  varchar(50),
     entered_datetime     datetime,
@@ -49,11 +50,11 @@ create index temp_all_encounters_encounterId ON temp_all_encounters (encounter_i
 update temp_all_encounters t
 inner join encounter e on t.encounter_id = e.encounter_id
 set t.encounter_datetime = e.encounter_datetime,
-    t.encounter_type_id = e.encounter_type, 
-    t.location_id = e.location_id, 
+    t.encounter_type_id = e.encounter_type,
+    t.location_id = e.location_id,
     t.patient_id = e.patient_id,
     t.visit_id = e.visit_id,
-    t.creator = e.creator, 
+    t.creator = e.creator,
     t.entered_datetime = e.date_created,
     t.voided = e.voided
 ;
@@ -84,23 +85,24 @@ set t.encounter_type_name = et.encounter_type_name;
 drop temporary table if exists locations;
 create temporary table locations
 (
-	location_id  int(11),
-	location_name varchar(511)
+	location_id   int(11),
+	location_name varchar(511),
+	facility      varchar(255)
 );
 
-insert into locations(location_id)
-select distinct location_id from temp_all_encounters;
+insert into locations(location_id, location_name)
+select location_id, name from location;
 
 create index locations_li on locations(location_id);
 
 update locations ls
-inner join location l on l.location_id = ls.location_id
-set ls.location_name = name;
+set ls.facility = location_tag_ancestor(ls.location_id, 'Visit Location');
 
 create index temp_all_encounters_li on temp_all_encounters(location_id);
 update temp_all_encounters t
 inner join locations ls on ls.location_id = t.location_id
-set t.encounter_location = ls.location_name;
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
 
 -- update user entered
 drop temporary table if exists user_names;
@@ -186,6 +188,7 @@ select emr_id,
        CONCAT(@partition, '-', visit_id) as visit_id,
        encounter_type_name,
        encounter_location,
+       facility,
        encounter_datetime,
        entered_datetime,
        user_entered,
