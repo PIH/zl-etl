@@ -8,6 +8,7 @@ CREATE TABLE echocardiogram_encounters
     loc_registered                       VARCHAR(255),
     date_echocardiogram                  DATETIME,
     encounter_location                   VARCHAR(255),
+    facility                             VARCHAR(255),
     provider                             VARCHAR(255),
     encounter_id                         VARCHAR(25),
     visit_id                             INT,

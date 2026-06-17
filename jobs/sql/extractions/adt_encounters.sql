@@ -20,11 +20,12 @@ create temporary table adt_encounters
     patient_id           int,
 	 emr_id               varchar(15),
     encounter_id         int,
-    visit_id			 int,
+    visit_id             int,
     encounter_datetime           datetime,
     creator              varchar(255),
-    datetime_created		 datetime,
+    datetime_created     datetime,
     encounter_location   varchar(255),
+    facility             varchar(255),
     provider 			 varchar(255),
     encounter_type 		 int,
     encounter_type_name  varchar(50),
@@ -50,6 +51,9 @@ UPDATE adt_encounters
 SET encounter_location = encounter_location_name(encounter_id);
 
 UPDATE adt_encounters
+SET facility = encounter_facility(encounter_id);
+
+UPDATE adt_encounters
 SET provider = provider(encounter_id);
 
 UPDATE adt_encounters t
@@ -65,6 +69,7 @@ creator AS user_entered,
 datetime_created,
 encounter_type_name AS encounter_type,
 encounter_location,
+facility,
 provider,
 index_asc,
 index_desc

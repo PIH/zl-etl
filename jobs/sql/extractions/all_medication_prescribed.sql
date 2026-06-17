@@ -21,6 +21,7 @@ order_drug text,
 order_formulation text,
 order_formulation_non_coded text,
 order_location varchar(255),
+facility varchar(255),
 order_created_date date,
 order_date_activated date,
 user_entered varchar(255),
@@ -164,6 +165,7 @@ update temp_medication_orders SET emr_id = PATIENT_IDENTIFIER(patient_id, METADA
 update temp_medication_orders tm set visit_id = (select visit_id from encounter e where voided = 0 and tm.encounter_id = e.encounter_id);
 update temp_medication_orders tm set location_id = (select location_id from encounter e where voided = 0 and tm.encounter_id = e.encounter_id);
 update temp_medication_orders tm set order_location = location_name(location_id);
+update temp_medication_orders tm set facility = encounter_facility(encounter_id);
 update temp_medication_orders tm set user_entered = encounter_creator_name(encounter_id);
 update temp_medication_orders tm set order_formulation = drugName(drug_id);
 update temp_medication_orders tm  set product_code = openboxesCode(drug_id);
@@ -189,6 +191,7 @@ if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounte
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),encounter_id) "visit_id",
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',order_id),encounter_id) "order_id",
 order_location,
+facility,
 order_created_date,
 order_date_activated,
 user_entered,

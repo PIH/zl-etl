@@ -14,6 +14,7 @@ CREATE TABLE diagnoses
     street_landmark          varchar(255),
     encounter_id             varchar(25),
     encounter_location       varchar(255),
+    facility                 varchar(255),
     obs_id                   int,
     obs_datetime             datetime,
     entered_by               varchar(255),

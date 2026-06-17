@@ -3,6 +3,7 @@ CREATE TABLE mch_diagnoses
 	emr_id  varchar(25),
 	encounter_id int,
 	encounter_location  varchar(255),
+	facility            varchar(255),
 	obs_id  int,
 	obs_datetime datetime,
 	visit_id int,

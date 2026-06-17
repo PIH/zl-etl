@@ -12,6 +12,7 @@ create temporary table temp_mch_diagnoses
     emr_id varchar(25),
 	encounter_id int,
 	encounter_location  varchar(255),
+	facility varchar(255),
 	obs_id  int,
 	obs_group_id int,
 	obs_datetime datetime,
@@ -91,6 +92,7 @@ update temp_mch_diagnoses tm set emr_id = zlemr(patient_id);
 update temp_mch_diagnoses tm set visit_id = (select visit_id from encounter e where e.voided = 0 and tm.encounter_id = e.encounter_id);
 
 update temp_mch_diagnoses set encounter_location = encounter_location_name(encounter_id);
+update temp_mch_diagnoses set facility = encounter_facility(encounter_id);
 update temp_mch_diagnoses set entered_by = encounter_creator_name(encounter_id);
 update temp_mch_diagnoses set provider = provider(encounter_id);
 
@@ -352,6 +354,7 @@ select
 	   emr_id,
        encounter_id,
        encounter_location,
+       facility,
        obs_id,
        obs_datetime,
        visit_id,

@@ -16,15 +16,16 @@ patient_id               int,
 encounter_id             int,
 date_entered 			    date,
 user_entered 			    varchar(100),
-visit_id                 int,      
-zlemr_id                 varchar(50),  
+visit_id                 int,
+zlemr_id                 varchar(50),
 dossier_id               varchar(50),  
 loc_registered           varchar(255),   
 unknown_patient          varchar(255),        
 ED_Visit_Start_Datetime  datetime,     
 Triage_datetime          datetime,       
-encounter_location       text,         
-provider                 varchar(255), 
+encounter_location       text,
+facility                 varchar(255),
+provider                 varchar(255),
 Triage_queue_status      varchar(255), 
 Triage_Color             varchar(255), 
 Triage_Score             int,          
@@ -104,6 +105,7 @@ UPDATE temp_ED_Triage SET provider = PROVIDER(encounter_id);
 
 -- encounter location
 UPDATE temp_ED_Triage SET encounter_location = ENCOUNTER_LOCATION_NAME(encounter_id);
+UPDATE temp_ED_Triage SET facility = encounter_facility(encounter_id);
 
 -- location registered
 UPDATE temp_ED_Triage SET loc_registered = loc_registered(patient_id);
@@ -364,8 +366,9 @@ loc_registered,
 unknown_patient,        
 ed_visit_start_datetime,     
 triage_datetime,       
-encounter_location,         
-provider, 
+encounter_location,
+facility,
+provider,
 triage_queue_status, 
 triage_color, 
 triage_score,          

@@ -24,7 +24,7 @@ create temporary table temp_encounter
     provider			varchar(255),
     voided               bit,
     index_asc 			int,
-    index_desc 			int 		
+    index_desc 			int
 );
 
 
@@ -46,7 +46,7 @@ UPDATE temp_encounter t SET t.user_entered = person_name_of_user(t.creator);
 UPDATE temp_encounter t SET t.emr_id = patient_identifier(t.patient_id, 'ZL EMR ID');
 UPDATE temp_encounter t SET t.provider = provider(t.encounter_id);
 
-SELECT  
+SELECT
 emr_id,
 CONCAT(@partition, '-', encounter_id) as encounter_id,
 CONCAT(@partition, '-', visit_id) as visit_id,
