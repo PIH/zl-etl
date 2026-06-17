@@ -16,7 +16,6 @@ CREATE TEMPORARY TABLE temp_labresults
   encounter_type                  VARCHAR(255),
   obs_id                          INT(11),
   visit_id                        INT(11),
-  visit_location                  VARCHAR(255),
   test_concept_id                 INT(11),      
   value_coded_concept_id          INT(11),      
   value_text                      TEXT,         
@@ -244,24 +243,12 @@ inner join obs o on o.encounter_id = t.encounter_id and o.voided = 0 and o.conce
 set results_date = o.value_datetime,
 	results_entry_date = o.date_created;
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-create index temp_labresults_vi on temp_labresults(visit_id);
-update temp_labresults t
-inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
-
 -- select final output
 SELECT
 	if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',t.obs_id),t.obs_id) "obs_id",
 	if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',t.patient_id),t.patient_id) "patient_id",
 	t.emr_id,
     if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',t.visit_id),t.visit_id) "visit_id",
-    t.visit_location,
     if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',t.encounter_id),t.encounter_id) "encounter_id",
     t.encounter_type,
     t.encounter_location,

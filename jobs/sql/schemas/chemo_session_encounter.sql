@@ -1,8 +1,7 @@
 CREATE TABLE chemo_session_encounter 
 (emr_id                    varchar(25),   
 encounter_id               varchar(25),   
-visit_id                   varchar(25),
-visit_location             varchar(255),
+visit_id                   varchar(25),   
 encounter_datetime         datetime,      
 provider_name              varchar(255),  
 user_entered               varchar(255),  

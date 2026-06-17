@@ -40,7 +40,6 @@ CREATE TABLE diagnoses
     date_created             datetime,
     retrospective            int,
     visit_id                 int,
-    visit_location           varchar(255),
     birthdate                datetime,
     birthdate_estimated      bit,
     encounter_type           varchar(255),

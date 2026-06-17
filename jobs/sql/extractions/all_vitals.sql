@@ -11,7 +11,6 @@ CREATE TEMPORARY TABLE temp_vitals
 	emr_id          	VARCHAR(25),
     encounter_id		int(11),
     visit_id			int(11),
-    visit_location		varchar(255),
     encounter_location_id	int(11),
     encounter_location	varchar(255),
     facility			varchar(255),
@@ -95,8 +94,10 @@ location_name					VARCHAR(255),
 facility						varchar(255)
 );
 
-INSERT INTO temp_locations(location_id, location_name)
-select location_id, name from location;
+INSERT INTO temp_locations(location_id)
+select distinct encounter_location_id from temp_vitals tv;
+
+update temp_locations t set location_name  = location_name(location_id);
 update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
 
 CREATE INDEX temp_locations_l ON temp_locations (location_id);
@@ -105,13 +106,6 @@ update temp_vitals tv
 inner join temp_locations tl on tl.location_id = tv.encounter_location_id
 set tv.encounter_location = tl.location_name,
     tv.facility = tl.facility;
-
-create index temp_vitals_vi on temp_vitals(visit_id);
-update temp_vitals tv
-inner join visit v on v.visit_id = tv.visit_id
-inner join temp_locations tl on tl.location_id = v.location_id
-set tv.visit_location = tl.location_name,
-    tv.facility = tl.location_name;
 
 -- user entered
 DROP TEMPORARY TABLE IF EXISTS temp_creators;
@@ -291,7 +285,6 @@ select
 	emr_id ,
 	concat(@partition,'-',encounter_id),
 	concat(@partition,'-',visit_id),
-	visit_location,
 	encounter_location,
 	facility,
 	encounter_datetime,

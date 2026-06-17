@@ -21,7 +21,6 @@ create temporary table adt_encounters
 	 emr_id               varchar(15),
     encounter_id         int,
     visit_id             int,
-    visit_location       varchar(255),
     encounter_datetime           datetime,
     creator              varchar(255),
     datetime_created     datetime,
@@ -61,22 +60,10 @@ UPDATE adt_encounters t
 SET emr_id = patient_identifier(patient_id, @emr_identifier_type);
 
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-create index adt_encounters_vi on adt_encounters(visit_id);
-update adt_encounters t
-inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
-
-SELECT
+SELECT 
 emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
 CONCAT(@partition,'-',visit_id) "visit_id",
-visit_location,
 encounter_datetime,
 creator AS user_entered,
 datetime_created,

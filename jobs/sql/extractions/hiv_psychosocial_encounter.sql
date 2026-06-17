@@ -9,7 +9,6 @@ patient_id                         int,
 emr_id                             varchar(255),
 encounter_id                       int,
 visit_id                           int,
-visit_location                     varchar(255),
 encounter_datetime                 datetime,     
 datetime_created                   datetime,     
 creator                            int,                  
@@ -120,21 +119,10 @@ SET willing_reenroll = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PI
 UPDATE temp_hiv_encs
 SET action_reinforce_adherence = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '14627',0));
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-create index temp_hiv_encs_vi on temp_hiv_encs(visit_id);
-update temp_hiv_encs t
-inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name;
-
 SELECT
 emr_id,
 encounter_id,
 visit_id,
-visit_location,
 encounter_datetime,
 datetime_created,
 user_entered,

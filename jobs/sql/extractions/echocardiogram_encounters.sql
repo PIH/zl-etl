@@ -21,7 +21,6 @@ CREATE TEMPORARY TABLE temp_echo
     provider                        varchar(255),
     encounter_id                    int(11),
     visit_id	                    int(11),
-    visit_location                  varchar(255),
     systolic_bp						double,
     diastolic_bp					double,
     heart_failure					bit,
@@ -165,19 +164,8 @@ select distinct(person_id) from temp_heart_failure_stage;
 update temp_echo t inner join temp_heart_failure_final th on t.patient_id = th.person_id
 set heart_failure = 1;
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-create index temp_echo_vi on temp_echo(visit_id);
-update temp_echo t
-inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
-
 -- select final output
-select
+select 
 patient_id,
 dossierId,
 emrid,
@@ -190,7 +178,6 @@ facility,
 provider,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 visit_id,
-visit_location,
 systolic_bp,
 diastolic_bp,
 heart_failure,

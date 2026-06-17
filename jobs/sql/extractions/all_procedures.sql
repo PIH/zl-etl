@@ -9,7 +9,6 @@ patient_id int,
 encounter_id int,
 obs_id int,
 visit_id int,
-visit_location varchar(255),
 creator int,
 concept_id int,
 value_coded int,
@@ -234,26 +233,14 @@ update temp_procedure tp set leep = if(value_coded = @leep, @yes, @non);
 set @uterine_myomectomy = concept_from_mapping('PIH', '8695');
 update temp_procedure tp set myomectomy = if(value_coded = @uterine_myomectomy, @yes, @non);
 
-update temp_procedure tp set retrospective =
+update temp_procedure tp set retrospective = 
 IF(TIMESTAMPDIFF(MINUTE, encounter_datetime, date_created) > 30, @yes, @non);
-
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-create index temp_procedure_vi on temp_procedure(visit_id);
-update temp_procedure t
-inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
 
 select
 zlemr(patient_id) emr_id,
 encounter_id,
 obs_id,
 visit_id,
-visit_location,
 creator,
 encounter_datetime,
 obs_datetime,

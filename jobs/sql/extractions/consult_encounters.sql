@@ -12,7 +12,6 @@ create temporary table temp_consult_encs
  emr_id              varchar(15),
  encounter_id        int(11),
  visit_id            int(11),
- visit_location      varchar(255),
  encounter_datetime  datetime,
  creator             int(11),
  user_entered        varchar(255),
@@ -119,22 +118,10 @@ set t.trauma =
 
 
 -- final output
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-create index temp_consult_encs_vi on temp_consult_encs(visit_id);
-update temp_consult_encs t
-inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
-
-SELECT
+SELECT 
 emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
 CONCAT(@partition,'-',visit_id) "visit_id",
-visit_location,
 encounter_datetime,
 user_entered,
 datetime_created,

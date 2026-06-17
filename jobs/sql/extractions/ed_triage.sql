@@ -17,7 +17,6 @@ encounter_id             int,
 date_entered 			    date,
 user_entered 			    varchar(100),
 visit_id                 int,
-visit_location           varchar(255),
 zlemr_id                 varchar(50),
 dossier_id               varchar(50),  
 loc_registered           varchar(255),   
@@ -355,24 +354,12 @@ order by o.encounter_id, o.obs_datetime , o.obs_id
 create index temp_ed_obs_ei on temp_ed_obs(encounter_id);
 
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-create index temp_ED_Triage_vi on temp_ED_Triage(visit_id);
-update temp_ED_Triage t
-inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
-
 -- final output of data
 Select
 CONCAT(@partition, '-', encounter_id) as encounter_id,
 date_entered,
 user_entered,
 CONCAT(@partition, '-', visit_id) as visit_id,
-visit_location,
 zlemr_id,
 dossier_id,  
 loc_registered,   

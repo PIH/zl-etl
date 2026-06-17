@@ -9,7 +9,6 @@ encounter_id int,
 patient_id int,
 emr_id varchar(20),
 visit_id int,
-visit_location varchar(255),
 order_id int,
 orderer int,
 drug_concept_id int,
@@ -184,24 +183,12 @@ update temp_medication_orders tm  set order_comments = obs_value_text(tm.encount
 update temp_medication_orders tm  set order_duration_units = concept_name(order_duration_units_id, @locale) where order_id is not null;
 
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-create index temp_medication_orders_vi on temp_medication_orders(visit_id);
-update temp_medication_orders t
-inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
-
 -- final query
-select
+select 
 emr_id,
 encounter_type,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),encounter_id) "visit_id",
-visit_location,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',order_id),encounter_id) "order_id",
 order_location,
 facility,
