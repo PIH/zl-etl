@@ -11,6 +11,7 @@ create temporary table temp_all_encounters
     encounter_datetime   datetime,
     patient_id           int(11),
     visit_id             int(11),
+    visit_location       varchar(255),
     creator              int(11),
     user_entered         varchar(255),
     location_id          int(11),
@@ -81,7 +82,8 @@ update temp_all_encounters t
 inner join encounter_types et on et.encounter_type_id = t.encounter_type_id
 set t.encounter_type_name = et.encounter_type_name;
 
--- update location name
+-- create temporary table for mapping location ids to name and associated facility
+-- (where facility is the nearest Visit Location ancestor of the encounter location)
 drop temporary table if exists locations;
 create temporary table locations
 (
@@ -99,10 +101,22 @@ update locations ls
 set ls.facility = location_tag_ancestor(ls.location_id, 'Visit Location');
 
 create index temp_all_encounters_li on temp_all_encounters(location_id);
+-- Sets encounter_location from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_all_encounters t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
     t.facility = ls.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+create index temp_all_encounters_vi on temp_all_encounters(visit_id);
+update temp_all_encounters t
+inner join visit v on t.visit_id = v.visit_id
+inner join locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
 
 -- update user entered
 drop temporary table if exists user_names;
@@ -186,6 +200,7 @@ select emr_id,
        CONCAT(@partition, '-', encounter_id) as encounter_id,
        CONCAT(@partition, '-', patient_id) as patient_id,
        CONCAT(@partition, '-', visit_id) as visit_id,
+       visit_location,
        encounter_type_name,
        encounter_location,
        facility,
