@@ -2,8 +2,10 @@ create table socioeconomic_encounter
 (
 emr_id                                varchar(25),  
 encounter_id                          varchar(25),  
-visit_id                              varchar(25),  
-encounter_location                    varchar(255), 
+visit_id                              varchar(25),
+visit_location                        varchar(255),
+encounter_location                    varchar(255),
+facility                              varchar(255),
 encounter_datetime                    datetime,     
 encounter_provider                    varchar(255), 
 date_entered                          datetime,     

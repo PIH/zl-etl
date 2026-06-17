@@ -7,11 +7,13 @@ create temporary table temp_HIV_dispensing
 patient_id int(11),
 encounter_id int(11),
 visit_id int(11),
+visit_location varchar(255),
 dispense_date datetime,
 encounter_location_id  int(11),
 date_entered DATETIME,
 user_entered VARCHAR(50),
 dispense_site  varchar(255),
+facility varchar(255),
 age_at_dispense_date int,
 dispense_date_ascending int,
 dispense_date_descending int,
@@ -72,8 +74,17 @@ create index temp_obs_oi on temp_obs(obs_id);
 create index temp_obs_ci1 on temp_obs(encounter_id, concept_id);
 create index temp_obs_ci2 on temp_obs(obs_group_id, concept_id);
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_HIV_dispensing_li on temp_HIV_dispensing(encounter_location_id);
 update temp_HIV_dispensing t
-set dispense_site = location_name(encounter_location_id);
+inner join temp_locations ls on ls.location_id = t.encounter_location_id
+set t.dispense_site = ls.location_name,
+    t.facility = ls.facility;
 
 update temp_HIV_dispensing t
 inner join person p on p.person_id = t.patient_id
@@ -349,13 +360,22 @@ left outer join dup_HIV_dispensing d on d.patient_id=t.patient_id and d.dispense
 set t.days_late_to_pickup = if(t.dispense_date>d.next_dispense_date,datediff(t.dispense_date,d.next_dispense_date),0)
 where t.dispense_date_descending = 1;
 
+create index temp_HIV_dispensing_vi on temp_HIV_dispensing(visit_id);
+update temp_HIV_dispensing t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
 # final query
 Select
 zlemr(t.patient_id),
 concat(@partition,'-',t.encounter_id),
 concat(@partition,'-',t.visit_id),
+t.visit_location,
 t.dispense_date,
 t.dispense_site,
+t.facility,
 t.date_entered,
 t.user_entered,
 t.age_at_dispense_date,

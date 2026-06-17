@@ -8,16 +8,18 @@ SELECT 'a541af1e-105c-40bf-b345-ba1fd6a59b85' INTO @emr_identifier_type;
 drop temporary table if exists temp_consult_encs;
 create temporary table temp_consult_encs
 (
- patient_id          int(11),          
- emr_id              varchar(15),  
- encounter_id        int(11),          
- visit_id            int(11),          
+ patient_id          int(11),
+ emr_id              varchar(15),
+ encounter_id        int(11),
+ visit_id            int(11),
+ visit_location      varchar(255),
  encounter_datetime  datetime,
  creator             int(11),
- user_entered        varchar(255), 
- datetime_created    datetime, 
+ user_entered        varchar(255),
+ datetime_created    datetime,
  location_id         int(11),
- encounter_location  varchar(255), 
+ encounter_location  varchar(255),
+ facility            varchar(255), 
  provider            varchar(255), 
  encounter_type      int(11),          
  encounter_type_name varchar(50),  
@@ -48,8 +50,17 @@ SET encounter_type_name = encounter_type_name_from_id(encounter_type);
 UPDATE temp_consult_encs
 set user_entered = person_name_of_user(creator);
 
-UPDATE temp_consult_encs
-SET encounter_location = location_name(location_id);
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_consult_encs_li on temp_consult_encs(location_id);
+update temp_consult_encs t
+inner join temp_locations ls on ls.location_id = t.location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
 
 UPDATE temp_consult_encs
 SET provider = provider(encounter_id);
@@ -114,14 +125,23 @@ set t.trauma =
 
 
 -- final output
-SELECT 
+create index temp_consult_encs_vi on temp_consult_encs(visit_id);
+update temp_consult_encs t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
+SELECT
 emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
 CONCAT(@partition,'-',visit_id) "visit_id",
+visit_location,
 encounter_datetime,
-user_entered, 
+user_entered,
 datetime_created,
 encounter_location,
+facility,
 encounter_type_name AS encounter_type,
 provider,
 trauma,

@@ -12,8 +12,11 @@ CREATE TEMPORARY TABLE temp_soc
  patient_id                            int(11),      
  emr_id                                VARCHAR(25),  
  encounter_id                          int(11),      
- visit_id                              int(11),      
- encounter_location                    varchar(255), 
+ visit_id                              int(11),
+ location_id                           int(11),
+ visit_location                        varchar(255),
+ encounter_location                    varchar(255),
+ facility                              varchar(255),
  encounter_datetime                    datetime,     
  encounter_provider                    VARCHAR(255), 
  date_entered                          datetime,     
@@ -76,8 +79,8 @@ CREATE TEMPORARY TABLE temp_soc
  household_no_assets                   varchar(255)  
 );
    
-insert into temp_soc(patient_id, encounter_id, visit_id, encounter_datetime, date_entered)   
-select e.patient_id,  e.encounter_id, e.visit_id, e.encounter_datetime, e.date_created from encounter e
+insert into temp_soc(patient_id, encounter_id, visit_id, location_id, encounter_datetime, date_entered)
+select e.patient_id,  e.encounter_id, e.visit_id, e.location_id, e.encounter_datetime, e.date_created from encounter e
 where e.encounter_type = @socioeconomics_enc_id
 AND ((date(e.encounter_datetime) >=@startDate) or @startDate is null)
 AND ((date(e.encounter_datetime) <=@endDate)  or @endDate is null)
@@ -107,10 +110,19 @@ set tv.emr_id = ti.emr_id;
 update temp_soc tv 
 set encounter_provider = provider(encounter_id);
 
-update temp_soc tv 
-set encounter_location = encounter_location_name(encounter_id); 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
 
-update  temp_soc tv 
+create index temp_soc_li on temp_soc(location_id);
+update temp_soc t
+inner join temp_locations ls on ls.location_id = t.location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
+
+update  temp_soc tv
 set user_entered = encounter_creator_name(encounter_id);
 
 -- observations
@@ -290,11 +302,20 @@ set inadequate_housing_materials = obs_value_coded_list(encounter_id, 'CIEL', '1
 update  temp_soc tv 
 set household_no_assets = obs_value_coded_list(encounter_id, 'CIEL', '165500', @locale);
 
-select 
+create index temp_soc_vi on temp_soc(visit_id);
+update temp_soc t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
+select
 	emr_id,
 	if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 	if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
+	visit_location,
 	encounter_location,
+	facility,
 	encounter_datetime,
 	encounter_provider,
 	date_entered,

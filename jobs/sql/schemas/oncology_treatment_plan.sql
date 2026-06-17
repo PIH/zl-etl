@@ -2,9 +2,11 @@ CREATE TABLE oncology_treatment_plan
 (
 emr_id             varchar(50),  
 encounter_id       varchar(50),  
-visit_id           varchar(50),  
+visit_id           varchar(50),
+visit_location     varchar(255),
 encounter_datetime datetime,     
-encounter_location varchar(100), 
+encounter_location varchar(100),
+facility           varchar(255),
 date_entered       date,         
 user_entered       varchar(30),  
 encounter_provider varchar(30),  

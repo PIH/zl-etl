@@ -956,6 +956,24 @@ BEGIN
 END
 #
 /*
+  encounter_facility
+  Walks up the location hierarchy from the encounter's location and returns the
+  name of the first ancestor tagged "Visit Location". Used for files that do not
+  maintain a locations temp table (per-row call).
+*/
+#
+DROP FUNCTION IF EXISTS encounter_facility;
+#
+CREATE FUNCTION encounter_facility(_encounter_id INT)
+    RETURNS varchar(255)
+    DETERMINISTIC
+BEGIN
+    DECLARE loc_id INT;
+SELECT location_id INTO loc_id FROM encounter WHERE encounter_id = _encounter_id;
+RETURN location_tag_ancestor(loc_id, 'Visit Location');
+END
+#
+/*
 Encounter Date
 */
 #

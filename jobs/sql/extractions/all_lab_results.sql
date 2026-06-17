@@ -10,20 +10,22 @@ SET @result_date = concept_from_mapping('PIH','10783');
 DROP TEMPORARY TABLE IF EXISTS temp_labresults;
 CREATE TEMPORARY TABLE temp_labresults
 ( 
-  patient_id                      INT(11),      
-  emr_id                          VARCHAR(50),  
-  encounter_id                    INT(11),      
-  encounter_type                  VARCHAR(255), 
-  obs_id                          INT(11),      
-  visit_id                        INT(11),      
+  patient_id                      INT(11),
+  emr_id                          VARCHAR(50),
+  encounter_id                    INT(11),
+  encounter_type                  VARCHAR(255),
+  obs_id                          INT(11),
+  visit_id                        INT(11),
+  visit_location                  VARCHAR(255),
   test_concept_id                 INT(11),      
   value_coded_concept_id          INT(11),      
   value_text                      TEXT,         
   value_numeric                   DOUBLE,       
   order_id                        INT(11),      
   loc_registered                  VARCHAR(255), 
-  encounter_location_id           INT(11),      
-  encounter_location              VARCHAR(255), 
+  encounter_location_id           INT(11),
+  encounter_location              VARCHAR(255),
+  facility                        VARCHAR(255),
   unknown_patient                 VARCHAR(50),  
   gender                          VARCHAR(50),  
   age_at_encounter                INT(11),      
@@ -128,13 +130,14 @@ set t.emr_id =  p.emr_id,
 DROP TEMPORARY TABLE IF EXISTS temp_lab_encounter;
 CREATE TEMPORARY TABLE temp_lab_encounter
 (
- patient_id               INT(11),      
- visit_id                 INT(11),      
- encounter_id             INT(11),      
- encounter_type_id        INT(11),      
- encounter_type           VARCHAR(255), 
- encounter_location_id    INT(11),      
- encounter_location       VARCHAR(255), 
+ patient_id               INT(11),
+ visit_id                 INT(11),
+ encounter_id             INT(11),
+ encounter_type_id        INT(11),
+ encounter_type           VARCHAR(255),
+ encounter_location_id    INT(11),
+ encounter_location       VARCHAR(255),
+ facility                 VARCHAR(255),
  date_created             DATETIME,
  creator                  INT(11),
  user_entered             TEXT,
@@ -160,8 +163,17 @@ set t.patient_id = e.patient_id ,
 update temp_lab_encounter t
 set encounter_type = encounter_type_name_from_id(encounter_type_id);
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_lab_encounter_li on temp_lab_encounter(encounter_location_id);
 update temp_lab_encounter t
-set encounter_location = location_name(t.encounter_location_id);
+inner join temp_locations ls on ls.location_id = t.encounter_location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
 
 update temp_lab_encounter t
 set user_entered = person_name_of_user(creator);
@@ -174,6 +186,7 @@ inner join temp_lab_encounter e on e.encounter_id = t.encounter_id
 set t.encounter_location_id = e.encounter_location_id,
 	t.encounter_type = e.encounter_type,
 	t.encounter_location =  e.encounter_location,
+	t.facility = e.facility,
 	t.specimen_collection_date = e.specimen_collection_date,
 	t.specimen_collection_entry_date =  e.date_created,
 	t.age_at_encounter = e.age_at_encounter,
@@ -237,15 +250,24 @@ inner join obs o on o.encounter_id = t.encounter_id and o.voided = 0 and o.conce
 set results_date = o.value_datetime,
 	results_entry_date = o.date_created;
 
+create index temp_labresults_vi on temp_labresults(visit_id);
+update temp_labresults t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
 -- select final output
 SELECT
 	if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',t.obs_id),t.obs_id) "obs_id",
 	if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',t.patient_id),t.patient_id) "patient_id",
 	t.emr_id,
     if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',t.visit_id),t.visit_id) "visit_id",
+    t.visit_location,
     if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',t.encounter_id),t.encounter_id) "encounter_id",
     t.encounter_type,
     t.encounter_location,
+    t.facility,
     t.loc_registered,
     t.unknown_patient,
     t.gender,

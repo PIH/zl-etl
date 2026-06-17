@@ -16,15 +16,18 @@ patient_id               int,
 encounter_id             int,
 date_entered 			    date,
 user_entered 			    varchar(100),
-visit_id                 int,      
-zlemr_id                 varchar(50),  
+visit_id                 int,
+location_id              int,
+visit_location           varchar(255),
+zlemr_id                 varchar(50),
 dossier_id               varchar(50),  
 loc_registered           varchar(255),   
 unknown_patient          varchar(255),        
 ED_Visit_Start_Datetime  datetime,     
 Triage_datetime          datetime,       
-encounter_location       text,         
-provider                 varchar(255), 
+encounter_location       text,
+facility                 varchar(255),
+provider                 varchar(255),
 Triage_queue_status      varchar(255), 
 Triage_Color             varchar(255), 
 Triage_Score             int,          
@@ -60,8 +63,8 @@ index_asc                int,
 index_desc               int        
 );
 
-insert into temp_ED_Triage (patient_id, encounter_id, visit_id, Triage_datetime, date_entered, user_entered)
-select e.patient_id, e.encounter_id, e.visit_id,e.encounter_datetime,e.date_created, encounter_creator_name(e.encounter_id)
+insert into temp_ED_Triage (patient_id, encounter_id, visit_id, location_id, Triage_datetime, date_entered, user_entered)
+select e.patient_id, e.encounter_id, e.visit_id, e.location_id, e.encounter_datetime, e.date_created, encounter_creator_name(e.encounter_id)
 from encounter e
 where e.encounter_type = @EDTriageEnc and e.voided = 0
 ;
@@ -103,7 +106,17 @@ set t.dossier_id = p.dossier_id,
 UPDATE temp_ED_Triage SET provider = PROVIDER(encounter_id);
 
 -- encounter location
-UPDATE temp_ED_Triage SET encounter_location = ENCOUNTER_LOCATION_NAME(encounter_id);
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_ED_Triage_li on temp_ED_Triage(location_id);
+update temp_ED_Triage t
+inner join temp_locations ls on ls.location_id = t.location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
 
 -- location registered
 UPDATE temp_ED_Triage SET loc_registered = loc_registered(patient_id);
@@ -352,20 +365,29 @@ order by o.encounter_id, o.obs_datetime , o.obs_id
 create index temp_ed_obs_ei on temp_ed_obs(encounter_id);
 
 
+create index temp_ED_Triage_vi on temp_ED_Triage(visit_id);
+update temp_ED_Triage t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
 -- final output of data
 Select
 CONCAT(@partition, '-', encounter_id) as encounter_id,
 date_entered,
 user_entered,
 CONCAT(@partition, '-', visit_id) as visit_id,
+visit_location,
 zlemr_id,
 dossier_id,  
 loc_registered,   
 unknown_patient,        
 ed_visit_start_datetime,     
 triage_datetime,       
-encounter_location,         
-provider, 
+encounter_location,
+facility,
+provider,
 triage_queue_status, 
 triage_color, 
 triage_score,          

@@ -9,11 +9,14 @@ patient_id int,
 encounter_id int,
 obs_id int,
 visit_id int,
+location_id int,
+visit_location varchar(255),
 creator int,
 concept_id int,
 value_coded int,
 encounter_datetime datetime,
 encounter_location varchar(150),
+facility varchar(255),
 encounter_type  varchar(150),
 obs_datetime  datetime,
 entered_by varchar(150),
@@ -71,10 +74,22 @@ from obs where voided = 0 and concept_id in (@procedure1, @procedure2, @non_code
 
 update temp_procedure tp join encounter e on e.voided = 0 and e.encounter_id = tp.encounter_id
 set tp.visit_id =  e.visit_id,
-	tp.encounter_location = encounter_location_name(e.encounter_id),
+    tp.location_id = e.location_id,
     tp.encounter_type = encounter_type_name(e.encounter_id),
     tp.provider = provider(e.encounter_id),
     tp.encounter_datetime = e.encounter_datetime;
+
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_procedure_li on temp_procedure(location_id);
+update temp_procedure tp
+inner join temp_locations ls on ls.location_id = tp.location_id
+set tp.encounter_location = ls.location_name,
+    tp.facility = ls.facility;
 
 update temp_procedure tp set procedures = 
 if(concept_id in (@procedure1, @procedure2), concept_name(tp.value_coded, 'en'), 
@@ -230,18 +245,27 @@ update temp_procedure tp set leep = if(value_coded = @leep, @yes, @non);
 set @uterine_myomectomy = concept_from_mapping('PIH', '8695');
 update temp_procedure tp set myomectomy = if(value_coded = @uterine_myomectomy, @yes, @non);
 
-update temp_procedure tp set retrospective = 
+update temp_procedure tp set retrospective =
 IF(TIMESTAMPDIFF(MINUTE, encounter_datetime, date_created) > 30, @yes, @non);
 
-select 
+create index temp_procedure_vi on temp_procedure(visit_id);
+update temp_procedure t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
+select
 zlemr(patient_id) emr_id,
 encounter_id,
 obs_id,
 visit_id,
+visit_location,
 creator,
 encounter_datetime,
 obs_datetime,
 encounter_location,
+facility,
 encounter_type,
 entered_by,
 provider,
