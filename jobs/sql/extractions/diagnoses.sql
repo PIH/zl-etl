@@ -28,6 +28,7 @@ CREATE TEMPORARY TABLE temp_diagnoses
  entered_by               varchar(1000),
  provider                 varchar(1000),
  visit_id                 int(11),
+ visit_location           varchar(255),
  obs_id                   int(11),
  obs_group_id             int(11),       
  obs_datetime             datetime,       
@@ -313,8 +314,19 @@ set t.age_at_encounter = e.age_at_encounter,
 update temp_diagnoses t
 set t.retrospective = IF(TIME_TO_SEC(date_created) - TIME_TO_SEC(obs_datetime) > 1800,1,0) ;
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+create index temp_diagnoses_vi on temp_diagnoses(visit_id);
+update temp_diagnoses t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
 -- select final output
-select 
+select
 d.patient_id,
 d.dossierId,
 d.patient_primary_id,
@@ -355,6 +367,7 @@ d.oncology,
 d.date_created,
 d.retrospective,
 d.visit_id,
+d.visit_location,
 d.birthdate,
 d.birthdate_estimated,
 d.encounter_type,

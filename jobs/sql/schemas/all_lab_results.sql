@@ -4,6 +4,7 @@ CREATE TABLE all_lab_results
     patient_id               VARCHAR(50),
     emr_id                   VARCHAR(50),
     visit_id                 VARCHAR(50),
+    visit_location           VARCHAR(255),
     encounter_id             VARCHAR(50),
     encounter_type           VARCHAR(255),
     encounter_location       VARCHAR(255),

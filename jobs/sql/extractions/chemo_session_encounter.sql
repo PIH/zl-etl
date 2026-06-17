@@ -7,6 +7,7 @@ create temporary table chemo_encounters
 emr_id                     varchar(50),
 encounter_id               int(11),
 visit_id                   int(11),
+visit_location             varchar(255),
 encounter_datetime         datetime,
 creator                    int(11),
 user_entered               text,
@@ -80,13 +81,11 @@ create temporary table temp_locations
     facility          varchar(255)
 );
 
-insert into temp_locations (location_id) 
-select distinct location_id from chemo_encounters;
+insert into temp_locations (location_id, location_name)
+select location_id, name from location;
 
 create index temp_locations_ui on temp_locations (location_id);
 
-update temp_locations
-set location_name = location_name (location_id);
 update temp_locations
 set facility = location_tag_ancestor(location_id, 'Visit Location');
 
@@ -94,6 +93,13 @@ update chemo_encounters t
 inner join temp_locations u on u.location_id = t.location_id
 set t.encounter_location = u.location_name,
     t.facility = u.facility;
+
+create index chemo_encounters_vi on chemo_encounters(visit_id);
+update chemo_encounters t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations u on u.location_id = v.location_id
+set t.visit_location = u.location_name,
+    t.facility = u.location_name;
 
 -- provider
 drop temporary table if exists temp_providers;
@@ -146,6 +152,7 @@ select
 e.emr_id,
 concat(@partition, '-', e.encounter_id),
 concat(@partition, '-', e.visit_id),
+e.visit_location,
 e.encounter_datetime,
 e.provider_name,
 e.user_entered,

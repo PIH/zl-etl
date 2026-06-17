@@ -8,6 +8,7 @@ patient_id int,
 emr_id varchar(50),
 encounter_id int,
 visit_id int,
+visit_location varchar(255),
 encounter_datetime datetime,
 encounter_location varchar(100),
 facility varchar(255),
@@ -65,11 +66,22 @@ ORDER BY obs_id ASC;
 
 UPDATE oncology_diagnosis SET facility = encounter_facility(encounter_id);
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+create index oncology_diagnosis_vi on oncology_diagnosis(visit_id);
+update oncology_diagnosis t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
 
 SELECT
 emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
 CONCAT(@partition,'-',visit_id) "visit_id",
+visit_location,
 encounter_datetime ,
 encounter_location ,
 facility ,
