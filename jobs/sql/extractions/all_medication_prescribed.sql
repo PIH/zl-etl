@@ -165,8 +165,18 @@ where o.voided = 0;
 update temp_medication_orders SET emr_id = PATIENT_IDENTIFIER(patient_id, METADATA_UUID('org.openmrs.module.emrapi', 'emr.primaryIdentifierType'));
 update temp_medication_orders tm set visit_id = (select visit_id from encounter e where voided = 0 and tm.encounter_id = e.encounter_id);
 update temp_medication_orders tm set location_id = (select location_id from encounter e where voided = 0 and tm.encounter_id = e.encounter_id);
-update temp_medication_orders tm set order_location = location_name(location_id);
-update temp_medication_orders tm set facility = encounter_facility(encounter_id);
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_medication_orders_li on temp_medication_orders(location_id);
+update temp_medication_orders tm
+inner join temp_locations ls on ls.location_id = tm.location_id
+set tm.order_location = ls.location_name,
+    tm.facility = ls.facility;
+
 update temp_medication_orders tm set user_entered = encounter_creator_name(encounter_id);
 update temp_medication_orders tm set order_formulation = drugName(drug_id);
 update temp_medication_orders tm  set product_code = openboxesCode(drug_id);
@@ -184,10 +194,6 @@ update temp_medication_orders tm  set order_comments = obs_value_text(tm.encount
 update temp_medication_orders tm  set order_duration_units = concept_name(order_duration_units_id, @locale) where order_id is not null;
 
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
 create index temp_medication_orders_vi on temp_medication_orders(visit_id);
 update temp_medication_orders t
 inner join visit v on v.visit_id = t.visit_id
