@@ -3,18 +3,17 @@ select et.encounter_type_id into @chemo_form from encounter_type et where uuid =
 
 drop temporary table if exists chemo_encounters;
 create temporary table chemo_encounters
-(patient_id                int(11),
-emr_id                     varchar(50),
-encounter_id               int(11),
+(patient_id                int(11),      
+emr_id                     varchar(50),  
+encounter_id               int(11),    
 visit_id                   int(11),
-encounter_datetime         datetime,
-creator                    int(11),
-user_entered               text,
+encounter_datetime         datetime,     
+creator                    int(11),      
+user_entered               text,         
 date_created               datetime,
 provider_name              varchar(255),
-location_id                int(11),
-encounter_location         varchar(255),
-facility                   varchar(255),
+location_id                int(11),      
+encounter_location         varchar(255), 
 cycle_number               double,       
 planned_chemo_sessions     double,       
 treatment_plan             varchar(255), 
@@ -76,8 +75,7 @@ drop temporary table if exists temp_locations;
 create temporary table temp_locations
 (
     location_id int(11),
-    location_name     text,
-    facility          varchar(255)
+    location_name     text
 );
 
 insert into temp_locations (location_id) 
@@ -87,13 +85,10 @@ create index temp_locations_ui on temp_locations (location_id);
 
 update temp_locations
 set location_name = location_name (location_id);
-update temp_locations
-set facility = location_tag_ancestor(location_id, 'Visit Location');
 
 update chemo_encounters t
 inner join temp_locations u on u.location_id = t.location_id
-set t.encounter_location = u.location_name,
-    t.facility = u.facility;
+set encounter_location = u.location_name;
 
 -- provider
 drop temporary table if exists temp_providers;
@@ -142,7 +137,7 @@ set treatment_plan = obs_value_coded_list_from_temp(encounter_id, 'PIH','10525',
 update chemo_encounters ce
 set visit_information_comments = obs_value_text_from_temp(encounter_id, 'PIH','10534');
 
-select
+select 
 e.emr_id,
 concat(@partition, '-', e.encounter_id),
 concat(@partition, '-', e.visit_id),
@@ -151,7 +146,6 @@ e.provider_name,
 e.user_entered,
 e.date_created,
 e.encounter_location,
-e.facility,
 e.cycle_number,
 e.planned_chemo_sessions,
 e.treatment_plan,

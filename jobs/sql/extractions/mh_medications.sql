@@ -12,7 +12,6 @@ encounter_id int,
 obs_group_id int,
 encounter_datetime datetime,
 encounter_location_name varchar(50),
-facility varchar(255),
 encounter_creator varchar(50),
 provider varchar(50),
 medication_name varchar(500),
@@ -41,7 +40,7 @@ create index temp_obs_c1 on temp_obs(encounter_id, concept_id);
 create index temp_obs_c2 on temp_obs(obs_group_id, concept_id);
 
 INSERT INTO all_mh_medications(patient_id,emr_id,encounter_id,obs_group_id,encounter_datetime,encounter_location_name,encounter_creator,provider)
-SELECT
+SELECT 
 DISTINCT
 patient_id,
 zlemr(patient_id) emr_id,
@@ -53,8 +52,6 @@ encounter_creator(e.encounter_id) encounter_creator,
 provider(e.encounter_id) provider
 FROM temp_encounter e INNER JOIN temp_obs o ON e.encounter_id=o.encounter_id
 AND concept_id=concept_from_mapping('PIH','10742');
-
-UPDATE all_mh_medications SET facility = encounter_facility(encounter_id);
 
 
 UPDATE all_mh_medications SET medication_name=obs_from_group_id_value_coded_list(obs_group_id,'PIH','10634','en');
@@ -68,7 +65,6 @@ if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',patient_id),patient_id
 emr_id,
 encounter_datetime,
 encounter_location_name,
-facility,
 encounter_creator,
 provider,
 medication_name,

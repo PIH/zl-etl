@@ -14,7 +14,6 @@ create temporary table temp_all_encounters
     creator              int(11),
     user_entered         varchar(255),
     encounter_location   varchar(255),
-    facility             varchar(255),
     encounter_type_name  varchar(50),
     entered_datetime     datetime,
     emr_id               varchar(15),
@@ -55,9 +54,6 @@ set t.encounter_datetime = e.encounter_datetime,
     t.entered_datetime = e.date_created,
     t.voided = e.voided
 ;
-
-update temp_all_encounters t
-set t.facility = encounter_facility(t.encounter_id);
 
 CREATE INDEX temp_all_encounters_patientId ON temp_all_encounters (patient_id);
 
@@ -109,7 +105,6 @@ select emr_id,
        CONCAT(@partition, '-', visit_id) as visit_id,
        encounter_type_name,
        encounter_location,
-       facility,
        encounter_datetime,
        entered_datetime,
        user_entered,

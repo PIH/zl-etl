@@ -15,7 +15,6 @@ CREATE TEMPORARY TABLE temp_covid_dispositon
 	encounter_date	 			DATE,
 	encounter_type				VARCHAR(255),
 	location				TEXT,
-	facility				VARCHAR(255),
     date_entered          DATETIME,
     user_entered          VARCHAR(50),
 	disposition				VARCHAR(255),
@@ -71,7 +70,6 @@ UPDATE temp_covid_dispositon SET disposition = OBS_VALUE_CODED_LIST(encounter_id
 
 -- Discharge conditions
 UPDATE temp_covid_dispositon SET discharge_condition = OBS_VALUE_CODED_LIST(encounter_id, 'CIEL', '159640', 'en');
-UPDATE temp_covid_dispositon SET facility = encounter_facility(encounter_id);
 /*
 -- index ascending
 DROP TEMPORARY TABLE IF EXISTS temp_index_asc;
@@ -117,11 +115,10 @@ SELECT
 	concat(@partition,'-',tcd.encounter_id),
 	encounter_type,
 	location,
-	facility,
 	encounter_date,
     date_entered,
     user_entered,
-	disposition,
+	disposition,				
 	discharge_condition,
 	index_asc,
 	index_desc

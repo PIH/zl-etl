@@ -8,7 +8,6 @@ create table adt_encounters
     datetime_created     datetime,
     encounter_type       varchar(255),
     encounter_location   varchar(255),
-    facility             varchar(255),
     provider             varchar(255),
     index_asc            int,
     index_desc           int

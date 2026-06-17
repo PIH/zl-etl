@@ -114,7 +114,6 @@ create temporary table temp_encounter
     loc_registered     varchar(255),
     encounter_datetime datetime,
     encounter_location varchar(50),
-    facility           varchar(255),
     encounter_type     varchar(50),
     provider           varchar(500),
     date_entered       DATETIME,
@@ -166,8 +165,6 @@ WHERE e.voided = 0
                   'ANC Followup'
     )
 ;
-
-update temp_encounter e set facility = encounter_facility(e.encounter_id);
 
 # BACILLE CAMILE-GUERIN VACCINATION
 
@@ -284,7 +281,6 @@ SELECT p.dossier_num       as dossierId,
        concat(@partition,'-',e.encounter_id),
        e.encounter_datetime,
        e.encounter_location,
-       e.facility,
        e.encounter_type,
        e.provider,
        e.date_entered,

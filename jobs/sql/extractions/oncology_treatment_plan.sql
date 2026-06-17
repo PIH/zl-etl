@@ -11,7 +11,6 @@ encounter_id int,
 visit_id int,
 encounter_datetime datetime,
 encounter_location varchar(100),
-facility varchar(255),
 date_entered date,
 user_entered varchar(30),
 encounter_provider varchar(30),
@@ -21,7 +20,7 @@ cancer_stage varchar(30),
 plan_details text);
 
 INSERT INTO oncology_treatment_plan(patient_id, emr_id,encounter_id,visit_id,encounter_datetime,encounter_location,date_entered,user_entered,encounter_provider)
-SELECT
+SELECT 
 patient_id,
 zlemr(patient_id),
 encounter_id,
@@ -31,11 +30,9 @@ encounter_location_name(encounter_id),
 date_created,
 encounter_creator(encounter_id),
 provider(encounter_id)
-FROM encounter e
+FROM encounter e 
 WHERE encounter_type = @enc_type
 AND voided = 0;
-
-UPDATE oncology_treatment_plan SET facility = encounter_facility(encounter_id);
 
 
 -- Cancer Stage
@@ -74,7 +71,6 @@ CONCAT(@partition,'-',encounter_id) "encounter_id",
 CONCAT(@partition,'-',visit_id) "visit_id",
 encounter_datetime,
 encounter_location,
-facility,
 date_entered,
 user_entered,
 encounter_provider,

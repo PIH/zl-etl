@@ -4,20 +4,17 @@ drop temporary table if exists temp_eid_visit;
 create temporary table temp_eid_visit as
 select
 patient_id,
-zlemr(patient_id) emr_id,
-encounter_id,
-encounter_type_name_from_id(encounter_type) encounter_type,
-date(encounter_datetime) visit_date,
+zlemr(patient_id) emr_id, 
+encounter_id, 
+encounter_type_name_from_id(encounter_type) encounter_type, 
+date(encounter_datetime) visit_date,  
 encounter_location_name(encounter_id) visit_location,
-null as facility,
 date(date_created) date_entered,
 encounter_creator_name(encounter_id) user_entered,
 DATE(obs_value_datetime(encounter_id, 'CIEL', '5096')) next_visit_date
-from encounter e
-where encounter_type = encounter_type('HIV-exposed Infant Followup')
+from encounter e 
+where encounter_type = encounter_type('HIV-exposed Infant Followup') 
 and e.voided = 0;
-
-UPDATE temp_eid_visit SET facility = encounter_facility(encounter_id);
 
 /*
 -- index asc
@@ -88,19 +85,18 @@ CREATE TEMPORARY TABLE temp_eid_enc_index_desc
 
         */
 
--- final query
+-- final query 
 SELECT
     CAST(concat(@partition, '-', encounter_id) AS CHAR(25)) AS encounter_id,
     CAST(emr_id AS CHAR(25)) AS emr_id,
     CAST(encounter_type AS char(50)) AS encounter_type,
     CAST(visit_date AS date) visit_date,
     CAST(visit_location AS char(100)) visit_location,
-    CAST(facility AS char(255)) facility,
     CAST(date_entered AS date) AS date_entered,
     CAST(user_entered AS char(255)) user_entered,
     CAST(next_visit_date AS date) next_visit_date,
     0 as index_asc,
     0 as index_desc
 FROM
-    temp_eid_visit
+    temp_eid_visit 
 ORDER BY patient_id , encounter_id;

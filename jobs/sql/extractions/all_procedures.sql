@@ -14,7 +14,6 @@ concept_id int,
 value_coded int,
 encounter_datetime datetime,
 encounter_location varchar(150),
-facility varchar(255),
 encounter_type  varchar(150),
 obs_datetime  datetime,
 entered_by varchar(150),
@@ -76,8 +75,6 @@ set tp.visit_id =  e.visit_id,
     tp.encounter_type = encounter_type_name(e.encounter_id),
     tp.provider = provider(e.encounter_id),
     tp.encounter_datetime = e.encounter_datetime;
-
-update temp_procedure tp set facility = encounter_facility(tp.encounter_id);
 
 update temp_procedure tp set procedures = 
 if(concept_id in (@procedure1, @procedure2), concept_name(tp.value_coded, 'en'), 
@@ -236,7 +233,7 @@ update temp_procedure tp set myomectomy = if(value_coded = @uterine_myomectomy, 
 update temp_procedure tp set retrospective = 
 IF(TIMESTAMPDIFF(MINUTE, encounter_datetime, date_created) > 30, @yes, @non);
 
-select
+select 
 zlemr(patient_id) emr_id,
 encounter_id,
 obs_id,
@@ -245,7 +242,6 @@ creator,
 encounter_datetime,
 obs_datetime,
 encounter_location,
-facility,
 encounter_type,
 entered_by,
 provider,

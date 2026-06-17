@@ -8,13 +8,12 @@ SELECT encounter_id, COUNT(obs_id) obs_count FROM obs o WHERE o.voided = 0 GROUP
 DROP TEMPORARY TABLE IF EXISTS temp_datakind_enc;
 CREATE TEMPORARY TABLE temp_datakind_enc
 AS
-SELECT
+SELECT 
     patient_id,
     e.encounter_id 'encounter_id',
     e.encounter_datetime 'encounter_datetime',
     ENCOUNTER_TYPE_NAME(e.encounter_id) 'encounter_type',
     ENCOUNTER_LOCATION_NAME(e.encounter_id) 'encounter_location',
-    NULL 'facility',
     PROVIDER(e.encounter_id) 'provider',
     date_created 'date_entered',
     username(creator) 'user_entered',
@@ -29,8 +28,6 @@ WHERE
 -- index
 CREATE INDEX temp_datakind_enc_patientid ON temp_datakind_enc(patient_id);
 CREATE INDEX temp_datakind_enc_encounterid ON temp_datakind_enc(encounter_id);
-
-UPDATE temp_datakind_enc SET facility = encounter_facility(encounter_id);
 
 /*
 -- index asc
@@ -81,13 +78,12 @@ CREATE INDEX temp_datakind_index_desc_patientid ON temp_datakind_index_desc(pati
 CREATE INDEX temp_datakind_index_desc_encounterid ON temp_datakind_index_desc(encounter_id);
 CREATE INDEX temp_datakind_index_desc_indexasc ON temp_datakind_index_desc(index_desc);
 */
-SELECT
+SELECT 
 concat(@partition,'-',t.patient_id),
     concat(@partition,'-',t.encounter_id),
     t.encounter_datetime,
     t.encounter_type,
     t.encounter_location,
-    t.facility,
     t.provider,
     t.date_entered,
     t.user_entered,
@@ -95,7 +91,7 @@ concat(@partition,'-',t.patient_id),
     t.obs_count,
     null as index_asc,
     null as index_desc
-FROM temp_datakind_enc t
+FROM temp_datakind_enc t 
 --JOIN temp_datakind_index_asc td ON t.encounter_id = td.encounter_id
 --JOIN temp_datakind_index_desc te ON t.encounter_id = te.encounter_id
 ;

@@ -15,7 +15,6 @@ CREATE TEMPORARY TABLE temp_delivery
     mch_program_id                       int(11),
     encounter_datetime                   datetime,
     encounter_location                   varchar(255),
-    facility                             varchar(255),
     encounter_type                       varchar(255),
     provider                             varchar(255),
     date_entered                         datetime,
@@ -181,7 +180,6 @@ update temp_delivery set zlemrid = zlemr(patient_id);
 update temp_delivery set dossierid = dosid(patient_id);
 update temp_delivery set loc_registered = loc_registered(patient_id);
 update temp_delivery set encounter_location = encounter_location_name(encounter_id);
-update temp_delivery set facility = encounter_facility(encounter_id);
 update temp_delivery set provider = provider(encounter_id);
 
 UPDATE temp_delivery t 
@@ -749,7 +747,6 @@ loc_registered,
 concat(@partition, '-', mch_program_id),
 encounter_datetime,
 encounter_location,
-facility,
 encounter_type,
 date_entered,
 provider,

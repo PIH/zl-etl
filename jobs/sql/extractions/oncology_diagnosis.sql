@@ -7,10 +7,8 @@ CREATE TEMPORARY TABLE oncology_diagnosis (
 patient_id int,
 emr_id varchar(50),
 encounter_id int,
-visit_id int,
 encounter_datetime datetime,
 encounter_location varchar(100),
-facility varchar(255),
 date_entered date,
 user_entered varchar(30),
 encounter_provider varchar(30),
@@ -20,13 +18,12 @@ diagnosis varchar(100)
 );
 
 
-INSERT INTO oncology_diagnosis(patient_id,emr_id,encounter_id,visit_id,encounter_datetime,encounter_location,
+INSERT INTO oncology_diagnosis(patient_id,emr_id,encounter_id,encounter_datetime,encounter_location,
 							date_entered,user_entered,encounter_provider,encounter_type,diagnosis_order,diagnosis)
-SELECT
+SELECT 
 patient_id,
 zlemr(e.patient_id),
 e.encounter_id,
-e.visit_id,
 e.encounter_datetime ,
 encounter_location_name(e.encounter_id),
 e.date_created,
@@ -42,13 +39,12 @@ AND e.voided =0
 ORDER BY obs_id ASC;
 
 
-INSERT INTO oncology_diagnosis(patient_id,emr_id,encounter_id,visit_id,encounter_datetime,encounter_location,
+INSERT INTO oncology_diagnosis(patient_id,emr_id,encounter_id,encounter_datetime,encounter_location,
 							date_entered,user_entered,encounter_provider,encounter_type,diagnosis_order,diagnosis)
-SELECT
+SELECT 
 patient_id,
 zlemr(e.patient_id),
 e.encounter_id,
-e.visit_id,
 e.encounter_datetime ,
 encounter_location_name(e.encounter_id),
 e.date_created,
@@ -63,20 +59,16 @@ AND o.voided =0
 AND e.voided =0
 ORDER BY obs_id ASC;
 
-UPDATE oncology_diagnosis SET facility = encounter_facility(encounter_id);
 
-
-SELECT
+SELECT 
 emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
-CONCAT(@partition,'-',visit_id) "visit_id",
 encounter_datetime ,
 encounter_location ,
-facility ,
 date_entered ,
 user_entered ,
 encounter_provider ,
 encounter_type,
 diagnosis_order ,
-diagnosis
+diagnosis 
 FROM oncology_diagnosis;

@@ -5,10 +5,10 @@ FROM encounter_type et WHERE uuid='83081f7d-ffd7-4d43-9571-a86e1bc19d7f';
 DROP temporary table if exists temp_hiv_encs;
 create temporary table temp_hiv_encs
 (
-patient_id                         int,
-emr_id                             varchar(255),
-encounter_id                       int,
-visit_id                           int,
+patient_id                         int,          
+emr_id                             varchar(255), 
+encounter_id                       int,          
+visit_id                           int,          
 encounter_datetime                 datetime,     
 datetime_created                   datetime,     
 creator                            int,                  
@@ -119,7 +119,7 @@ SET willing_reenroll = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PI
 UPDATE temp_hiv_encs
 SET action_reinforce_adherence = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '14627',0));
 
-SELECT
+SELECT 
 emr_id,
 encounter_id,
 visit_id,

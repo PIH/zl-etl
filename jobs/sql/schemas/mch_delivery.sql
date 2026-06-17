@@ -6,7 +6,6 @@ create table mch_delivery
     mch_program_id                       varchar(25),    
     encounter_datetime                   datetime,
     encounter_location                   varchar(255),
-    facility                             varchar(255),
     encounter_type                       varchar(255),
     date_entered                         datetime,
     provider                             varchar(255),

@@ -60,8 +60,10 @@ location_id						INT(11),
 location_name					VARCHAR(255)
 );
 
-INSERT INTO temp_locations(location_id, location_name)
-select location_id, name from location;
+INSERT INTO temp_locations(location_id)
+select distinct location_id from temp_visits;
+
+update temp_locations t set location_name =  location_name(location_id);	
 
 CREATE INDEX temp_locations_li ON temp_locations (location_id);
 

@@ -8,7 +8,6 @@ emr_id varchar(50),
 encounter_id int,
 encounter_datetime datetime,
 encounter_location varchar(100),
-facility varchar(255),
 date_entered date,
 user_entered varchar(30),
 encounter_provider varchar(30),
@@ -50,8 +49,6 @@ provider(encounter_id)
 FROM encounter e 
 WHERE encounter_type = @enc_type
 AND voided = 0;
-
-UPDATE oncology_intake SET facility = encounter_facility(encounter_id);
 
 -- Type 1
 UPDATE oncology_intake SET type_1_diabetes = answer_exists_in_encounter(encounter_id, 'PIH','10140', 'PIH', '6691');
@@ -215,12 +212,11 @@ ON o.encounter_id =oi.encounter_id
 AND o.voided =0
 SET zldsi_evaluated = obs_from_group_id_value_coded(zldsi_obs_group_id,'PIH','11778','en');
 
-SELECT
+SELECT 
 emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
 encounter_datetime ,
 encounter_location ,
-facility ,
 date_entered ,
 user_entered ,
 encounter_provider ,

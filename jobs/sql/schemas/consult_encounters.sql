@@ -7,7 +7,6 @@ create table consult_encounters
        user_entered       varchar(255),  
        datetime_created   datetime,   
        encounter_location varchar(255),
-       facility           varchar(255),
        encounter_type     varchar(255),  
        provider           varchar(255),  
        trauma             bit,           

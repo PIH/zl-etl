@@ -29,12 +29,11 @@ dossier_id                        varchar(50),
 encounter_id                      int(11),      
 encounter_datetime                datetime,       
 patient_id                        int(11),      
-visit_id                          int(11),
-creator                           int(11),
-user_entered                      text,
-location_id                       int(11),
-encounter_location                varchar(255),
-facility                          varchar(255),
+visit_id                          int(11),      
+creator                           int(11),      
+user_entered                      text,         
+location_id                       int(11),      
+encounter_location                varchar(255), 
 entered_datetime                  datetime,     
 provider                          text,         
 loc_registered                    varchar(255),   
@@ -134,7 +133,6 @@ and (DATE(encounter_datetime) <=  date(@endDate) or @endDate is null);
 
 update temp_mh_encounters set user_entered= person_name_of_user(creator);
 update temp_mh_encounters set encounter_location = location_name(location_id);
-update temp_mh_encounters set facility = encounter_facility(encounter_id);
 update temp_mh_encounters set provider = provider(encounter_id);
 update temp_mh_encounters set age_at_enc = age_at_enc(patient_id, encounter_id);
 
@@ -700,7 +698,6 @@ if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',patient_id),patient_id
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
 user_entered,
 encounter_location,
-facility,
 entered_datetime,
 provider,
 loc_registered,

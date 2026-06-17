@@ -12,7 +12,6 @@ encounter_location_id  int(11),
 date_entered DATETIME,
 user_entered VARCHAR(50),
 dispense_site  varchar(255),
-facility varchar(255),
 age_at_dispense_date int,
 dispense_date_ascending int,
 dispense_date_descending int,
@@ -75,9 +74,6 @@ create index temp_obs_ci2 on temp_obs(obs_group_id, concept_id);
 
 update temp_HIV_dispensing t
 set dispense_site = location_name(encounter_location_id);
-
-update temp_HIV_dispensing t
-set facility = encounter_facility(encounter_id);
 
 update temp_HIV_dispensing t
 inner join person p on p.person_id = t.patient_id
@@ -358,10 +354,8 @@ Select
 zlemr(t.patient_id),
 concat(@partition,'-',t.encounter_id),
 concat(@partition,'-',t.visit_id),
-t.visit_location,
 t.dispense_date,
 t.dispense_site,
-t.facility,
 t.date_entered,
 t.user_entered,
 t.age_at_dispense_date,

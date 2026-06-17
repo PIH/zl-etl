@@ -17,7 +17,6 @@ CREATE TEMPORARY TABLE temp_echo
     loc_registered                  varchar(255),
     encounter_datetime              datetime,
     encounter_location              varchar(255),
-    facility                        varchar(255),
     provider                        varchar(255),
     encounter_id                    int(11),
     visit_id	                    int(11),
@@ -73,7 +72,6 @@ update temp_echo set gender = gender(patient_id);
 
 update temp_echo set loc_registered = loc_registered(patient_id);
 update temp_echo set encounter_location = encounter_location_name(encounter_id);
-update temp_echo set facility = encounter_facility(encounter_id);
 update temp_echo set provider = provider(encounter_id);
 
 -- vital signs
@@ -174,7 +172,6 @@ gender,
 loc_registered,
 encounter_datetime,
 encounter_location,
-facility,
 provider,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 visit_id,
