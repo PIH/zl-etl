@@ -11,7 +11,6 @@ create temporary table temp_all_encounters
     encounter_datetime   datetime,
     patient_id           int,
     visit_id             int,
-    location_id          int,
     visit_location       varchar(255),
     creator              int(11),
     user_entered         varchar(255),
@@ -50,7 +49,7 @@ update temp_all_encounters t
 inner join encounter e on t.encounter_id = e.encounter_id
 set t.encounter_datetime = e.encounter_datetime,
     t.encounter_type_name = encounter_type_name_from_id(e.encounter_type),
-    t.location_id = e.location_id,
+    t.encounter_location = location_name(e.location_id),
     t.patient_id = e.patient_id,
     t.visit_id = e.visit_id,
     t.user_entered = person_name_of_user(e.creator),
@@ -58,17 +57,8 @@ set t.encounter_datetime = e.encounter_datetime,
     t.voided = e.voided
 ;
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
-
-create index temp_all_encounters_li on temp_all_encounters(location_id);
 update temp_all_encounters t
-inner join temp_locations ls on ls.location_id = t.location_id
-set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+set t.facility = encounter_facility(t.encounter_id);
 
 CREATE INDEX temp_all_encounters_patientId ON temp_all_encounters (patient_id);
 
@@ -113,6 +103,10 @@ update temp_all_encounters t
 set t.emr_id = te.emr_id
 ;
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
 create index temp_all_encounters_vi on temp_all_encounters(visit_id);
 update temp_all_encounters t
 inner join visit v on v.visit_id = t.visit_id

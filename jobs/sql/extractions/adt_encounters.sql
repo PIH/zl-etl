@@ -25,7 +25,6 @@ create temporary table adt_encounters
     encounter_datetime           datetime,
     creator              varchar(255),
     datetime_created     datetime,
-    location_id          int(11),
     encounter_location   varchar(255),
     facility             varchar(255),
     provider 			 varchar(255),
@@ -36,8 +35,8 @@ create temporary table adt_encounters
 );
 
 
-insert into adt_encounters (patient_id, encounter_id, visit_id, encounter_datetime, datetime_created, encounter_type, location_id)
-select patient_id, encounter_id, visit_id, encounter_datetime, date_created, encounter_type, location_id
+insert into adt_encounters (patient_id, encounter_id, visit_id, encounter_datetime, datetime_created, encounter_type)
+select patient_id, encounter_id, visit_id, encounter_datetime, date_created, encounter_type
 from encounter e
 where e.voided = 0
 AND encounter_type IN (@adm_type_id , @trf_type_id , @sort_type_id)
@@ -49,17 +48,11 @@ SET encounter_type_name = encounter_type_name_from_id(encounter_type);
 UPDATE adt_encounters
 SET creator = encounter_creator_name(encounter_id);
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+UPDATE adt_encounters
+SET encounter_location = encounter_location_name(encounter_id);
 
-create index adt_encounters_li on adt_encounters(location_id);
-update adt_encounters t
-inner join temp_locations ls on ls.location_id = t.location_id
-set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+UPDATE adt_encounters
+SET facility = encounter_facility(encounter_id);
 
 UPDATE adt_encounters
 SET provider = provider(encounter_id);
@@ -68,6 +61,10 @@ UPDATE adt_encounters t
 SET emr_id = patient_identifier(patient_id, @emr_identifier_type);
 
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
 create index adt_encounters_vi on adt_encounters(visit_id);
 update adt_encounters t
 inner join visit v on v.visit_id = t.visit_id

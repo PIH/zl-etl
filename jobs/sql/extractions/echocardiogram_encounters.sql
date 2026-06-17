@@ -21,7 +21,6 @@ CREATE TEMPORARY TABLE temp_echo
     provider                        varchar(255),
     encounter_id                    int(11),
     visit_id	                    int(11),
-    location_id                     int(11),
     visit_location                  varchar(255),
     systolic_bp						double,
     diastolic_bp					double,
@@ -53,16 +52,14 @@ insert into temp_echo (
   encounter_id,
   visit_id,
   encounter_datetime,
-  date_created,
-  location_id
+  date_created
   )
 select
   patient_id,
   encounter_id,
   visit_id,
   encounter_datetime,
-  date_created,
-  location_id
+  date_created
 from encounter e
 where e.encounter_type in (@echo_note)
 AND ((date(e.encounter_datetime) >=@startDate) or @startDate is null)
@@ -76,17 +73,8 @@ update temp_echo set age = age_at_enc(patient_id, encounter_id);
 update temp_echo set gender = gender(patient_id);
 
 update temp_echo set loc_registered = loc_registered(patient_id);
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
-
-create index temp_echo_li on temp_echo(location_id);
-update temp_echo t
-inner join temp_locations ls on ls.location_id = t.location_id
-set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+update temp_echo set encounter_location = encounter_location_name(encounter_id);
+update temp_echo set facility = encounter_facility(encounter_id);
 update temp_echo set provider = provider(encounter_id);
 
 -- vital signs
@@ -177,6 +165,10 @@ select distinct(person_id) from temp_heart_failure_stage;
 update temp_echo t inner join temp_heart_failure_final th on t.patient_id = th.person_id
 set heart_failure = 1;
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
 create index temp_echo_vi on temp_echo(visit_id);
 update temp_echo t
 inner join visit v on v.visit_id = t.visit_id

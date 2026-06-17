@@ -9,7 +9,6 @@ patient_id int,
 emr_id varchar(50),
 encounter_id int,
 visit_id int,
-location_id int,
 visit_location varchar(255),
 encounter_datetime datetime,
 encounter_location varchar(100),
@@ -22,14 +21,14 @@ treatment_intent varchar(30),
 cancer_stage varchar(30),
 plan_details text);
 
-INSERT INTO oncology_treatment_plan(patient_id, emr_id,encounter_id,visit_id,encounter_datetime,location_id,date_entered,user_entered,encounter_provider)
+INSERT INTO oncology_treatment_plan(patient_id, emr_id,encounter_id,visit_id,encounter_datetime,encounter_location,date_entered,user_entered,encounter_provider)
 SELECT
 patient_id,
 zlemr(patient_id),
 encounter_id,
 visit_id ,
 encounter_datetime ,
-location_id,
+encounter_location_name(encounter_id),
 date_created,
 encounter_creator(encounter_id),
 provider(encounter_id)
@@ -37,17 +36,7 @@ FROM encounter e
 WHERE encounter_type = @enc_type
 AND voided = 0;
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
-
-create index oncology_treatment_plan_li on oncology_treatment_plan(location_id);
-update oncology_treatment_plan t
-inner join temp_locations ls on ls.location_id = t.location_id
-set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+UPDATE oncology_treatment_plan SET facility = encounter_facility(encounter_id);
 
 
 -- Cancer Stage
@@ -79,6 +68,10 @@ SET oi.date_enrolled= pd.date_enrolled;
 
 UPDATE oncology_treatment_plan SET treatment_intent=currentProgramState(patientProgramId(patient_id, @prog_id, date_enrolled),5 ,'en');
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
 create index oncology_treatment_plan_vi on oncology_treatment_plan(visit_id);
 update oncology_treatment_plan t
 inner join visit v on v.visit_id = t.visit_id
