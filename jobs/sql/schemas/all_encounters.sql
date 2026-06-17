@@ -4,6 +4,7 @@ create table all_encounters
     encounter_id        varchar(25),
     patient_id          varchar(25),
     visit_id            varchar(25),
+    visit_location      varchar(255),
     encounter_type_name varchar(50),
     encounter_location  varchar(255),
     facility            varchar(255),
