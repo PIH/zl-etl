@@ -72,13 +72,17 @@ update chemo_encounters t
 inner join temp_users u on u.user_id = t.creator
 set user_entered = u.user_name;
 
--- location
+-- Sets encounter_location from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update chemo_encounters t
 inner join locations u on u.location_id = t.location_id
 set t.encounter_location = u.location_name,
     t.facility = u.facility;
 
 create index chemo_encounters_vi on chemo_encounters(visit_id);
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
 update chemo_encounters t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations u on u.location_id = v.location_id

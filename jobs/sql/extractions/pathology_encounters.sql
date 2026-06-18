@@ -99,6 +99,8 @@ inner join encounter e on e.encounter_id = t.encounter_id
 set t.location_id = e.location_id;
 
 create index temp_pathology_li on temp_pathology(location_id);
+-- Sets encounter_location from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_pathology t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,

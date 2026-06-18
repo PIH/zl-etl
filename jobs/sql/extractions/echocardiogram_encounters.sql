@@ -77,6 +77,8 @@ update temp_echo set gender = gender(patient_id);
 
 update temp_echo set loc_registered = loc_registered(patient_id);
 create index temp_echo_li on temp_echo(location_id);
+-- Sets encounter_location from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_echo t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
@@ -172,6 +174,9 @@ update temp_echo t inner join temp_heart_failure_final th on t.patient_id = th.p
 set heart_failure = 1;
 
 create index temp_echo_vi on temp_echo(visit_id);
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_echo t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id

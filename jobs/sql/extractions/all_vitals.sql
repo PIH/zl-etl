@@ -86,13 +86,17 @@ update temp_vitals tv
 inner join temp_providers tp on tp.provider_id = tv.encounter_provider_id
 set tv.encounter_provider = tp.provider_name;
 
--- location name
+-- Sets encounter_location from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_vitals tv
 inner join locations tl on tl.location_id = tv.encounter_location_id
 set tv.encounter_location = tl.location_name,
     tv.facility = tl.facility;
 
 create index temp_vitals_vi on temp_vitals(visit_id);
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_vitals tv
 inner join visit v on v.visit_id = tv.visit_id
 inner join locations tl on tl.location_id = v.location_id

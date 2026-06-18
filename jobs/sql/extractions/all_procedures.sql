@@ -80,6 +80,8 @@ set tp.visit_id =  e.visit_id,
     tp.encounter_datetime = e.encounter_datetime;
 
 create index temp_procedure_li on temp_procedure(location_id);
+-- Sets encounter_location from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_procedure tp
 inner join locations ls on ls.location_id = tp.location_id
 set tp.encounter_location = ls.location_name,
@@ -243,6 +245,9 @@ update temp_procedure tp set retrospective =
 IF(TIMESTAMPDIFF(MINUTE, encounter_datetime, date_created) > 30, @yes, @non);
 
 create index temp_procedure_vi on temp_procedure(visit_id);
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_procedure t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id

@@ -111,6 +111,8 @@ update temp_soc tv
 set encounter_provider = provider(encounter_id);
 
 create index temp_soc_li on temp_soc(location_id);
+-- Sets encounter_location from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_soc t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
@@ -297,6 +299,9 @@ update  temp_soc tv
 set household_no_assets = obs_value_coded_list(encounter_id, 'CIEL', '165500', @locale);
 
 create index temp_soc_vi on temp_soc(visit_id);
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_soc t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id

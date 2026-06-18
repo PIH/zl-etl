@@ -75,6 +75,8 @@ create index temp_obs_ci1 on temp_obs(encounter_id, concept_id);
 create index temp_obs_ci2 on temp_obs(obs_group_id, concept_id);
 
 create index temp_HIV_dispensing_li on temp_HIV_dispensing(encounter_location_id);
+-- Sets dispense_site from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_HIV_dispensing t
 inner join locations ls on ls.location_id = t.encounter_location_id
 set t.dispense_site = ls.location_name,
@@ -355,6 +357,9 @@ set t.days_late_to_pickup = if(t.dispense_date>d.next_dispense_date,datediff(t.d
 where t.dispense_date_descending = 1;
 
 create index temp_HIV_dispensing_vi on temp_HIV_dispensing(visit_id);
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_HIV_dispensing t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id

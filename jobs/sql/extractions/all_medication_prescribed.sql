@@ -166,6 +166,8 @@ update temp_medication_orders SET emr_id = PATIENT_IDENTIFIER(patient_id, METADA
 update temp_medication_orders tm set visit_id = (select visit_id from encounter e where voided = 0 and tm.encounter_id = e.encounter_id);
 update temp_medication_orders tm set location_id = (select location_id from encounter e where voided = 0 and tm.encounter_id = e.encounter_id);
 create index temp_medication_orders_li on temp_medication_orders(location_id);
+-- Sets order_location from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_medication_orders tm
 inner join locations ls on ls.location_id = tm.location_id
 set tm.order_location = ls.location_name,
@@ -189,6 +191,9 @@ update temp_medication_orders tm  set order_duration_units = concept_name(order_
 
 
 create index temp_medication_orders_vi on temp_medication_orders(visit_id);
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_medication_orders t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id

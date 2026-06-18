@@ -135,6 +135,8 @@ and (DATE(encounter_datetime) <=  date(@endDate) or @endDate is null);
 
 update temp_mh_encounters set user_entered= person_name_of_user(creator);
 create index temp_mh_encounters_li on temp_mh_encounters(location_id);
+-- Sets encounter_location from the encounter's location.
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_mh_encounters t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
@@ -695,6 +697,9 @@ inner join temp_visit_index_desc tvid on tvid.encounter_id = t.encounter_id
 set t.index_desc = tvid.index_desc;
 
 create index temp_mh_encounters_vi on temp_mh_encounters(visit_id);
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_mh_encounters t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id

@@ -20,12 +20,16 @@ where encounter_type = encounter_type('HIV-exposed Infant Followup')
 and e.voided = 0;
 
 create index temp_eid_visit_li on temp_eid_visit(location_id);
+-- Sets visit_location from the encounter's location as a fallback when no visit is linked.
+-- Sets facility as the Visit Location ancestor of the encounter location.
 update temp_eid_visit t
 inner join locations ls on ls.location_id = t.location_id
 set t.visit_location = ls.location_name,
     t.facility = ls.facility;
 
 create index temp_eid_visit_vi on temp_eid_visit(visit_id);
+-- Overrides visit_location and facility from the visit's location when a visit exists.
+-- Uses the visit's location directly — more accurate than the ancestor walk.
 update temp_eid_visit t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
