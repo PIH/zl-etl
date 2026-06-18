@@ -8,6 +8,7 @@ patient_id int,
 emr_id varchar(50),
 encounter_id int,
 visit_id int,
+location_id int,
 visit_location varchar(255),
 encounter_datetime datetime,
 encounter_location varchar(100),
@@ -21,7 +22,7 @@ diagnosis varchar(100)
 );
 
 
-INSERT INTO oncology_diagnosis(patient_id,emr_id,encounter_id,visit_id,encounter_datetime,encounter_location,
+INSERT INTO oncology_diagnosis(patient_id,emr_id,encounter_id,visit_id,encounter_datetime,location_id,
 							date_entered,user_entered,encounter_provider,encounter_type,diagnosis_order,diagnosis)
 SELECT
 patient_id,
@@ -29,7 +30,7 @@ zlemr(e.patient_id),
 e.encounter_id,
 e.visit_id,
 e.encounter_datetime ,
-encounter_location_name(e.encounter_id),
+e.location_id,
 e.date_created,
 encounter_creator(e.encounter_id),
 provider(e.encounter_id),
@@ -43,7 +44,7 @@ AND e.voided =0
 ORDER BY obs_id ASC;
 
 
-INSERT INTO oncology_diagnosis(patient_id,emr_id,encounter_id,visit_id,encounter_datetime,encounter_location,
+INSERT INTO oncology_diagnosis(patient_id,emr_id,encounter_id,visit_id,encounter_datetime,location_id,
 							date_entered,user_entered,encounter_provider,encounter_type,diagnosis_order,diagnosis)
 SELECT
 patient_id,
@@ -51,7 +52,7 @@ zlemr(e.patient_id),
 e.encounter_id,
 e.visit_id,
 e.encounter_datetime ,
-encounter_location_name(e.encounter_id),
+e.location_id,
 e.date_created,
 encounter_creator(e.encounter_id),
 provider(e.encounter_id),
@@ -64,12 +65,18 @@ AND o.voided =0
 AND e.voided =0
 ORDER BY obs_id ASC;
 
-UPDATE oncology_diagnosis SET facility = encounter_facility(encounter_id);
-
 drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255));
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
 insert into temp_locations(location_id, location_name) select location_id, name from location;
 create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index oncology_diagnosis_li on oncology_diagnosis(location_id);
+update oncology_diagnosis t
+inner join temp_locations ls on ls.location_id = t.location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
+
 create index oncology_diagnosis_vi on oncology_diagnosis(visit_id);
 update oncology_diagnosis t
 inner join visit v on v.visit_id = t.visit_id
