@@ -3,6 +3,8 @@ create table hiv_psychosocial_encounter
 emr_id                             varchar(255), 
 encounter_id                       int,          
 visit_id                           int,
+encounter_location                 varchar(255),
+facility                           varchar(255),
 visit_location                     varchar(255),
 encounter_datetime                 datetime,     
 datetime_created                   datetime,     
