@@ -87,29 +87,15 @@ inner join temp_providers tp on tp.provider_id = tv.encounter_provider_id
 set tv.encounter_provider = tp.provider_name;
 
 -- location name
-DROP TEMPORARY TABLE IF EXISTS temp_locations;
-CREATE TEMPORARY TABLE temp_locations
-(
-location_id						INT(11),
-location_name					VARCHAR(255),
-facility						varchar(255)
-);
-
-INSERT INTO temp_locations(location_id, location_name)
-select location_id, name from location;
-update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
-
-CREATE INDEX temp_locations_l ON temp_locations (location_id);
-
 update temp_vitals tv
-inner join temp_locations tl on tl.location_id = tv.encounter_location_id
+inner join locations tl on tl.location_id = tv.encounter_location_id
 set tv.encounter_location = tl.location_name,
     tv.facility = tl.facility;
 
 create index temp_vitals_vi on temp_vitals(visit_id);
 update temp_vitals tv
 inner join visit v on v.visit_id = tv.visit_id
-inner join temp_locations tl on tl.location_id = v.location_id
+inner join locations tl on tl.location_id = v.location_id
 set tv.visit_location = tl.location_name,
     tv.facility = tl.location_name;
 
