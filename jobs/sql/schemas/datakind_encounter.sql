@@ -5,6 +5,7 @@ CREATE TABLE datakind_encounter
     encounter_datetime DATETIME,
     encounter_type     VARCHAR(255),
     encounter_location TEXT,
+    facility           VARCHAR(255),
     provider           VARCHAR(255),
     date_entered       DATETIME,
     user_entered       VARCHAR(50),
