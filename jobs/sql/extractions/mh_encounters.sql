@@ -30,6 +30,7 @@ encounter_id                      int(11),
 encounter_datetime                datetime,       
 patient_id                        int(11),      
 visit_id                          int(11),
+visit_location                    varchar(255),
 creator                           int(11),
 user_entered                      text,
 location_id                       int(11),
@@ -689,15 +690,27 @@ update temp_mh_encounters t
 inner join temp_visit_index_desc tvid on tvid.encounter_id = t.encounter_id
 set t.index_desc = tvid.index_desc;
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+create index temp_mh_encounters_vi on temp_mh_encounters(visit_id);
+update temp_mh_encounters t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
 -- final output ------------------------------------
 
-select 
+select
 emr_id,
 dossier_id,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 encounter_datetime,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',patient_id),patient_id) "patient_id",
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
+visit_location,
 user_entered,
 encounter_location,
 facility,

@@ -7,6 +7,7 @@ CREATE TABLE mch_diagnoses
 	obs_id  int,
 	obs_datetime datetime,
 	visit_id int,
+	visit_location varchar(255),
 	encounter_type varchar(100),
 	entered_by varchar(255),
 	provider varchar(255),

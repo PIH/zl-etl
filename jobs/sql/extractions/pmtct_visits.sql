@@ -8,7 +8,8 @@ set @hiv_program = (select program_id from program WHERE uuid = 'b1cb1fc1-5190-4
 -- drop and create temp pmct visit table
 DROP TEMPORARY TABLE IF EXISTS temp_pmtct_visit;
 CREATE TEMPORARY TABLE temp_pmtct_visit (
- visit_id                INT,          
+ visit_id                INT,
+ visit_location          VARCHAR(255),
  encounter_id            INT,          
  patient_id              INT,    
  hiv_program_id        INT(11),
@@ -239,8 +240,19 @@ UPDATE temp_pmtct_visit t SET t.index_asc = (SELECT index_asc FROM temp_pmtct_vi
 UPDATE temp_pmtct_visit t SET t.index_desc = (SELECT index_desc FROM temp_pmtct_visit_index_desc b WHERE t.visit_id = b.visit_id AND t.encounter_id = b.encounter_id);
 */
 
-SELECT 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+create index temp_pmtct_visit_vi on temp_pmtct_visit(visit_id);
+update temp_pmtct_visit t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name;
+
+SELECT
 visit_id,
+visit_location,
 concat(@partition,'-',encounter_id),
 concat(@partition, '-', hiv_program_id),
 emr_id,
