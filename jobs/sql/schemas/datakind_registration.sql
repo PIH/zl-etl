@@ -6,5 +6,6 @@ CREATE TABLE datakind_registration
     patient_date_created   DATETIME,
     patient_date_changed   DATETIME,
     encouter_date_created  DATETIME,
-    encounter_date_changed DATETIME
+    encounter_date_changed DATETIME,
+    health_center          VARCHAR(255)
 );

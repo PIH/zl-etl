@@ -52,6 +52,7 @@ CREATE TEMPORARY TABLE temp_patient
     occupation                  VARCHAR(100),
     mothers_first_name          VARCHAR(50),
     telephone_number            VARCHAR(100),
+    health_center               VARCHAR(255),
     address                     TEXT,
     department                  VARCHAR(100),
     commune                     VARCHAR(100),
@@ -178,9 +179,16 @@ UPDATE temp_patient t JOIN person_attribute m ON t.patient_id = m.person_id AND
 m.voided = 0 AND  m.person_attribute_type_id = @mothers_first_name
 SET mothers_first_name = m.value;
 
-UPDATE temp_patient t JOIN person_attribute m ON t.patient_id = m.person_id AND 
+UPDATE temp_patient t JOIN person_attribute m ON t.patient_id = m.person_id AND
 m.voided = 0 AND  m.person_attribute_type_id = @telephone_number
 SET telephone_number = m.value;
+
+-- Sets health_center from the patient's registered Health Center person attribute.
+update temp_patient t
+inner join person_attribute pa on pa.person_id = t.patient_id
+    and pa.voided = 0
+    and pa.person_attribute_type_id = @healthCenterAttr
+set t.health_center = pa.value;
 
 # key populations
 DROP TEMPORARY TABLE IF EXISTS temp_key_popn_encounter;
@@ -863,6 +871,7 @@ t.occupation,
 tehd.agent,
 t.mothers_first_name,
 t.telephone_number,
+t.health_center,
 t.address,
 t.department,
 t.commune,

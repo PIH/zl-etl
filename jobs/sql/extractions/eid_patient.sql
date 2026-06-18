@@ -23,6 +23,7 @@ CREATE TEMPORARY TABLE temp_patient
     gender                      VARCHAR(50),
     birthdate                   DATE,
     telephone_number            VARCHAR(100),
+    health_center               VARCHAR(255),
     current_age                 FLOAT,
     initial_enrollment_date     DATE,
     initial_enrollment_location VARCHAR(100),
@@ -83,7 +84,14 @@ SET birthdate = BIRTHDATE(patient_id);
 
 update temp_patient t
 SET telephone_number = phone_number(patient_id);
-    
+
+-- Sets health_center from the patient's registered Health Center person attribute.
+update temp_patient t
+inner join person_attribute pa on pa.person_id = t.patient_id
+    and pa.voided = 0
+    and pa.person_attribute_type_id = @healthCenterAttr
+set t.health_center = pa.value;
+
 update temp_patient t set current_age =  ROUND(DATEDIFF(NOW(),t.birthdate) / 365.25 , 1);
 
 -- program detauls
@@ -146,6 +154,7 @@ family_name,
 gender,
 birthdate,
 telephone_number,
+health_center,
 current_age,
 initial_enrollment_date,
 initial_enrollment_location,

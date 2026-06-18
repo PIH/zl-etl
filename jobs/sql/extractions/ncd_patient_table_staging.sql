@@ -36,7 +36,8 @@ heart_failure_improbable bit,
 ncd_status varchar(50),
 ncd_status_date date,
 deceased bit,
-date_of_death date
+date_of_death date,
+health_center varchar(255)
 );
 
 -- -------------------- INSERT patients IN SCOPE OF NCD -----------------------------------------------------
@@ -108,9 +109,16 @@ UPDATE ncd_patient_table tt set ncd_current_location = currentProgramLocation(pa
 
 -- -------------------------------------------------------- death flag, death date -----------------------
 UPDATE ncd_patient_table tt INNER JOIN (
-SELECT person_id, dead , death_date FROM person p WHERE voided=0) st on  st.person_id =tt.patient_id 
+SELECT person_id, dead , death_date FROM person p WHERE voided=0) st on  st.person_id =tt.patient_id
 SET tt.deceased = dead,
 	tt.date_of_death = CAST(st.death_date AS date);
+
+-- Sets health_center from the patient's registered Health Center person attribute.
+update ncd_patient_table tt
+inner join person_attribute pa on pa.person_id = tt.patient_id
+    and pa.voided = 0
+    and pa.person_attribute_type_id = @healthCenterAttr
+set tt.health_center = pa.value;
 
 -- -------------------------------------------------------- program state, last status date -----------------------
 
@@ -321,7 +329,8 @@ heart_failure_improbable ,
 ncd_status ,
 ncd_status_date ,
 deceased ,
-date_of_death 
+date_of_death ,
+health_center
 FROM ncd_patient_table
 WHERE (diabetes IS NOT NULL AND  respiratory IS NOT NULL AND htn IS NOT NULL AND epilepsy IS NOT NULL AND heart_failure IS NOT NULL 
 AND cerebrovascular_accident IS NOT NULL AND renal_failure IS NOT NULL

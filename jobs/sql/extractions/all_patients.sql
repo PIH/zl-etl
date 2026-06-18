@@ -15,8 +15,9 @@ department                        varchar(255),
 commune                           varchar(255),  
 section_communale                 varchar(255),  
 locality                          varchar(255),  
-telephone_number                  varchar(255),  
-civil_status                      varchar(255),  
+telephone_number                  varchar(255),
+health_center                     varchar(255),
+civil_status                      varchar(255),
 occupation                        varchar(255),  
 reg_location                      varchar(50),   
 reg_location_id                   int(11),       
@@ -100,6 +101,12 @@ select person_attribute_type_id into @telephone from person_attribute_type where
 select person_attribute_type_id into @motherName from person_attribute_type where name = 'First Name of Mother' ;
 update temp_patients t set telephone_number = person_attribute_value(patient_id,'Telephone Number');
 update temp_patients t set mothers_first_name = person_attribute_value(patient_id,'First Name of Mother');
+-- Sets health_center from the patient's registered Health Center person attribute.
+update temp_patients t
+inner join person_attribute pa on pa.person_id = t.patient_id
+    and pa.voided = 0
+    and pa.person_attribute_type_id = @healthCenterAttr
+set t.health_center = pa.value;
 update temp_patients t set last_modified_attributes_datetime =
 	(select max(COALESCE(date_changed,date_created)) from person_attribute a 
 	where a.person_id = t.patient_id
@@ -214,5 +221,6 @@ death_date,
 cause_of_death,
 last_modified_datetime,
 patient_uuid,
-patient_url
+patient_url,
+health_center
 FROM temp_patients;

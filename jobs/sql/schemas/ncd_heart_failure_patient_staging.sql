@@ -12,5 +12,6 @@ hf_isolated_right	BIT,
 hf_congestive	BIT,
 hf_rheumatic	BIT,
 last_visit_date	DATE,
-deceased	BIT
+deceased	BIT,
+health_center	VARCHAR(255)
 );

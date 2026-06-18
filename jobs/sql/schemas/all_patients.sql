@@ -10,8 +10,8 @@ department                varchar(255),
 commune                   varchar(255), 
 section_communale         varchar(255), 
 locality                  varchar(255), 
-telephone_number          varchar(50),  
-civil_status              varchar(255), 
+telephone_number          varchar(50),
+civil_status              varchar(255),
 occupation                varchar(255), 
 reg_location              varchar(50),  
 registration_date         date,         
@@ -29,6 +29,7 @@ death_date                date,
 cause_of_death            varchar(100),
 last_modified_datetime    datetime,
 patient_uuid              char(38),
-patient_url               text
+patient_url               text,
+health_center             varchar(255)
 )
 ;

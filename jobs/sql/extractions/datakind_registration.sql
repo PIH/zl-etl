@@ -8,7 +8,9 @@ SELECT
 	p.date_created 'patient_date_created',
     p.date_changed 'patient_date_changed',
     e.date_created 'encouter_date_created',
-    e.date_changed 'encounter_date_changed'
+    e.date_changed 'encounter_date_changed',
+    -- Sets health_center from the patient's registered Health Center person attribute.
+    pa.value 'health_center'
 FROM
     patient p
         LEFT JOIN
@@ -19,4 +21,8 @@ FROM
         LEFT JOIN
     person d ON d.person_id = p.patient_id
         AND d.voided = 0
+        LEFT JOIN
+    person_attribute pa ON pa.person_id = p.patient_id
+        AND pa.voided = 0
+        AND pa.person_attribute_type_id = @healthCenterAttr
 ORDER BY p.patient_id;

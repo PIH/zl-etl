@@ -6,6 +6,7 @@ CREATE TABLE mh_patients
     emr_id_deprecated       varchar(30),
     dob                     date,
     gender                  varchar(50),
+    health_center           varchar(255),
     town                    varchar(500),
     referral                varchar(500),
     program_enrollment_date date,

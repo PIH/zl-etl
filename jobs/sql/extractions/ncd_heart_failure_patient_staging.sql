@@ -45,6 +45,7 @@ DROP TEMPORARY TABLE IF EXISTS temp_ncd_heart_failure;
 CREATE TEMPORARY TABLE temp_ncd_heart_failure (
 patient_id INT,
 emr_id VARCHAR(50),
+health_center VARCHAR(255),
 encounter_id INT,
 encounter_type_id INT,
 encounter_type_name VARCHAR(100),
@@ -181,6 +182,13 @@ SET t.ncd_enrolled = 1;
 UPDATE temp_ncd_heart_failure t
 SET t.ncd_enrolled = 0 WHERE t.ncd_enrolled IS NULL;
 
+-- Sets health_center from the patient's registered Health Center person attribute.
+update temp_ncd_heart_failure t
+inner join person_attribute pa on pa.person_id = t.patient_id
+    and pa.voided = 0
+    and pa.person_attribute_type_id = @healthCenterAttr
+set t.health_center = pa.value;
+
 # final query
 SELECT
 emr_id,
@@ -195,5 +203,6 @@ hf_isolated_right,
 hf_congestive,
 hf_rheumatic,
 last_visit_date,
-deceased
+deceased,
+health_center
 FROM temp_ncd_heart_failure order by patient_id;

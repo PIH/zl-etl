@@ -2,6 +2,7 @@ CREATE TABLE mch_patient
 (
     emr_id                          VARCHAR(25),
     dossier_id                      VARCHAR(50),
+    health_center                   VARCHAR(255),
     first_encounter_type            VARCHAR(150),
     latest_encounter_type           VARCHAR(150),
     first_encounter_date            DATETIME,

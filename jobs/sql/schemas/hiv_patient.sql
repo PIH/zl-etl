@@ -22,6 +22,7 @@ create table hiv_patient
     agent                             TEXT,
     mothers_first_name                VARCHAR(255),
     telephone_number                  VARCHAR(60),
+    health_center                     VARCHAR(255),
     address                           VARCHAR(255),
     department                        VARCHAR(255),
     commune                           VARCHAR(255),

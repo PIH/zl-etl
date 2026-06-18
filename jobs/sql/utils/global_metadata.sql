@@ -12,6 +12,7 @@ BEGIN
 	SET @phoneNumber = (select person_attribute_type_id from person_attribute_type where uuid = '14d4f066-15f5-102d-96e4-000c29c2a5d7');
     SET @testPt = (select person_attribute_type_id from person_attribute_type where uuid = '4f07985c-88a5-4abd-aa0c-f3ec8324d8e7');
     SET @unknownPt = (select person_attribute_type_id from person_attribute_type where uuid = '8b56eac7-5c76-4b9c-8c6f-1deab8d3fc47');
+    SET @healthCenterAttr = (select person_attribute_type_id from person_attribute_type where uuid = '8d87236c-c2cc-11de-8d13-0010c6dffd0f');
 
 	SET @zikaProgram = (select program_id from program where uuid = '3bea593a-9afd-4642-96a6-210b60f5aff2');
 

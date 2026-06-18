@@ -29,5 +29,6 @@ heart_failure_improbable bit,
 ncd_status varchar(50),
 ncd_status_date date,
 deceased bit,
-date_of_death date
+date_of_death date,
+health_center varchar(255)
 );
