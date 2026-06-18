@@ -53,20 +53,8 @@ inner join visit_type vt on vt.visit_type_id = t.visit_type_id
 set t.visit_type = vt.name;
 
 -- locations
-DROP TEMPORARY TABLE IF EXISTS temp_locations;
-CREATE TEMPORARY TABLE temp_locations
-(
-location_id						INT(11),
-location_name					VARCHAR(255)
-);
-
-INSERT INTO temp_locations(location_id, location_name)
-select location_id, name from location;
-
-CREATE INDEX temp_locations_li ON temp_locations (location_id);
-
 update temp_visits tv 
-inner join temp_locations tl on tl.location_id = tv.location_id
+inner join locations tl on tl.location_id = tv.location_id
 set tv.visit_location = tl.location_name;
 
 -- user entered

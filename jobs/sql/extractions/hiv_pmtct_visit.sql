@@ -124,15 +124,9 @@ inner join temp_identifiers ti on ti.patient_id = thv.patient_id
 set thv.emr_id = ti.emr_id,
 	thv.hivemr_v1 = ti.hivemr_v1;
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
-
 create index temp_hiv_pmtct_visit_li on temp_hiv_pmtct_visit(encounter_location_id);
 update temp_hiv_pmtct_visit t
-inner join temp_locations ls on ls.location_id = t.encounter_location_id
+inner join locations ls on ls.location_id = t.encounter_location_id
 set t.visit_location = ls.location_name,
     t.facility = ls.facility;
 update temp_hiv_pmtct_visit t set user_entered = username(creator);   
@@ -571,7 +565,7 @@ set hiv_program_id = patient_program_id_from_encounter(patient_id, @hiv_program,
 create index temp_hiv_pmtct_visit_vi on temp_hiv_pmtct_visit(visit_id);
 update temp_hiv_pmtct_visit t
 inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
+inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
     t.facility = ls.location_name;
 

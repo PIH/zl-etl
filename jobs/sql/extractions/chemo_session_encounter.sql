@@ -72,32 +72,16 @@ update chemo_encounters t
 inner join temp_users u on u.user_id = t.creator
 set user_entered = u.user_name;
 
--- location 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations
-(
-    location_id int(11),
-    location_name     text,
-    facility          varchar(255)
-);
-
-insert into temp_locations (location_id, location_name)
-select location_id, name from location;
-
-create index temp_locations_ui on temp_locations (location_id);
-
-update temp_locations
-set facility = location_tag_ancestor(location_id, 'Visit Location');
-
+-- location
 update chemo_encounters t
-inner join temp_locations u on u.location_id = t.location_id
+inner join locations u on u.location_id = t.location_id
 set t.encounter_location = u.location_name,
     t.facility = u.facility;
 
 create index chemo_encounters_vi on chemo_encounters(visit_id);
 update chemo_encounters t
 inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations u on u.location_id = v.location_id
+inner join locations u on u.location_id = v.location_id
 set t.visit_location = u.location_name,
     t.facility = u.location_name;
 

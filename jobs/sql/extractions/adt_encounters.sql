@@ -49,15 +49,9 @@ SET encounter_type_name = encounter_type_name_from_id(encounter_type);
 UPDATE adt_encounters
 SET creator = encounter_creator_name(encounter_id);
 
-drop temporary table if exists temp_locations;
-create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
-insert into temp_locations(location_id, location_name) select location_id, name from location;
-create index temp_locations_li on temp_locations(location_id);
-update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
-
 create index adt_encounters_li on adt_encounters(location_id);
 update adt_encounters t
-inner join temp_locations ls on ls.location_id = t.location_id
+inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
     t.facility = ls.facility;
 
@@ -71,7 +65,7 @@ SET emr_id = patient_identifier(patient_id, @emr_identifier_type);
 create index adt_encounters_vi on adt_encounters(visit_id);
 update adt_encounters t
 inner join visit v on v.visit_id = t.visit_id
-inner join temp_locations ls on ls.location_id = v.location_id
+inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
     t.facility = ls.location_name;
 

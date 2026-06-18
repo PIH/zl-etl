@@ -42,3 +42,11 @@ from person p
                                                                     order by a2.preferred desc, a2.date_created desc
                                                                     limit 1)
 where p.voided = 0;
+
+drop view if exists locations;
+create or replace view locations as
+select
+    location_id,
+    name as location_name,
+    location_tag_ancestor(location_id, 'Visit Location') as facility
+from location;

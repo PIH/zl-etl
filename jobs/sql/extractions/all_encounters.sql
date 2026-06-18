@@ -82,24 +82,6 @@ update temp_all_encounters t
 inner join encounter_types et on et.encounter_type_id = t.encounter_type_id
 set t.encounter_type_name = et.encounter_type_name;
 
--- create temporary table for mapping location ids to name and associated facility
--- (where facility is the nearest Visit Location ancestor of the encounter location)
-drop temporary table if exists locations;
-create temporary table locations
-(
-	location_id   int(11),
-	location_name varchar(511),
-	facility      varchar(255)
-);
-
-insert into locations(location_id, location_name)
-select location_id, name from location;
-
-create index locations_li on locations(location_id);
-
-update locations ls
-set ls.facility = location_tag_ancestor(ls.location_id, 'Visit Location');
-
 create index temp_all_encounters_li on temp_all_encounters(location_id);
 -- Sets encounter_location from the encounter's location.
 -- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
