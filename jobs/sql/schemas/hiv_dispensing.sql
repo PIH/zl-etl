@@ -6,6 +6,7 @@ create table hiv_dispensing
     visit_location              varchar(255),
     dispense_date               datetime,
     dispense_site               varchar(255),
+    facility                    varchar(255),
     date_entered                DATETIME,
     user_entered                VARCHAR(50),
     age_at_dispense_date        int,
