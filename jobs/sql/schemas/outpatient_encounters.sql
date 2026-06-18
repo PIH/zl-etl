@@ -1,9 +1,11 @@
-create table outpatient_encounters
+accreate table outpatient_encounters
 (
    emr_id               varchar(15),
    encounter_id         varchar(255),
    visit_id             varchar(255),
    visit_location       varchar(255),
+   encounter_location   varchar(255),
+   facility             varchar(255),
    encounter_datetime   datetime,
    date_created         datetime,
    encounter_type       varchar(255),

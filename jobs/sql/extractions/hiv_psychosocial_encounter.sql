@@ -9,6 +9,9 @@ patient_id                         int,
 emr_id                             varchar(255),
 encounter_id                       int,
 visit_id                           int,
+location_id                        int,
+encounter_location                 varchar(255),
+facility                           varchar(255),
 visit_location                     varchar(255),
 encounter_datetime                 datetime,     
 datetime_created                   datetime,     
@@ -36,9 +39,9 @@ index_asc                          INT,
 index_desc                         INT           
 );
 
-insert into temp_hiv_encs(patient_id, encounter_id, visit_id, encounter_datetime, 
+insert into temp_hiv_encs(patient_id, encounter_id, visit_id, location_id, encounter_datetime,
 datetime_created, creator)
-select patient_id, encounter_id, visit_id, encounter_datetime, date_created, creator
+select patient_id, encounter_id, visit_id, e.location_id, encounter_datetime, date_created, creator
 from encounter e
 where e.voided = 0
 AND encounter_type IN (@hiv_psy_enc)
@@ -120,16 +123,25 @@ SET willing_reenroll = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PI
 UPDATE temp_hiv_encs
 SET action_reinforce_adherence = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '14627',0));
 
+create index temp_hiv_encs_li on temp_hiv_encs(location_id);
+update temp_hiv_encs t
+inner join locations ls on ls.location_id = t.location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
+
 create index temp_hiv_encs_vi on temp_hiv_encs(visit_id);
 update temp_hiv_encs t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name;
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
 
 SELECT
 emr_id,
 encounter_id,
 visit_id,
+encounter_location,
+facility,
 visit_location,
 encounter_datetime,
 datetime_created,

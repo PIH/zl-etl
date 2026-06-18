@@ -19,6 +19,7 @@ create temporary table temp_encounter
     user_entered         varchar(255),
     location_id 		 int,
     encounter_location   varchar(255),
+    facility             varchar(255),
     encounter_type 		 int,
     encounter_type_name  varchar(255),
     date_created     datetime,
@@ -42,7 +43,11 @@ CREATE INDEX temp_all_encounters_encounterId ON temp_encounter (encounter_id);
 CREATE INDEX temp_all_encounters_patientId ON temp_encounter (patient_id);
 
 UPDATE temp_encounter t SET t.encounter_type_name = encounter_type_name_from_id(t.encounter_type);
-UPDATE temp_encounter t SET t.encounter_location = location_name(t.location_id);
+create index temp_encounter_li on temp_encounter(location_id);
+update temp_encounter t
+inner join locations ls on ls.location_id = t.location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
 UPDATE temp_encounter t SET t.user_entered = person_name_of_user(t.creator);
 UPDATE temp_encounter t SET t.emr_id = patient_identifier(t.patient_id, 'ZL EMR ID');
 UPDATE temp_encounter t SET t.provider = provider(t.encounter_id);
@@ -51,13 +56,16 @@ create index temp_encounter_vi on temp_encounter(visit_id);
 update temp_encounter t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name;
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
 
 SELECT
 emr_id,
 CONCAT(@partition, '-', encounter_id) as encounter_id,
 CONCAT(@partition, '-', visit_id) as visit_id,
 visit_location,
+encounter_location,
+facility,
 encounter_datetime,
 date_created,
 encounter_type_name AS encounter_type,
