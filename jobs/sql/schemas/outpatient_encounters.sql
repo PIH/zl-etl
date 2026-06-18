@@ -1,4 +1,4 @@
-accreate table outpatient_encounters
+create table outpatient_encounters
 (
    emr_id               varchar(15),
    encounter_id         varchar(255),
