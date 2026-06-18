@@ -12,6 +12,7 @@ CREATE TEMPORARY TABLE all_mh_diagnosis
     encounter_id            int,
     encounter_datetime      datetime,
     encounter_location_name varchar(50),
+    facility                varchar(255),
     encounter_creator       text,
     provider                text,
     age_at_enc              double,
@@ -51,12 +52,15 @@ value_coded_name(o.obs_id,'en') diagnosis
 FROM temp_encounter e INNER JOIN temp_obs o ON e.encounter_id=o.encounter_id
 INNER JOIN person p ON p.person_id = e.patient_id;
 
+UPDATE all_mh_diagnosis SET facility = encounter_facility(encounter_id);
+
 SELECT
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',patient_id),patient_id) "patient_id",
 emr_id,
 encounter_datetime,
 encounter_location_name,
+facility,
 encounter_creator,
 provider,
 age_at_enc,

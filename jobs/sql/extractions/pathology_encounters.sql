@@ -20,6 +20,7 @@ order_id					INT(11),
 order_number 				VARCHAR(50),
 encounter_id				INT(11),
 encounter_location			VARCHAR(255),
+facility				VARCHAR(255),
 order_datetime				DATETIME,
 order_entered_datetime		DATETIME,
 order_user_entered			VARCHAR(100),
@@ -93,7 +94,10 @@ update temp_pathology t
 set age_at_enc = age_at_enc(t.patient_id, t.encounter_id);
 
 update temp_pathology t
-set encounter_location = encounter_location_name(t.encounter_id); 
+set encounter_location = encounter_location_name(t.encounter_id);
+
+update temp_pathology t
+set facility = encounter_facility(t.encounter_id);
 
 update temp_pathology t
 set order_entered_datetime = encounter_date_created(t.encounter_id);
@@ -292,6 +296,7 @@ if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',order_id),order_id) "o
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',order_number),order_number) "order_number",
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 encounter_location,
+facility,
 order_datetime,
 order_entered_datetime,
 order_user_entered,

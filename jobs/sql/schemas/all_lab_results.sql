@@ -7,6 +7,7 @@ CREATE TABLE all_lab_results
     encounter_id             VARCHAR(50),
     encounter_type           VARCHAR(255),
     encounter_location       VARCHAR(255),
+    facility                 VARCHAR(255),
     loc_registered           TEXT,
     unknown_patient          VARCHAR(50),
     gender                   VARCHAR(11),

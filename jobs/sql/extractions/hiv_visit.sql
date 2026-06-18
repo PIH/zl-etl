@@ -38,8 +38,9 @@ reason_not_on_ARV                    VARCHAR(255),
 breastfeeding_status                 VARCHAR(255), 
 last_breastfeeding_date              DATETIME,     
 next_visit_date                      DATE,         
-encounter_location_id                INT(11),      
-visit_location                       VARCHAR(255), 
+encounter_location_id                INT(11),
+visit_location                       VARCHAR(255),
+facility                             VARCHAR(255),
 inh_line                             VARCHAR(50),  
 inh_start_date                       DATE,         
 inh_end_date                         DATE,     
@@ -114,7 +115,8 @@ inner join temp_identifiers ti on ti.patient_id = thv.patient_id
 set thv.emr_id = ti.emr_id,
 	thv.hivemr_v1 = ti.hivemr_v1;
 
-update temp_hiv_visit t set visit_location = location_name(encounter_location_id);   
+update temp_hiv_visit t set visit_location = location_name(encounter_location_id);
+update temp_hiv_visit t set facility = encounter_facility(encounter_id);
 update temp_hiv_visit t set user_entered = username(creator);   
 
 
@@ -496,6 +498,7 @@ SELECT
 	DATE(visit_date),
 	next_visit_date,
 	visit_location,
+	facility,
 	sexually_active_with_men,
 	sexually_active_with_women,
 	intravenous_drug_use,

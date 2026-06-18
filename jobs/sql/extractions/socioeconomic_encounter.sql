@@ -12,8 +12,9 @@ CREATE TEMPORARY TABLE temp_soc
  patient_id                            int(11),      
  emr_id                                VARCHAR(25),  
  encounter_id                          int(11),      
- visit_id                              int(11),      
- encounter_location                    varchar(255), 
+ visit_id                              int(11),
+ encounter_location                    varchar(255),
+ facility                              varchar(255),
  encounter_datetime                    datetime,     
  encounter_provider                    VARCHAR(255), 
  date_entered                          datetime,     
@@ -107,10 +108,13 @@ set tv.emr_id = ti.emr_id;
 update temp_soc tv 
 set encounter_provider = provider(encounter_id);
 
-update temp_soc tv 
-set encounter_location = encounter_location_name(encounter_id); 
+update temp_soc tv
+set encounter_location = encounter_location_name(encounter_id);
 
-update  temp_soc tv 
+update temp_soc tv
+set facility = encounter_facility(encounter_id);
+
+update  temp_soc tv
 set user_entered = encounter_creator_name(encounter_id);
 
 -- observations
@@ -295,6 +299,7 @@ select
 	if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 	if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
 	encounter_location,
+	facility,
 	encounter_datetime,
 	encounter_provider,
 	date_entered,

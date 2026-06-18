@@ -5,14 +5,15 @@ set @locale = 'fr';
 DROP TEMPORARY TABLE IF EXISTS all_medication_dispensing;
 CREATE TEMPORARY TABLE all_medication_dispensing
 (dispensing_id      int(11) NOT NULL AUTO_INCREMENT,
-patient_id          int,          
-obs_group_id        int,          
-form                varchar(10),  
-emr_id              varchar(50),  
-encounter_id        int,          
-encounter_datetime  datetime,     
-location_id         int(11),      
-encounter_location  varchar(100), 
+patient_id          int,
+obs_group_id        int,
+form                varchar(10),
+emr_id              varchar(50),
+encounter_id        int,
+encounter_datetime  datetime,
+location_id         int(11),
+encounter_location  varchar(100),
+facility            varchar(255),
 datetime_entered    datetime,         
 user_entered        varchar(30),  
 creator             int(11),      
@@ -175,6 +176,9 @@ where md.status = @complete_status;
 update all_medication_dispensing m
 set encounter_location = location_name(location_id);
 
+update all_medication_dispensing m
+set facility = encounter_facility(m.encounter_id);
+
 -- user names of creator
 -- copy all distinct creators to a table, find the name and join back to main table
 drop temporary table if exists temp_user_names;
@@ -267,6 +271,7 @@ emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
 encounter_datetime,
 encounter_location,
+facility,
 datetime_entered,
 user_entered,
 encounter_provider,
