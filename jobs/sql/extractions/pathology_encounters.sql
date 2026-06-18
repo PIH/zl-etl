@@ -19,6 +19,7 @@ gender						VARCHAR(50),
 order_id					INT(11),
 order_number 				VARCHAR(50),
 encounter_id				INT(11),
+location_id				INT(11),
 encounter_location			VARCHAR(255),
 facility				VARCHAR(255),
 order_datetime				DATETIME,
@@ -94,10 +95,20 @@ update temp_pathology t
 set age_at_enc = age_at_enc(t.patient_id, t.encounter_id);
 
 update temp_pathology t
-set encounter_location = encounter_location_name(t.encounter_id);
+inner join encounter e on e.encounter_id = t.encounter_id
+set t.location_id = e.location_id;
 
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_pathology_li on temp_pathology(location_id);
 update temp_pathology t
-set facility = encounter_facility(t.encounter_id);
+inner join temp_locations ls on ls.location_id = t.location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
 
 update temp_pathology t
 set order_entered_datetime = encounter_date_created(t.encounter_id);
