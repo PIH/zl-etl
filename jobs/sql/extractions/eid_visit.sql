@@ -6,10 +6,12 @@ select
 patient_id,
 zlemr(patient_id) emr_id,
 encounter_id,
+e.visit_id,
+e.location_id,
 encounter_type_name_from_id(encounter_type) encounter_type,
 date(encounter_datetime) visit_date,
-encounter_location_name(encounter_id) visit_location,
-null as facility,
+cast(null as char(255)) as visit_location,
+cast(null as char(255)) as facility,
 date(date_created) date_entered,
 encounter_creator_name(encounter_id) user_entered,
 DATE(obs_value_datetime(encounter_id, 'CIEL', '5096')) next_visit_date
@@ -17,7 +19,24 @@ from encounter e
 where encounter_type = encounter_type('HIV-exposed Infant Followup')
 and e.voided = 0;
 
-UPDATE temp_eid_visit SET facility = encounter_facility(encounter_id);
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_eid_visit_li on temp_eid_visit(location_id);
+update temp_eid_visit t
+inner join temp_locations ls on ls.location_id = t.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.facility;
+
+create index temp_eid_visit_vi on temp_eid_visit(visit_id);
+update temp_eid_visit t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
 
 /*
 -- index asc
