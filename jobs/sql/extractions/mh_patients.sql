@@ -2,6 +2,7 @@ SELECT encounter_type_id  INTO @enc_type FROM encounter_type et WHERE uuid='f9cf
 SELECT program_id  INTO @mh_prog_id FROM program p WHERE uuid='0e69c3ab-1ccb-430b-b0db-b9760319230f';
 SELECT encounter_type_id INTO @mh_enctype FROM encounter_type et WHERE et.uuid ='a8584ab8-cc2a-11e5-9956-625662870761';
 SET @partition = '${partitionNum}';
+SELECT person_attribute_type_id INTO @healthCenterAttr FROM person_attribute_type WHERE uuid = '8d87236c-c2cc-11de-8d13-0010c6dffd0f';
 
 DROP TABLE IF EXISTS all_mh_patients;
 CREATE TEMPORARY TABLE all_mh_patients
@@ -46,12 +47,13 @@ SET emr_id = zlemr(patient_id),
     gender = gender(patient_id),
 	dob = birthdate(patient_id);
 
--- Sets health_center from the patient's registered Health Center person attribute.
+-- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
 update all_mh_patients t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
-set t.health_center = pa.value;
+inner join location l on l.location_id = pa.value
+set t.health_center = l.name;
 
 UPDATE all_mh_patients tgt
 SET town=(

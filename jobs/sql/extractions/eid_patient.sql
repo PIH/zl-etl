@@ -7,6 +7,7 @@ SELECT program_workflow_id into @eid_treatment_status_id from program_workflow p
 
 SET @eid_program_id = (SELECT program_id FROM program WHERE retired = 0 AND uuid = '7e06bf82-9f1a-4218-b68f-823082ef519b');
 SET @telephone_number = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'Telephone Number');
+SELECT person_attribute_type_id INTO @healthCenterAttr FROM person_attribute_type WHERE uuid = '8d87236c-c2cc-11de-8d13-0010c6dffd0f';
 
 select rt.relationship_type_id into @parent_id from relationship_type rt where uuid = '8d91a210-c2cc-11de-8d13-0010c6dffd0f';
 select rt.relationship_type_id into @mother_id from relationship_type rt where uuid = '9a4b3b84-8a9f-11e8-9a94-a6cf71072f73';
@@ -85,12 +86,13 @@ SET birthdate = BIRTHDATE(patient_id);
 update temp_patient t
 SET telephone_number = phone_number(patient_id);
 
--- Sets health_center from the patient's registered Health Center person attribute.
+-- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
 update temp_patient t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
-set t.health_center = pa.value;
+inner join location l on l.location_id = pa.value
+set t.health_center = l.name;
 
 update temp_patient t set current_age =  ROUND(DATEDIFF(NOW(),t.birthdate) / 365.25 , 1);
 

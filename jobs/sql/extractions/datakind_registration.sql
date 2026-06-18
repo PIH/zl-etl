@@ -1,5 +1,6 @@
 set @reg_encounter_type = (select encounter_type_id from
 encounter_type where uuid = '873f968a-73a8-4f9c-ac78-9f4778b751b6');
+SELECT person_attribute_type_id INTO @healthCenterAttr FROM person_attribute_type WHERE uuid = '8d87236c-c2cc-11de-8d13-0010c6dffd0f';
 
 SELECT
     p.patient_id,
@@ -9,8 +10,8 @@ SELECT
     p.date_changed 'patient_date_changed',
     e.date_created 'encouter_date_created',
     e.date_changed 'encounter_date_changed',
-    -- Sets health_center from the patient's registered Health Center person attribute.
-    pa.value 'health_center'
+    -- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
+    l.name 'health_center'
 FROM
     patient p
         LEFT JOIN
@@ -25,4 +26,6 @@ FROM
     person_attribute pa ON pa.person_id = p.patient_id
         AND pa.voided = 0
         AND pa.person_attribute_type_id = @healthCenterAttr
+        LEFT JOIN
+    location l ON l.location_id = pa.value
 ORDER BY p.patient_id;

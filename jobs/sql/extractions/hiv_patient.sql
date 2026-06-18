@@ -13,6 +13,7 @@ SET @hiv_dispensing_encounter = ENCOUNTER_TYPE('HIV drug dispensing');
 SET @mothers_first_name = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'First Name of Mother');
 SET @telephone_number = (SELECT person_attribute_type_id FROM person_attribute_type p WHERE p.name = 'Telephone Number');
 SET @transfer_to_zl=concept_from_mapping('PIH','13275');
+SELECT person_attribute_type_id INTO @healthCenterAttr FROM person_attribute_type WHERE uuid = '8d87236c-c2cc-11de-8d13-0010c6dffd0f';
 
 DROP TEMPORARY TABLE IF EXISTS temp_patient;
 CREATE TEMPORARY TABLE temp_patient
@@ -183,12 +184,13 @@ UPDATE temp_patient t JOIN person_attribute m ON t.patient_id = m.person_id AND
 m.voided = 0 AND  m.person_attribute_type_id = @telephone_number
 SET telephone_number = m.value;
 
--- Sets health_center from the patient's registered Health Center person attribute.
+-- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
 update temp_patient t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
-set t.health_center = pa.value;
+inner join location l on l.location_id = pa.value
+set t.health_center = l.name;
 
 # key populations
 DROP TEMPORARY TABLE IF EXISTS temp_key_popn_encounter;

@@ -3,6 +3,7 @@ SELECT 'en' INTO @locale;
 SET @ncd_init_enc = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'ae06d311-1866-455b-8a64-126a9bd74171');
 SET @ncd_follow_enc = (SELECT encounter_type_id FROM encounter_type e WHERE uuid = '5cbfd6a2-92d9-4ad0-b526-9d29bfe1d10c');
 select program_id into @ncd_program_id from program where uuid = '515796ec-bf3a-11e7-abc4-cec278b6b50a';
+SELECT person_attribute_type_id INTO @healthCenterAttr FROM person_attribute_type WHERE uuid = '8d87236c-c2cc-11de-8d13-0010c6dffd0f';
 
 DROP TEMPORARY TABLE IF EXISTS ncd_patient_table;
 CREATE TEMPORARY TABLE ncd_patient_table (
@@ -113,12 +114,13 @@ SELECT person_id, dead , death_date FROM person p WHERE voided=0) st on  st.pers
 SET tt.deceased = dead,
 	tt.date_of_death = CAST(st.death_date AS date);
 
--- Sets health_center from the patient's registered Health Center person attribute.
+-- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
 update ncd_patient_table tt
 inner join person_attribute pa on pa.person_id = tt.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
-set tt.health_center = pa.value;
+inner join location l on l.location_id = pa.value
+set tt.health_center = l.name;
 
 -- -------------------------------------------------------- program state, last status date -----------------------
 

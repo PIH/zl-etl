@@ -99,14 +99,16 @@ update temp_patients t set dossier_id = patient_identifier(patient_id, 'e66645eb
 -- person attributes
 select person_attribute_type_id into @telephone from person_attribute_type where name = 'Telephone Number' ;
 select person_attribute_type_id into @motherName from person_attribute_type where name = 'First Name of Mother' ;
+select person_attribute_type_id into @healthCenterAttr from person_attribute_type where uuid = '8d87236c-c2cc-11de-8d13-0010c6dffd0f';
 update temp_patients t set telephone_number = person_attribute_value(patient_id,'Telephone Number');
 update temp_patients t set mothers_first_name = person_attribute_value(patient_id,'First Name of Mother');
--- Sets health_center from the patient's registered Health Center person attribute.
+-- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
 update temp_patients t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
-set t.health_center = pa.value;
+inner join location l on l.location_id = pa.value
+set t.health_center = l.name;
 update temp_patients t set last_modified_attributes_datetime =
 	(select max(COALESCE(date_changed,date_created)) from person_attribute a 
 	where a.person_id = t.patient_id

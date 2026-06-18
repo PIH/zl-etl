@@ -6,6 +6,7 @@ SET @rheumatic_heart_disease = CONCEPT_FROM_MAPPING('PIH', 221);
 SET @ncd_initial_consult = (SELECT encounter_type_id FROM encounter_type e WHERE e.name="NCD Initial Consult" AND retired = 0);
 SET @ncd_followup_consult = (SELECT encounter_type_id FROM encounter_type e WHERE e.name="NCD Followup Consult" AND retired = 0);
 SET @ncd_program = (SELECT program_id FROM program p WHERE p.name = "NCD");
+SELECT person_attribute_type_id INTO @healthCenterAttr FROM person_attribute_type WHERE uuid = '8d87236c-c2cc-11de-8d13-0010c6dffd0f';
 
 DROP TEMPORARY TABLE IF EXISTS temp_ncd_heart_failure_stage;
 CREATE TEMPORARY TABLE temp_ncd_heart_failure_stage (
@@ -182,12 +183,13 @@ SET t.ncd_enrolled = 1;
 UPDATE temp_ncd_heart_failure t
 SET t.ncd_enrolled = 0 WHERE t.ncd_enrolled IS NULL;
 
--- Sets health_center from the patient's registered Health Center person attribute.
+-- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
 update temp_ncd_heart_failure t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
-set t.health_center = pa.value;
+inner join location l on l.location_id = pa.value
+set t.health_center = l.name;
 
 # final query
 SELECT

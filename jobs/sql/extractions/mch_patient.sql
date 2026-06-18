@@ -2,7 +2,8 @@ SET sql_safe_updates = 0;
 SET @mch_patient_program_id = (SELECT program_id FROM program WHERE uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73');
 SET @mch_encounter = (SELECT encounter_type_id FROM encounter_type WHERE uuid = 'd83e98fd-dc7b-420f-aa3f-36f648b4483d');
 SET @delivery = (SELECT encounter_type_id FROM encounter_type WHERE uuid = '00e5ebb2-90ec-11e8-9eb6-529269fb1459');
-SET @regEncId = (SELECT encounter_type_id  from encounter_type where uuid = '873f968a-73a8-4f9c-ac78-9f4778b751b6');      
+SET @regEncId = (SELECT encounter_type_id  from encounter_type where uuid = '873f968a-73a8-4f9c-ac78-9f4778b751b6');
+SELECT person_attribute_type_id INTO @healthCenterAttr FROM person_attribute_type WHERE uuid = '8d87236c-c2cc-11de-8d13-0010c6dffd0f';
 
 DROP TEMPORARY TABLE IF EXISTS temp_od_encounters;
 CREATE TEMPORARY TABLE temp_od_encounters
@@ -214,12 +215,13 @@ UPDATE temp_mch_patient tm SET age_cat_1 =  CASE WHEN tm.age < 10 THEN "Group 1"
 # Dossier Number
 UPDATE temp_mch_patient tm SET tm.dossier_id = dosId(tm.patient_id);
 
--- Sets health_center from the patient's registered Health Center person attribute.
+-- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
 update temp_mch_patient t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
-set t.health_center = pa.value;
+inner join location l on l.location_id = pa.value
+set t.health_center = l.name;
 
 ### Final query
 SELECT
