@@ -5,6 +5,7 @@ CREATE TABLE eid_visit
     encounter_type  VARCHAR(50),
     visit_date      DATE,
     visit_location  VARCHAR(100),
+    facility        VARCHAR(255),
     date_entered    DATE,
     user_entered    VARCHAR(255),
     next_visit_date DATE,

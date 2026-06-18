@@ -5,6 +5,7 @@ CREATE TABLE mh_diagnoses
     emr_id                  varchar(50),
     encounter_datetime      datetime,
     encounter_location_name varchar(50),
+    facility                varchar(255),
     encounter_creator       text,
     provider                text,
     age_at_enc              float,

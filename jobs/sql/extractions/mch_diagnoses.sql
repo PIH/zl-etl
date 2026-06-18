@@ -12,10 +12,13 @@ create temporary table temp_mch_diagnoses
     emr_id varchar(25),
 	encounter_id int,
 	encounter_location  varchar(255),
+	facility varchar(255),
+	location_id int(11),
 	obs_id  int,
 	obs_group_id int,
 	obs_datetime datetime,
 	visit_id int,
+	visit_location varchar(255),
 	encounter_type varchar(100),
 	entered_by varchar(255),
 	provider varchar(255),
@@ -89,8 +92,19 @@ and encounter_id in (select encounter_id from encounter e where voided = 0 and e
 
 update temp_mch_diagnoses tm set emr_id = zlemr(patient_id);
 update temp_mch_diagnoses tm set visit_id = (select visit_id from encounter e where e.voided = 0 and tm.encounter_id = e.encounter_id);
+update temp_mch_diagnoses tm set location_id = (select location_id from encounter e where e.voided = 0 and tm.encounter_id = e.encounter_id);
 
-update temp_mch_diagnoses set encounter_location = encounter_location_name(encounter_id);
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_mch_diagnoses_li on temp_mch_diagnoses(location_id);
+update temp_mch_diagnoses t
+inner join temp_locations ls on ls.location_id = t.location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
 update temp_mch_diagnoses set entered_by = encounter_creator_name(encounter_id);
 update temp_mch_diagnoses set provider = provider(encounter_id);
 
@@ -347,14 +361,23 @@ update temp_mch_diagnoses tm set sti = if(diagnosis_concept in (
 @Herpes_simplex
 ), @yes, @non);
 
+create index temp_mch_diagnoses_vi on temp_mch_diagnoses(visit_id);
+update temp_mch_diagnoses t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
 -- final query
-select 
+select
 	   emr_id,
        encounter_id,
        encounter_location,
+       facility,
        obs_id,
        obs_datetime,
        visit_id,
+       visit_location,
        encounter_type,
        entered_by,
        provider,

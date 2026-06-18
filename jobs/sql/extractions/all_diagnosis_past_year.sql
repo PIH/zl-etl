@@ -18,14 +18,16 @@ CREATE TEMPORARY TABLE temp_diagnoses
  birthdate                datetime,       
  birthdate_estimated      boolean,        
  section_communale_CDC_ID varchar(11),   
- encounter_id             int(11),        
- age_at_encounter         int(3),        
- encounter_location       varchar(255),  
- encounter_type           varchar(255),  
- entered_by               varchar(1000), 
- provider                 varchar(1000), 
- visit_id                 int(11),       
- obs_id                   int(11),        
+ encounter_id             int(11),
+ age_at_encounter         int(3),
+ encounter_location       varchar(255),
+ facility                 varchar(255),
+ encounter_type           varchar(255),
+ entered_by               varchar(1000),
+ provider                 varchar(1000),
+ visit_id                 int(11),
+ visit_location           varchar(255),
+ obs_id                   int(11),
  obs_group_id             int(11),       
  obs_datetime             datetime,       
  diagnosis_entered        text,           
@@ -255,20 +257,21 @@ set t.dossierId = p.dossierId,
 DROP TEMPORARY TABLE IF EXISTS temp_dx_encounter;
 CREATE TEMPORARY TABLE temp_dx_encounter
 (
- patient_id          int(11),      
- encounter_id        int(11),   
+ patient_id          int(11),
+ encounter_id        int(11),
  encounter_location_id int(11),
  encounter_location  varchar(255),
+ facility            varchar(255),
  encounter_type_id   int(11),
  encounter_type      varchar(255),
  age_at_encounter    int(3),
  entered_by_user_id  int(11),
- entered_by          varchar(255), 
- provider            varchar(255), 
- date_created        datetime,     
- visit_id            int(11),      
- birthdate           datetime,     
- birthdate_estimated boolean     
+ entered_by          varchar(255),
+ provider            varchar(255),
+ date_created        datetime,
+ visit_id            int(11),
+ birthdate           datetime,
+ birthdate_estimated boolean
 );
 
 insert into temp_dx_encounter(encounter_id)
@@ -286,7 +289,17 @@ set t.entered_by_user_id = e.creator,
 	t.date_created = e.date_created 
 ;
 
-update temp_dx_encounter set encounter_location = location_name(encounter_location_id);
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_dx_encounter_li on temp_dx_encounter(encounter_location_id);
+update temp_dx_encounter t
+inner join temp_locations ls on ls.location_id = t.encounter_location_id
+set t.encounter_location = ls.location_name,
+    t.facility = ls.facility;
 update temp_dx_encounter set entered_by = person_name_of_user(entered_by_user_id);
 update temp_dx_encounter set encounter_type = encounter_type_name_from_id(encounter_type_id);
 
@@ -299,16 +312,24 @@ set t.age_at_encounter = e.age_at_encounter,
 	t.date_created = e.date_created,
 	t.encounter_id = e.encounter_id,
 	t.encounter_location = e.encounter_location,
+	t.facility = e.facility,
 	t.encounter_type = e.encounter_type,
 	t.entered_by = e.entered_by,
 	t.provider = e.provider,
 	t.visit_id = e.visit_id;
 
-update temp_diagnoses t 
+update temp_diagnoses t
 set t.retrospective = IF(TIME_TO_SEC(date_created) - TIME_TO_SEC(obs_datetime) > 1800,1,0) ;
 
+create index temp_diagnoses_vi on temp_diagnoses(visit_id);
+update temp_diagnoses t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
 -- select final output
-select 
+select
 CONCAT(@partition, '-', d.patient_id) as patient_id,
 d.dossierId,
 d.patient_primary_id,
@@ -323,6 +344,7 @@ d.locality,
 d.street_landmark,
 CONCAT(@partition, '-', d.encounter_id) as encounter_id,
 d.encounter_location,
+d.facility,
 CONCAT(@partition, '-', d.obs_id) as obs_id,
 d.obs_datetime,
 d.entered_by,
@@ -348,6 +370,7 @@ d.oncology,
 d.date_created,
 d.retrospective,
 CONCAT(@partition, '-', d.visit_id) as visit_id,
+d.visit_location,
 d.birthdate,
 d.birthdate_estimated,
 d.encounter_type,

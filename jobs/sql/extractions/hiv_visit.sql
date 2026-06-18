@@ -38,8 +38,9 @@ reason_not_on_ARV                    VARCHAR(255),
 breastfeeding_status                 VARCHAR(255), 
 last_breastfeeding_date              DATETIME,     
 next_visit_date                      DATE,         
-encounter_location_id                INT(11),      
-visit_location                       VARCHAR(255), 
+encounter_location_id                INT(11),
+visit_location                       VARCHAR(255),
+facility                             VARCHAR(255),
 inh_line                             VARCHAR(50),  
 inh_start_date                       DATE,         
 inh_end_date                         DATE,     
@@ -114,7 +115,17 @@ inner join temp_identifiers ti on ti.patient_id = thv.patient_id
 set thv.emr_id = ti.emr_id,
 	thv.hivemr_v1 = ti.hivemr_v1;
 
-update temp_hiv_visit t set visit_location = location_name(encounter_location_id);   
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_hiv_visit_li on temp_hiv_visit(encounter_location_id);
+update temp_hiv_visit t
+inner join temp_locations ls on ls.location_id = t.encounter_location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.facility;
 update temp_hiv_visit t set user_entered = username(creator);   
 
 
@@ -464,6 +475,13 @@ set t.with_sex_worker = value_coded_as_boolean(o.obs_id);
 update temp_hiv_visit t
 set hiv_program_id = patient_program_id_from_encounter(patient_id, @hiv_program, encounter_id);
 
+create index temp_hiv_visit_vi on temp_hiv_visit(visit_id);
+update temp_hiv_visit t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
 SELECT
 	concat(@partition, '-', encounter_id),
 	concat(@partition, '-', visit_id),
@@ -496,6 +514,7 @@ SELECT
 	DATE(visit_date),
 	next_visit_date,
 	visit_location,
+	facility,
 	sexually_active_with_men,
 	sexually_active_with_women,
 	intravenous_drug_use,

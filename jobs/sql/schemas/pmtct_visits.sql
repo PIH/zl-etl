@@ -1,6 +1,7 @@
 CREATE TABLE pmtct_visits
 (
     visit_id                INT,
+    visit_location          VARCHAR(255),
     encounter_id            VARCHAR(25),
     hiv_program_id          VARCHAR(25),
     emr_id                  VARCHAR(25),

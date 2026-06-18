@@ -9,6 +9,7 @@ encounter_id int,
 patient_id int,
 emr_id varchar(20),
 visit_id int,
+visit_location varchar(255),
 order_id int,
 orderer int,
 drug_concept_id int,
@@ -21,6 +22,7 @@ order_drug text,
 order_formulation text,
 order_formulation_non_coded text,
 order_location varchar(255),
+facility varchar(255),
 order_created_date date,
 order_date_activated date,
 user_entered varchar(255),
@@ -163,7 +165,18 @@ where o.voided = 0;
 update temp_medication_orders SET emr_id = PATIENT_IDENTIFIER(patient_id, METADATA_UUID('org.openmrs.module.emrapi', 'emr.primaryIdentifierType'));
 update temp_medication_orders tm set visit_id = (select visit_id from encounter e where voided = 0 and tm.encounter_id = e.encounter_id);
 update temp_medication_orders tm set location_id = (select location_id from encounter e where voided = 0 and tm.encounter_id = e.encounter_id);
-update temp_medication_orders tm set order_location = location_name(location_id);
+drop temporary table if exists temp_locations;
+create temporary table temp_locations (location_id int(11), location_name varchar(255), facility varchar(255));
+insert into temp_locations(location_id, location_name) select location_id, name from location;
+create index temp_locations_li on temp_locations(location_id);
+update temp_locations set facility = location_tag_ancestor(location_id, 'Visit Location');
+
+create index temp_medication_orders_li on temp_medication_orders(location_id);
+update temp_medication_orders tm
+inner join temp_locations ls on ls.location_id = tm.location_id
+set tm.order_location = ls.location_name,
+    tm.facility = ls.facility;
+
 update temp_medication_orders tm set user_entered = encounter_creator_name(encounter_id);
 update temp_medication_orders tm set order_formulation = drugName(drug_id);
 update temp_medication_orders tm  set product_code = openboxesCode(drug_id);
@@ -181,14 +194,23 @@ update temp_medication_orders tm  set order_comments = obs_value_text(tm.encount
 update temp_medication_orders tm  set order_duration_units = concept_name(order_duration_units_id, @locale) where order_id is not null;
 
 
+create index temp_medication_orders_vi on temp_medication_orders(visit_id);
+update temp_medication_orders t
+inner join visit v on v.visit_id = t.visit_id
+inner join temp_locations ls on ls.location_id = v.location_id
+set t.visit_location = ls.location_name,
+    t.facility = ls.location_name;
+
 -- final query
-select 
+select
 emr_id,
 encounter_type,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),encounter_id) "visit_id",
+visit_location,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',order_id),encounter_id) "order_id",
 order_location,
+facility,
 order_created_date,
 order_date_activated,
 user_entered,
