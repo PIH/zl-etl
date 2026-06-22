@@ -1,4 +1,4 @@
-drop table if exists report_mapping;
+drop table if exists report_mapping#
 create or replace view report_mapping as
 select crm.concept_id, crs.name "source", crt.code
 from concept_reference_map crm,
@@ -9,10 +9,10 @@ where crm.concept_reference_term_id = crt.concept_reference_term_id
   and crt.retired = 0
   and crs.retired = 0
   and crs.name in ('PIH', 'CIEL')
-  and crm.concept_map_type_id = 
-  (select concept_map_type_id from concept_map_type cmt where uuid = '35543629-7d8c-11e1-909d-c80aa9edcf4e'); -- SAME-AS
+  and crm.concept_map_type_id =
+  (select concept_map_type_id from concept_map_type cmt where uuid = '35543629-7d8c-11e1-909d-c80aa9edcf4e')# -- SAME-AS
 
-drop table if exists current_name_address;
+drop table if exists current_name_address#
 create or replace view current_name_address as
 select p.person_id,
        p.gender,
@@ -41,12 +41,12 @@ from person p
                                                                       and a2.voided = 0
                                                                     order by a2.preferred desc, a2.date_created desc
                                                                     limit 1)
-where p.voided = 0;
+where p.voided = 0#
 
-drop view if exists locations;
+drop view if exists locations#
 create or replace view locations as
 select
     location_id,
     name as location_name,
     location_tag_ancestor(location_id, 'Visit Location') as facility
-from location;
+from location#
