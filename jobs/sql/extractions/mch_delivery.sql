@@ -16,6 +16,8 @@ CREATE TEMPORARY TABLE temp_delivery
     encounter_datetime                   datetime,
     encounter_location                   varchar(255),
     facility                             varchar(255),
+    visit_id                             int(11),
+    visit_location                       varchar(255),
     encounter_type                       varchar(255),
     provider                             varchar(255),
     date_entered                         datetime,
@@ -159,13 +161,15 @@ insert into temp_delivery (
   encounter_id,
   encounter_datetime,
   date_entered,
-  encounter_type)
+  encounter_type,
+  visit_id)
 select
   patient_id,
   encounter_id,
   encounter_datetime,
-  e.date_created, 
-  et.name
+  e.date_created,
+  et.name,
+  e.visit_id
 from encounter e
 inner join encounter_type et on et.encounter_type_id = e.encounter_type
 where e.encounter_type in (@delivery_note)
@@ -181,7 +185,20 @@ update temp_delivery set zlemrid = zlemr(patient_id);
 update temp_delivery set dossierid = dosid(patient_id);
 update temp_delivery set loc_registered = loc_registered(patient_id);
 update temp_delivery set encounter_location = encounter_location_name(encounter_id);
-update temp_delivery set facility = encounter_facility(encounter_id);
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+update temp_delivery t
+inner join encounter e on e.encounter_id = t.encounter_id
+inner join locations l on l.location_id = e.location_id
+set t.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+update temp_delivery t
+inner join visit v on v.visit_id = t.visit_id
+inner join locations l on l.location_id = v.location_id
+set t.visit_location = l.location_name,
+    t.facility = l.location_name;
 update temp_delivery set provider = provider(encounter_id);
 
 UPDATE temp_delivery t 
@@ -750,6 +767,8 @@ concat(@partition, '-', mch_program_id),
 encounter_datetime,
 encounter_location,
 facility,
+if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
+visit_location,
 encounter_type,
 date_entered,
 provider,

@@ -16,6 +16,8 @@ CREATE TEMPORARY TABLE temp_covid_dispositon
 	encounter_type				VARCHAR(255),
 	location				TEXT,
 	facility				VARCHAR(255),
+	visit_id				INT,
+	visit_location			VARCHAR(100),
     date_entered          DATETIME,
     user_entered          VARCHAR(50),
 	disposition				VARCHAR(255),
@@ -32,6 +34,7 @@ INSERT INTO temp_covid_dispositon
 	patient_id,
 	encounter_date,
 	location,
+	visit_id,
     date_entered,
     user_entered
 )
@@ -41,6 +44,7 @@ SELECT
 	patient_id,
 	DATE(encounter_datetime),
 	encounter_location_name(encounter_id),
+	visit_id,
     date_created,
     username(creator)
 FROM
@@ -71,7 +75,20 @@ UPDATE temp_covid_dispositon SET disposition = OBS_VALUE_CODED_LIST(encounter_id
 
 -- Discharge conditions
 UPDATE temp_covid_dispositon SET discharge_condition = OBS_VALUE_CODED_LIST(encounter_id, 'CIEL', '159640', 'en');
-UPDATE temp_covid_dispositon SET facility = encounter_facility(encounter_id);
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+UPDATE temp_covid_dispositon t
+INNER JOIN encounter e ON e.encounter_id = t.encounter_id
+INNER JOIN locations l ON l.location_id = e.location_id
+SET t.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+UPDATE temp_covid_dispositon t
+INNER JOIN visit v ON v.visit_id = t.visit_id
+INNER JOIN locations l ON l.location_id = v.location_id
+SET t.visit_location = l.location_name,
+    t.facility = l.location_name;
 /*
 -- index ascending
 DROP TEMPORARY TABLE IF EXISTS temp_index_asc;
@@ -118,6 +135,8 @@ SELECT
 	encounter_type,
 	location,
 	facility,
+	concat(@partition,'-',tcd.visit_id) as visit_id,
+	tcd.visit_location,
 	encounter_date,
     date_entered,
     user_entered,

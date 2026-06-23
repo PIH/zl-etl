@@ -14,6 +14,8 @@ encounter_datetime  datetime,
 location_id         int(11),
 encounter_location  varchar(100),
 facility            varchar(255),
+visit_id            int,
+visit_location      varchar(100),
 datetime_entered    datetime,         
 user_entered        varchar(30),  
 creator             int(11),      
@@ -150,11 +152,12 @@ set t.duration = o.duration,
 
 -- New Form --------
 set @complete_status = concept_from_mapping('PIH','1267');
-INSERT INTO all_medication_dispensing(form, patient_id, encounter_datetime, datetime_entered,  creator, dispenser, location_id, drug_id,
+INSERT INTO all_medication_dispensing(form, patient_id, encounter_id, encounter_datetime, datetime_entered,  creator, dispenser, location_id, drug_id,
 quantity_per_dose,dose_unit, frequency,quantity_dispensed, quantity_unit, order_id, instructions)
-SELECT 
+SELECT
 'New' AS form,
 patient_id,
+encounter_id,
 date_handed_over,
 md.date_created,
 md.creator,
@@ -176,8 +179,23 @@ where md.status = @complete_status;
 update all_medication_dispensing m
 set encounter_location = location_name(location_id);
 
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update all_medication_dispensing m
-set facility = encounter_facility(m.encounter_id);
+inner join locations l on l.location_id = m.location_id
+set m.facility = l.facility;
+
+update all_medication_dispensing m
+inner join encounter e on e.encounter_id = m.encounter_id
+set m.visit_id = e.visit_id;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+update all_medication_dispensing m
+inner join visit v on v.visit_id = m.visit_id
+inner join locations l on l.location_id = v.location_id
+set m.visit_location = l.location_name,
+    m.facility = l.location_name;
 
 -- user names of creator
 -- copy all distinct creators to a table, find the name and join back to main table
@@ -272,6 +290,8 @@ CONCAT(@partition,'-',encounter_id) "encounter_id",
 encounter_datetime,
 encounter_location,
 facility,
+CONCAT(@partition,'-',visit_id) "visit_id",
+visit_location,
 datetime_entered,
 user_entered,
 encounter_provider,

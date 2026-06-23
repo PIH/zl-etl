@@ -9,6 +9,8 @@ encounter_id int,
 encounter_datetime datetime,
 encounter_location varchar(100),
 facility varchar(255),
+visit_id int,
+visit_location varchar(100),
 date_entered date,
 user_entered varchar(30),
 encounter_provider varchar(30),
@@ -37,21 +39,35 @@ disposition varchar(100),
 comment text,
 next_visit_date date);
 
-INSERT INTO oncology_intake(patient_id,emr_id,encounter_id,encounter_datetime,encounter_location,date_entered,user_entered,encounter_provider)
-SELECT 
+INSERT INTO oncology_intake(patient_id,emr_id,encounter_id,encounter_datetime,encounter_location,visit_id,date_entered,user_entered,encounter_provider)
+SELECT
 patient_id,
 zlemr(patient_id),
 encounter_id,
 encounter_datetime ,
 encounter_location_name(encounter_id),
+visit_id,
 date_created,
 encounter_creator(encounter_id),
 provider(encounter_id)
-FROM encounter e 
+FROM encounter e
 WHERE encounter_type = @enc_type
 AND voided = 0;
 
-UPDATE oncology_intake SET facility = encounter_facility(encounter_id);
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+UPDATE oncology_intake t
+INNER JOIN encounter e ON e.encounter_id = t.encounter_id
+INNER JOIN locations l ON l.location_id = e.location_id
+SET t.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+UPDATE oncology_intake t
+INNER JOIN visit v ON v.visit_id = t.visit_id
+INNER JOIN locations l ON l.location_id = v.location_id
+SET t.visit_location = l.location_name,
+    t.facility = l.location_name;
 
 -- Type 1
 UPDATE oncology_intake SET type_1_diabetes = answer_exists_in_encounter(encounter_id, 'PIH','10140', 'PIH', '6691');
@@ -221,6 +237,8 @@ CONCAT(@partition,'-',encounter_id) "encounter_id",
 encounter_datetime ,
 encounter_location ,
 facility ,
+CONCAT(@partition,'-',visit_id) "visit_id",
+visit_location,
 date_entered ,
 user_entered ,
 encounter_provider ,

@@ -115,6 +115,8 @@ create temporary table temp_encounter
     encounter_datetime datetime,
     encounter_location varchar(50),
     facility           varchar(255),
+    visit_id           int,
+    visit_location     varchar(100),
     encounter_type     varchar(50),
     provider           varchar(500),
     date_entered       DATETIME,
@@ -139,12 +141,13 @@ create temporary table temp_encounter
     tetanus_booster_1  datetime,
     tetanus_booster_2  datetime
 );
-insert into temp_encounter (encounter_id, patient_id, encounter_datetime, encounter_location, encounter_type, provider, date_entered, user_entered)
+insert into temp_encounter (encounter_id, patient_id, encounter_datetime, encounter_location, encounter_type, visit_id, provider, date_entered, user_entered)
 SELECT e.encounter_id,
        e.patient_id,
        e.encounter_datetime,
        el.name,
        et.name,
+       e.visit_id,
        CONCAT(pn.given_name, ' ', pn.family_name),
        e.date_created,
        username(e.creator)
@@ -167,7 +170,20 @@ WHERE e.voided = 0
     )
 ;
 
-update temp_encounter e set facility = encounter_facility(e.encounter_id);
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+update temp_encounter t
+inner join encounter e on e.encounter_id = t.encounter_id
+inner join locations l on l.location_id = e.location_id
+set t.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+update temp_encounter t
+inner join visit v on v.visit_id = t.visit_id
+inner join locations l on l.location_id = v.location_id
+set t.visit_location = l.location_name,
+    t.facility = l.location_name;
 
 # BACILLE CAMILE-GUERIN VACCINATION
 
@@ -285,6 +301,8 @@ SELECT p.dossier_num       as dossierId,
        e.encounter_datetime,
        e.encounter_location,
        e.facility,
+       concat(@partition,'-',e.visit_id) as visit_id,
+       e.visit_location,
        e.encounter_type,
        e.provider,
        e.date_entered,
