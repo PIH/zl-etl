@@ -20,6 +20,9 @@ CREATE TEMPORARY TABLE temp_covid_visit
 	location                      TEXT,
     date_entered                  DATETIME,
     user_entered                  VARCHAR(50),
+	visit_id                      INT,
+	visit_location                VARCHAR(255),
+	facility                      VARCHAR(255),
 	case_condition                VARCHAR(255),
 	overall_condition             VARCHAR(255),
 	fever                         VARCHAR(11),
@@ -188,6 +191,32 @@ person_attribute_type t ON a.person_attribute_type_id = t.person_attribute_type_
 WHERE
 a.value = 'true'
 AND t.name = 'Test Patient');
+
+-- Sets visit_id from the encounter.
+UPDATE temp_covid_visit tc
+INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
+SET tc.visit_id = e.visit_id;
+
+-- Sets facility as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
+UPDATE temp_covid_visit tc
+INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
+INNER JOIN locations l ON l.location_id = e.location_id
+SET tc.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+UPDATE temp_covid_visit tc
+INNER JOIN visit v ON v.visit_id = tc.visit_id
+INNER JOIN locations l ON l.location_id = v.location_id
+SET tc.visit_location = l.location_name,
+    tc.facility = l.location_name;
+
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+UPDATE temp_covid_visit tc
+INNER JOIN location loc ON loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+SET tc.facility = loc.name
+WHERE tc.facility IS NULL;
 
 ### COVID 19 admission
 -- case condition
@@ -1077,6 +1106,9 @@ SELECT
         encounter_type,
         date_entered,
         user_entered,
+        IF(visit_id IS NULL, NULL, concat(@partition,'-',visit_id)) visit_id,
+        visit_location,
+        facility,
         case_condition,
 	      overall_condition,
         IF(fever like "%Yes%", 1, NULL)	                fever,

@@ -24,6 +24,9 @@ CREATE TEMPORARY TABLE temp_covid_lab_encounters
     location            TEXT,
     date_entered        DATETIME,
     user_entered        VARCHAR(50),
+    visit_id            INT,
+    visit_location      VARCHAR(255),
+    facility            VARCHAR(255),
     specimen_source     VARCHAR(255),
     concept_id			INT,
     value_coded		    INT,
@@ -64,6 +67,9 @@ CREATE TEMPORARY TABLE temp_covid_lab_results_app_encounter
     location            TEXT,
     date_entered        DATETIME,
     user_entered        VARCHAR(50),
+    visit_id            INT,
+    visit_location      VARCHAR(255),
+    facility            VARCHAR(255),
     specimen_source     VARCHAR(255),
     concept_id			INT,
     value_coded			INT,
@@ -117,6 +123,32 @@ WHERE
 
 UPDATE temp_final_covid_lab_encounters tc LEFT JOIN encounter_type et ON tc.encounter_type_id = et.encounter_type_id
     SET encounter_type = et.name;
+
+-- Sets visit_id from the encounter.
+UPDATE temp_final_covid_lab_encounters tc
+INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
+SET tc.visit_id = e.visit_id;
+
+-- Sets facility as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
+UPDATE temp_final_covid_lab_encounters tc
+INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
+INNER JOIN locations l ON l.location_id = e.location_id
+SET tc.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+UPDATE temp_final_covid_lab_encounters tc
+INNER JOIN visit v ON v.visit_id = tc.visit_id
+INNER JOIN locations l ON l.location_id = v.location_id
+SET tc.visit_location = l.location_name,
+    tc.facility = l.location_name;
+
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+UPDATE temp_final_covid_lab_encounters tc
+INNER JOIN location loc ON loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+SET tc.facility = loc.name
+WHERE tc.facility IS NULL;
 
 ### lab set(specimen set) -- parent obs
 DROP TEMPORARY TABLE IF EXISTS temp_covid_lab_specimen_set;
@@ -289,6 +321,9 @@ CREATE TEMPORARY TABLE temp_covid_lab_app_result
     encounter_type      VARCHAR(255),
     date_entered        DATETIME,
     user_entered        VARCHAR(50),
+    visit_id            INT,
+    visit_location      VARCHAR(255),
+    facility            VARCHAR(255),
     specimen_date       DATE,
     date_for_reporting  DATE,
     specimen_source     VARCHAR(255),
@@ -309,7 +344,10 @@ SELECT DISTINCT(encounter_id), encounter_date, encounter_type, location, date_en
 UPDATE temp_covid_lab_app_result tcl INNER JOIN temp_final_covid_lab_encounters tfcl ON tcl.encounter_id = tfcl.encounter_id
     SET tcl.patient_id = tfcl.patient_id,
         tcl.specimen_date = tfcl.encounter_date,
-        tcl.date_for_reporting = tfcl.encounter_date;
+        tcl.date_for_reporting = tfcl.encounter_date,
+        tcl.visit_id = tfcl.visit_id,
+        tcl.visit_location = tfcl.visit_location,
+        tcl.facility = tfcl.facility;
 
 ### Antibody lab results app
 UPDATE temp_covid_lab_app_result tcl INNER JOIN temp_final_covid_lab_encounters tfc ON tcl.encounter_id = tfc.encounter_id AND concept_id = CONCEPT_FROM_MAPPING('CIEL', '165853')
@@ -340,6 +378,9 @@ SELECT
     e.encounter_type,
     e.date_entered,
     e.user_entered,
+    e.visit_id,
+    e.visit_location,
+    e.facility,
     DATE(lspd.value_datetime) specimen_date,
     COALESCE(DATE(lspd.value_datetime), e.encounter_date) date_for_reporting,
     lss.specimen_source,
@@ -373,6 +414,9 @@ SELECT * FROM
     encounter_type,
     date_entered,
     user_entered,
+    IF(visit_id IS NULL, NULL, concat(@partition,'-',visit_id)) visit_id,
+    visit_location,
+    facility,
     specimen_date,
     date_for_reporting,
     specimen_source,
@@ -384,8 +428,8 @@ SELECT * FROM
     pcr_results,
     genexpert,
     genexpert_results
- FROM temp_final_query q 
- UNION ALL SELECT 
+ FROM temp_final_query q
+ UNION ALL SELECT
     patient_id,
     concat(@partition,'-',encounter_id),
     obs_id,
@@ -394,6 +438,9 @@ SELECT * FROM
     encounter_type,
     date_entered,
     user_entered,
+    IF(visit_id IS NULL, NULL, concat(@partition,'-',visit_id)) visit_id,
+    visit_location,
+    facility,
     specimen_date,
     date_for_reporting,
     specimen_source,

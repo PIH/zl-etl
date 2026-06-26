@@ -17,6 +17,9 @@ CREATE TEMPORARY TABLE temp_covid_admission_encounter
 	encounter_datetime			DATETIME,
     	date_entered                 DATETIME,
     	user_entered                 VARCHAR(50),
+	visit_id			INT,
+	visit_location			VARCHAR(255),
+	facility			VARCHAR(255),
 	health_care_worker			VARCHAR(11),
 	health_care_worker_type		VARCHAR(255),
 	home_medications			TEXT,
@@ -170,6 +173,32 @@ UPDATE temp_covid_admission_encounter SET transfer_facility_name = OBS_VALUE_TEX
 -- contact_case_14d
 UPDATE temp_covid_admission_encounter SET contact_case_14d = OBS_VALUE_CODED_LIST(encounter_id, 'CIEL', '162633', 'en');
 
+-- Sets visit_id from the encounter.
+UPDATE temp_covid_admission_encounter t
+INNER JOIN encounter e ON e.encounter_id = t.encounter_id
+SET t.visit_id = e.visit_id;
+
+-- Sets facility as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
+UPDATE temp_covid_admission_encounter t
+INNER JOIN encounter e ON e.encounter_id = t.encounter_id
+INNER JOIN locations l ON l.location_id = e.location_id
+SET t.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+UPDATE temp_covid_admission_encounter t
+INNER JOIN visit v ON v.visit_id = t.visit_id
+INNER JOIN locations l ON l.location_id = v.location_id
+SET t.visit_location = l.location_name,
+    t.facility = l.location_name;
+
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+UPDATE temp_covid_admission_encounter t
+INNER JOIN location loc ON loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+SET t.facility = loc.name
+WHERE t.facility IS NULL;
+
 ## EXECUTE FINAL SELECTION
 SELECT
 	concat(@partition,'-',encounter_id),
@@ -177,6 +206,9 @@ SELECT
 	encounter_datetime,
     date_entered,
     user_entered,
+	IF(visit_id IS NULL, NULL, concat(@partition,'-',visit_id))	visit_id,
+	visit_location,
+	facility,
 	IF(health_care_worker like "%Yes%", 1, NULL)			health_care_worker,
   health_care_worker_type,
 	home_medications,
