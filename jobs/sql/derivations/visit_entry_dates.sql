@@ -17,7 +17,7 @@ lab_results_max_date_entered  datetime
 insert into #temp_summary (site, visit_location)
 	select DISTINCT site, case when site = 'hiv' then visit_location else site end from hiv_visit hv 
 	union
-	select DISTINCT site, case when site = 'hiv' then visit_site else site end from mch_visit
+	select DISTINCT site, case when site = 'hiv' then encounter_location else site end from mch_visit
 	union
 	select DISTINCT site, case when site = 'hiv' then cast(location as varchar) else site end from covid_visit
 	union
@@ -35,9 +35,9 @@ update t
 set mch_max_date_entered = s.max_date
 from  #temp_summary t
 inner join
-	(select site, case when site = 'hiv' then visit_site else site end as "visit_location", max(date_entered) "max_date"
-	from mch_visit mv 
-	group by site, case when site = 'hiv' then visit_site else site end) s on s.site = t.site and s.visit_location = t.visit_location 
+	(select site, case when site = 'hiv' then encounter_location else site end as "visit_location", max(date_entered) "max_date"
+	from mch_visit mv
+	group by site, case when site = 'hiv' then encounter_location else site end) s on s.site = t.site and s.visit_location = t.visit_location 
 ;
 
 update t
