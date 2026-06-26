@@ -17,7 +17,10 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
  emr_id                           VARCHAR(25),  
  mch_program_id                   INT(11),
  visit_date                       DATE,         
- visit_site                       VARCHAR(100), 
+ encounter_location               VARCHAR(100),
+ visit_id                         INT(11),
+ visit_location                   VARCHAR(255),
+ facility                         VARCHAR(255),
  age_at_visit                     DOUBLE,       
  date_entered                     DATETIME,     
  user_entered                     VARCHAR(50),  
@@ -110,7 +113,7 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
 );
 
 
-INSERT INTO temp_obgyn_visit(patient_id, encounter_id, visit_date, visit_site, date_entered)
+INSERT INTO temp_obgyn_visit(patient_id, encounter_id, visit_date, encounter_location, date_entered)
 SELECT DISTINCT e.patient_id, e.encounter_id, DATE(e.encounter_datetime), LOCATION_NAME(e.location_id), e.date_created 
 FROM encounter e
 INNER JOIN obs o ON o.encounter_id = e.encounter_id AND o.voided = 0 -- ensure that only rows with obs are included
@@ -1000,13 +1003,42 @@ INNER JOIN (select encounter_id, group_concat(concept_name(value_coded, @locale)
 group by encounter_id) o on o.encounter_id = t.encounter_id
 set t.other_sti = o.stis;		
 
+-- Sets visit_id from the encounter.
+update temp_obgyn_visit t
+inner join encounter e on e.encounter_id = t.encounter_id
+set t.visit_id = e.visit_id;
+
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+update temp_obgyn_visit t
+inner join encounter e on e.encounter_id = t.encounter_id
+inner join locations l on l.location_id = e.location_id
+set t.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+update temp_obgyn_visit t
+inner join visit v on v.visit_id = t.visit_id
+inner join locations l on l.location_id = v.location_id
+set t.visit_location = l.location_name,
+    t.facility = l.location_name;
+
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+update temp_obgyn_visit t
+inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+set t.facility = loc.name
+where t.facility is null;
+
 # final query
 SELECT
     ZLEMR(patient_id),
     CONCAT(@partition,'-',encounter_id),
     concat(@partition, '-', mch_program_id),
     visit_date,
-    visit_site,
+    encounter_location,
+    facility,
+    if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
+    visit_location,
     visit_type,
     consultation_type,
     consultation_type_fp,
