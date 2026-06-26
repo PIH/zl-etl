@@ -10,6 +10,8 @@ create table all_admissions_staging
    user_entered         varchar(255),
    date_entered         date,
    encounter_location   varchar(255),
+   visit_location       varchar(255),
+   facility             varchar(255),
    provider             varchar(255),
    previous_disposition_encounter_id varchar(50),
    previous_disposition_datetime datetime,
@@ -22,7 +24,7 @@ create table all_admissions_staging
 );
 
 INSERT INTO all_admissions_staging(emr_id, encounter_id, visit_id, encounter_type, start_datetime,
-   end_datetime, user_entered, date_entered, encounter_location, provider, site, partition_num)
+   end_datetime, user_entered, date_entered, encounter_location, visit_location, facility, provider, site, partition_num)
 SELECT emr_id,  
 encounter_id,
 visit_id,
@@ -32,6 +34,8 @@ lag(encounter_datetime) OVER(PARTITION BY emr_id ORDER BY encounter_datetime des
 user_entered  AS creator,
 datetime_created  AS date_entered,
 encounter_location,
+visit_location,
+facility,
 provider,
 site,
 partition_num
