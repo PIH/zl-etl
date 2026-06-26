@@ -8,8 +8,11 @@ patient_id                   INT,
 emr_id                       VARCHAR(50), 
 encounter_id                 INT,         
 encounter_datetime           DATETIME,    
-date_entered                 DATETIME,    
-user_entered                 VARCHAR(50), 
+date_entered                 DATETIME,
+user_entered                 VARCHAR(50),
+visit_id                     int(11),
+visit_location               varchar(255),
+facility                     varchar(255),
 delivery_datetime            DATETIME,    
 birth_obs_group_id           INT(11),     
 birth_number                 INT,         
@@ -141,12 +144,41 @@ inner join temp_obs o on o.obs_group_id = t.birth_obs_group_id
 	and o.value_coded = concept_from_mapping('PIH','5622')
 set  other_c_section_fetal_reason = o.comments;
 
+-- Sets visit_id from the encounter.
+update temp_mch_birth t
+inner join encounter e on e.encounter_id = t.encounter_id
+set t.visit_id = e.visit_id;
+
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+update temp_mch_birth t
+inner join encounter e on e.encounter_id = t.encounter_id
+inner join locations l on l.location_id = e.location_id
+set t.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+update temp_mch_birth t
+inner join visit v on v.visit_id = t.visit_id
+inner join locations l on l.location_id = v.location_id
+set t.visit_location = l.location_name,
+    t.facility = l.location_name;
+
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+update temp_mch_birth t
+inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+set t.facility = loc.name
+where t.facility is null;
+
 SELECT
 emr_id,
 concat(@partition,'-',encounter_id),
 date(encounter_datetime),
 date_entered,
 user_entered,
+facility,
+if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
+visit_location,
 delivery_datetime,
 birth_number,
 multiples,

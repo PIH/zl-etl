@@ -14,6 +14,9 @@ CREATE TEMPORARY TABLE temp_mch_pregnancy(
     encounter_date                  DATE,    
     date_entered                    DATETIME,
     user_entered                    VARCHAR(50),
+    visit_id                        int(11),
+    visit_location                  varchar(255),
+    facility                        varchar(255),
     gravidity                       INT,
     parity                          INT,
     num_abortions                   INT,
@@ -131,6 +134,32 @@ UPDATE temp_mch_pregnancy t SET pregnancy_10_outcome = OBS_FROM_GROUP_ID_VALUE_C
 UPDATE temp_mch_pregnancy t SET pmtct_club = OBS_VALUE_CODED_LIST(t.encounter_id, 'PIH', '13262', 'en');
 UPDATE temp_mch_pregnancy t SET  delivery_location_plan = OBS_VALUE_CODED_LIST(t.encounter_id, 'CIEL', '159758', 'en');
 
+-- Sets visit_id from the encounter.
+update temp_mch_pregnancy t
+inner join encounter e on e.encounter_id = t.encounter_id
+set t.visit_id = e.visit_id;
+
+-- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+update temp_mch_pregnancy t
+inner join encounter e on e.encounter_id = t.encounter_id
+inner join locations l on l.location_id = e.location_id
+set t.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+update temp_mch_pregnancy t
+inner join visit v on v.visit_id = t.visit_id
+inner join locations l on l.location_id = v.location_id
+set t.visit_location = l.location_name,
+    t.facility = l.location_name;
+
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+update temp_mch_pregnancy t
+inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+set t.facility = loc.name
+where t.facility is null;
+
 SELECT
 pregnancy_id,
 concat(@partition,'-',encounter_id),
@@ -139,6 +168,9 @@ emr_id,
 encounter_date,
 date_entered,
 user_entered,
+facility,
+if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
+visit_location,
 gravidity,
 parity,
 num_abortions,
