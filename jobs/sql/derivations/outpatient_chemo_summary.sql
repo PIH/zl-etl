@@ -9,6 +9,7 @@ gender varchar(3),
 encounter_datetime datetime,
 encounter_provider varchar(255),
 encounter_location varchar(255),
+facility varchar(255),
 drug_name varchar(255)
 )
 
@@ -21,6 +22,7 @@ gender,
 encounter_datetime,
 encounter_provider,
 encounter_location,
+facility,
 drug_name)
 select
 d.emr_id,
@@ -31,6 +33,7 @@ p.gender,
 d.encounter_datetime,
 d.encounter_provider,
 d.encounter_location,
+d.facility,
 d.drug_name
 from all_medication_dispensing d 
 inner join all_patients p on p.emr_id = d.emr_id
