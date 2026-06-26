@@ -14,6 +14,7 @@ CREATE TEMPORARY TABLE temp_report
     emr_id          VARCHAR(255),
     specimen_encounter_id INT,
     order_encounter_id INT,
+    visit_id             INT,
     loc_registered  VARCHAR(255),
     unknown_patient CHAR(1),
     gender          CHAR(1),
@@ -32,6 +33,8 @@ CREATE TEMPORARY TABLE temp_report
     auto_expire_date DATETIME,
     fulfiller_status VARCHAR(255),
     ordering_location VARCHAR(255),
+    visit_location       VARCHAR(255),
+    facility             VARCHAR(255),
     urgency         VARCHAR(255),
     specimen_collection_datetime DATETIME,
     collection_date_estimated VARCHAR(255),
@@ -169,6 +172,32 @@ UPDATE temp_report t SET user_entered = PROVIDER(t.order_encounter_id);
 UPDATE temp_report t SET orderer_provider_type = PROVIDER_TYPE(t.order_encounter_id);
 UPDATE temp_report t SET ordering_location = ENCOUNTER_LOCATION_NAME(t.order_encounter_id);
 
+-- Sets visit_id from the encounter associated with the order.
+update temp_report t
+inner join encounter e on e.encounter_id = t.order_encounter_id
+set t.visit_id = e.visit_id;
+
+-- Sets facility as the Visit Location ancestor of the order encounter's location (fallback for rows with no visit).
+update temp_report t
+inner join encounter e on e.encounter_id = t.order_encounter_id
+inner join locations l on l.location_id = e.location_id
+set t.facility = l.facility;
+
+-- Sets visit_location from the visit's location.
+-- Overrides facility with visit_location when a visit exists, since visits are
+-- associated directly with the Visit Location — more accurate than the ancestor walk.
+update temp_report t
+inner join visit v on v.visit_id = t.visit_id
+inner join locations l on l.location_id = v.location_id
+set t.visit_location = l.location_name,
+    t.facility = l.location_name;
+
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+update temp_report t
+inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+set t.facility = loc.name
+where t.facility is null;
+
 update temp_report t
   inner join encounter e on e.encounter_id = t.specimen_encounter_id
 set t.specimen_collection_datetime = e.encounter_datetime;
@@ -205,6 +234,9 @@ user_entered,
 orderer_provider_type,
 order_datetime,
 ordering_location,
+if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
+visit_location,
+facility,
 urgency,
 specimen_collection_datetime,
 collection_date_estimated,
