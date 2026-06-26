@@ -70,6 +70,12 @@ INNER JOIN locations l ON l.location_id = v.location_id
 SET t.visit_location = l.location_name,
     t.facility = l.location_name;
 
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+UPDATE all_mh_diagnosis t
+INNER JOIN location loc ON loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+SET t.facility = loc.name
+WHERE t.facility IS NULL;
+
 SELECT
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',patient_id),patient_id) "patient_id",

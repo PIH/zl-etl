@@ -197,6 +197,12 @@ inner join locations l on l.location_id = v.location_id
 set m.visit_location = l.location_name,
     m.facility = l.location_name;
 
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+update all_medication_dispensing m
+inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+set m.facility = loc.name
+where m.facility is null;
+
 -- user names of creator
 -- copy all distinct creators to a table, find the name and join back to main table
 drop temporary table if exists temp_user_names;

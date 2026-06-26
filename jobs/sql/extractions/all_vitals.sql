@@ -103,6 +103,12 @@ inner join locations tl on tl.location_id = v.location_id
 set tv.visit_location = tl.location_name,
     tv.facility = tl.location_name;
 
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+update temp_vitals tv
+inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+set tv.facility = loc.name
+where tv.facility is null;
+
 -- user entered
 DROP TEMPORARY TABLE IF EXISTS temp_creators;
 CREATE TEMPORARY TABLE temp_creators

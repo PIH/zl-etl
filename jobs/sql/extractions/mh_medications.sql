@@ -72,6 +72,12 @@ INNER JOIN locations l ON l.location_id = v.location_id
 SET t.visit_location = l.location_name,
     t.facility = l.location_name;
 
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+UPDATE all_mh_medications t
+INNER JOIN location loc ON loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+SET t.facility = loc.name
+WHERE t.facility IS NULL;
+
 
 UPDATE all_mh_medications SET medication_name=obs_from_group_id_value_coded_list(obs_group_id,'PIH','10634','en');
 UPDATE all_mh_medications SET dosage_unit=obs_from_group_id_value_coded_list(obs_group_id,'PIH','10744','en');

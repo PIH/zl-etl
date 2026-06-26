@@ -106,6 +106,12 @@ inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
     t.facility = ls.facility;
 
+-- Falls back to 'Unknown Location' if facility is still NULL after the location lookup.
+update temp_pathology t
+inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+set t.facility = loc.name
+where t.facility is null;
+
 update temp_pathology t
 set order_entered_datetime = encounter_date_created(t.encounter_id);
 

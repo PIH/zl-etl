@@ -69,6 +69,12 @@ INNER JOIN locations l ON l.location_id = v.location_id
 SET t.visit_location = l.location_name,
     t.facility = l.location_name;
 
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+UPDATE oncology_intake t
+INNER JOIN location loc ON loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+SET t.facility = loc.name
+WHERE t.facility IS NULL;
+
 -- Type 1
 UPDATE oncology_intake SET type_1_diabetes = answer_exists_in_encounter(encounter_id, 'PIH','10140', 'PIH', '6691');
 

@@ -141,6 +141,12 @@ inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
     t.facility = ls.location_name;
 
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+update temp_hiv_encs t
+inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+set t.facility = loc.name
+where t.facility is null;
+
 SELECT
 emr_id,
 encounter_id,

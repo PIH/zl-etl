@@ -89,6 +89,12 @@ inner join locations u on u.location_id = v.location_id
 set t.visit_location = u.location_name,
     t.facility = u.location_name;
 
+-- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
+update chemo_encounters t
+inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
+set t.facility = loc.name
+where t.facility is null;
+
 -- provider
 drop temporary table if exists temp_providers;
 create temporary table temp_providers
