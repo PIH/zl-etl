@@ -7,10 +7,9 @@ configuration:
     - type: "iterating-job"
       description: "Refreshing OpenMRS Data for all sites"
       configuration:
-        maxConcurrentJobs: 3
+        maxConcurrentJobs: 4
         iterations:
           - siteName: "mirebalais"
-          - siteName: "hiv"
           - siteName: "cange"
           - siteName: "hinche"
           - siteName: "saint_marc_hsn"
@@ -20,6 +19,7 @@ configuration:
           - siteName: "belladere"
           - siteName: "boucancarre"
           - siteName: "cercalasource"
+          - siteName: "hiv"
         jobTemplate:
           path: "refresh-${siteName}.yml"
 
