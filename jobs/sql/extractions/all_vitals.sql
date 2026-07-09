@@ -78,7 +78,7 @@ select distinct provider_id from encounter_provider ep
 inner join temp_vitals tv on ep.encounter_id = tv.encounter_id
 where ep.voided = 0;
 
-update temp_providers t set provider_name  = username(provider_id);	
+update temp_providers t set provider_name  = provider_name_from_provider_id(provider_id);
 
 CREATE INDEX temp_providers_p ON temp_providers (provider_id);
 
