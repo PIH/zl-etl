@@ -80,8 +80,6 @@ update temp_providers t set provider_name  = provider_name_from_provider_id(prov
 
 CREATE INDEX temp_providers_p ON temp_providers (provider_id);
 
-select  provider_name_from_provider_id(10058);
-
 update temp_vitals tv 
 inner join temp_providers tp on tp.provider_id = tv.encounter_provider_id
 set tv.encounter_provider = tp.provider_name;
