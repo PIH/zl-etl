@@ -80,16 +80,11 @@ update temp_providers t set provider_name  = provider_name_from_provider_id(prov
 
 CREATE INDEX temp_providers_p ON temp_providers (provider_id);
 
-select * from temp_vitals;
-select * from temp_providers;
 select  provider_name_from_provider_id(10058);
-
 
 update temp_vitals tv 
 inner join temp_providers tp on tp.provider_id = tv.encounter_provider_id
 set tv.encounter_provider = tp.provider_name;
-
-select * from temp_providers;
 
 -- Sets encounter_location from the encounter's location.
 -- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
