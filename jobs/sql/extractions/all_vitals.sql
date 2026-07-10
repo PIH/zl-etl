@@ -64,7 +64,7 @@ set tv.emr_id = ti.emr_id;
 -- provider name
 update temp_vitals tv 
 inner join encounter_provider ep on ep.encounter_id  = tv.encounter_id and ep.voided = 0
-set tv.encounter_provider_id = ep.encounter_provider_id ;
+set tv.encounter_provider_id = ep.provider_id ;
 
 DROP TEMPORARY TABLE IF EXISTS temp_providers;
 CREATE TEMPORARY TABLE temp_providers
@@ -74,9 +74,7 @@ provider_name					VARCHAR(255)
 );
 
 INSERT INTO temp_providers(provider_id)
-select distinct provider_id from encounter_provider ep
-inner join temp_vitals tv on ep.encounter_id = tv.encounter_id
-where ep.voided = 0;
+select distinct encounter_provider_id from temp_vitals ep;
 
 update temp_providers t set provider_name  = provider_name_from_provider_id(provider_id);
 
