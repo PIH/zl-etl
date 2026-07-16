@@ -9,7 +9,6 @@ configuration:
     - "openmrs-${siteName}.yml"
   jobs:
     - path: "create-source-views-and-functions.yml"
-    #- path: "setup-for-incremental-updates.yml"
     - type: "iterating-job"
       description: "Importing data for hiv using partition ${partitionNum}"
       configuration:
