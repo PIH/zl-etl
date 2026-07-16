@@ -4,7 +4,6 @@ parameters:
   siteName: "mirebalais"
   partitionNum: "1"
   conditional: ""
-  incrementalEnabled: "false"
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
@@ -16,4 +15,3 @@ configuration:
           path: "import-to-table-partition.yml"
         iterations:
           - tableName: "all_encounters"
-            incrementalEnabled: "true"

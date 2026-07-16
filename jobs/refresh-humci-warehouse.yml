@@ -11,7 +11,6 @@ parameters:
   siteName: "humci"
   partitionNum: "1"
   conditional: ""
-  incrementalEnabled: "false"
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
@@ -29,7 +28,6 @@ configuration:
           - tableName: "all_procedures"
           - tableName: "all_vitals"
           - tableName: "all_encounters"
-          #   incrementalEnabled: "true"
           - tableName: "all_visits"
           - tableName: "all_patients"
           - tableName: "eid_patient"

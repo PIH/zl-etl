@@ -29,8 +29,6 @@ create temporary table temp_encounter
     index_desc 			int
 );
 
-
--- If there is a previous watermark, initialize with only those encounters since that watermark
 insert into temp_encounter (encounter_id, encounter_datetime, encounter_type, location_id, patient_id, visit_id, creator, date_created, voided  )
 select encounter_id, encounter_datetime, 
 encounter_type, location_id, patient_id, visit_id, creator, date_created, voided

@@ -9,7 +9,6 @@ parameters:
   siteName: "zlci"
   partitionNum: "1"
   conditional: ""
-  incrementalEnabled: "false"
 configuration:
   jobs:
     - path: "create-source-views-and-functions.yml"
