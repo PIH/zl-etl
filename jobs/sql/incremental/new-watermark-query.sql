@@ -1,1 +1,0 @@
-select max(last_updated) from patient_last_update_date where partition_num = ${partitionNum}

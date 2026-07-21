@@ -6,13 +6,11 @@ type: "job-pipeline"
 description: "Refreshing data for ${siteName} using partition ${partitionNum}"
 parameters:
   conditional: ""
-  incrementalEnabled: "false"
 configuration:
   datasources:
     - "openmrs-${siteName}.yml"
   jobs:
     - path: "create-source-views-and-functions.yml"
-    - path: "setup-for-incremental-updates.yml"
     - type: "iterating-job"
       description: "Importing from ${siteName} using partition ${partitionNum}"
       configuration:
@@ -26,7 +24,6 @@ configuration:
           - tableName: "all_procedures"
           - tableName: "all_vitals"
           - tableName: "all_encounters"
-          #   incrementalEnabled: "true"
           - tableName: "all_visits"
           - tableName: "all_patients"
           - tableName: "covid_admission"
