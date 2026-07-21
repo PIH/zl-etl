@@ -144,12 +144,6 @@ INNER JOIN locations l ON l.location_id = v.location_id
 SET tc.visit_location = l.location_name,
     tc.facility = l.location_name;
 
--- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
-UPDATE temp_final_covid_lab_encounters tc
-INNER JOIN location loc ON loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
-SET tc.facility = loc.name
-WHERE tc.facility IS NULL;
-
 ### lab set(specimen set) -- parent obs
 DROP TEMPORARY TABLE IF EXISTS temp_covid_lab_specimen_set;
 CREATE TEMPORARY TABLE temp_covid_lab_specimen_set (

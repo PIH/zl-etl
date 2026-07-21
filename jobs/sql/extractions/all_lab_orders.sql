@@ -192,12 +192,6 @@ inner join locations l on l.location_id = v.location_id
 set t.visit_location = l.location_name,
     t.facility = l.location_name;
 
--- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
-update temp_report t
-inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
-set t.facility = loc.name
-where t.facility is null;
-
 update temp_report t
   inner join encounter e on e.encounter_id = t.specimen_encounter_id
 set t.specimen_collection_datetime = e.encounter_datetime;

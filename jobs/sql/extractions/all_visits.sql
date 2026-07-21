@@ -58,10 +58,9 @@ update temp_visits tv
 inner join locations tl on tl.location_id = tv.location_id
 set tv.visit_location = tl.location_name;
 
--- Sets facility to visit_location; falls back to 'Unknown Location' if visit_location is null.
+-- Sets facility to visit_location.
 update temp_visits tv
-inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
-set tv.facility = coalesce(tv.visit_location, loc.name);
+set tv.facility = tv.visit_location;
 
 -- user entered
 DROP TEMPORARY TABLE IF EXISTS temp_users;

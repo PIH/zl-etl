@@ -154,12 +154,6 @@ inner join locations l on l.location_id = v.location_id
 set t.visit_location = l.location_name,
     t.facility = l.location_name;
 
--- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
-update temp_mch_pregnancy t
-inner join location loc on loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
-set t.facility = loc.name
-where t.facility is null;
-
 SELECT
 pregnancy_id,
 concat(@partition,'-',encounter_id),

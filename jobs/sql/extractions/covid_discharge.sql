@@ -100,12 +100,6 @@ INNER JOIN locations l ON l.location_id = v.location_id
 SET tc.visit_location = l.location_name,
     tc.facility = l.location_name;
 
--- Falls back to 'Unknown Location' if facility is still NULL after both location lookups.
-UPDATE temp_covid_discharge tc
-INNER JOIN location loc ON loc.uuid = '8d6c993e-c2cc-11de-8d13-0010c6dffd0f'
-SET tc.facility = loc.name
-WHERE tc.facility IS NULL;
-
 ## Therapy
 -- oxygen therapy
 UPDATE temp_covid_discharge SET oxygen_therapy = OBS_VALUE_CODED_LIST(encounter_id, 'CIEL', '165864', 'en');
