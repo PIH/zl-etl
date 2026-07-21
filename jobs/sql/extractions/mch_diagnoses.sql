@@ -12,7 +12,7 @@ create temporary table temp_mch_diagnoses
     emr_id varchar(25),
 	encounter_id int,
 	encounter_location  varchar(255),
-	facility varchar(255),
+	site varchar(255),
 	location_id int(11),
 	obs_id  int,
 	obs_group_id int,
@@ -96,11 +96,11 @@ update temp_mch_diagnoses tm set location_id = (select location_id from encounte
 
 create index temp_mch_diagnoses_li on temp_mch_diagnoses(location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_mch_diagnoses t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 update temp_mch_diagnoses set entered_by = encounter_creator_name(encounter_id);
 update temp_mch_diagnoses set provider = provider(encounter_id);
 
@@ -359,20 +359,20 @@ update temp_mch_diagnoses tm set sti = if(diagnosis_concept in (
 
 create index temp_mch_diagnoses_vi on temp_mch_diagnoses(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_mch_diagnoses t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 -- final query
 select
 	   emr_id,
        encounter_id,
        encounter_location,
-       facility,
+       site,
        obs_id,
        obs_datetime,
        visit_id,

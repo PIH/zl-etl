@@ -22,7 +22,7 @@ order_drug text,
 order_formulation text,
 order_formulation_non_coded text,
 order_location varchar(255),
-facility varchar(255),
+site varchar(255),
 order_created_date date,
 order_date_activated date,
 user_entered varchar(255),
@@ -167,11 +167,11 @@ update temp_medication_orders tm set visit_id = (select visit_id from encounter 
 update temp_medication_orders tm set location_id = (select location_id from encounter e where voided = 0 and tm.encounter_id = e.encounter_id);
 create index temp_medication_orders_li on temp_medication_orders(location_id);
 -- Sets order_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_medication_orders tm
 inner join locations ls on ls.location_id = tm.location_id
 set tm.order_location = ls.location_name,
-    tm.facility = ls.facility;
+    tm.site = ls.site;
 
 update temp_medication_orders tm set user_entered = encounter_creator_name(encounter_id);
 update temp_medication_orders tm set order_formulation = drugName(drug_id);
@@ -192,13 +192,13 @@ update temp_medication_orders tm  set order_duration_units = concept_name(order_
 
 create index temp_medication_orders_vi on temp_medication_orders(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_medication_orders t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 -- final query
 select
@@ -209,7 +209,7 @@ if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),encounter_id
 visit_location,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',order_id),encounter_id) "order_id",
 order_location,
-facility,
+site,
 order_created_date,
 order_date_activated,
 user_entered,

@@ -35,7 +35,7 @@ creator                           int(11),
 user_entered                      text,
 location_id                       int(11),
 encounter_location                varchar(255),
-facility                          varchar(255),
+site                          varchar(255),
 entered_datetime                  datetime,     
 provider                          text,         
 loc_registered                    varchar(255),   
@@ -136,11 +136,11 @@ and (DATE(encounter_datetime) <=  date(@endDate) or @endDate is null);
 update temp_mh_encounters set user_entered= person_name_of_user(creator);
 create index temp_mh_encounters_li on temp_mh_encounters(location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_mh_encounters t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 
 update temp_mh_encounters set provider = provider(encounter_id);
 update temp_mh_encounters set age_at_enc = age_at_enc(patient_id, encounter_id);
@@ -698,13 +698,13 @@ set t.index_desc = tvid.index_desc;
 
 create index temp_mh_encounters_vi on temp_mh_encounters(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_mh_encounters t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 -- final output ------------------------------------
 
@@ -718,7 +718,7 @@ if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "v
 visit_location,
 user_entered,
 encounter_location,
-facility,
+site,
 entered_datetime,
 provider,
 loc_registered,

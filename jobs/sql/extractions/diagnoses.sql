@@ -23,7 +23,7 @@ CREATE TEMPORARY TABLE temp_diagnoses
  encounter_id             int(11),
  age_at_encounter         int(3),
  encounter_location       varchar(255),
- facility                 varchar(255),
+ site                 varchar(255),
  encounter_type           varchar(255),
  entered_by               varchar(1000),
  provider                 varchar(1000),
@@ -263,7 +263,7 @@ CREATE TEMPORARY TABLE temp_dx_encounter
  encounter_id        int(11),
  encounter_location_id int(11),
  encounter_location  varchar(255),
- facility            varchar(255),
+ site            varchar(255),
  encounter_type_id   int(11),
  encounter_type      varchar(255),
  age_at_encounter    int(3),
@@ -293,11 +293,11 @@ set t.entered_by_user_id = e.creator,
 
 create index temp_dx_encounter_li on temp_dx_encounter(encounter_location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_dx_encounter t
 inner join locations ls on ls.location_id = t.encounter_location_id
 set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 update temp_dx_encounter set entered_by = person_name_of_user(entered_by_user_id);
 update temp_dx_encounter set encounter_type = encounter_type_name_from_id(encounter_type_id);
 
@@ -310,7 +310,7 @@ set t.age_at_encounter = e.age_at_encounter,
 	t.date_created = e.date_created,
 	t.encounter_id = e.encounter_id,
 	t.encounter_location = e.encounter_location,
-	t.facility = e.facility,
+	t.site = e.site,
 	t.encounter_type = e.encounter_type,
 	t.entered_by = e.entered_by,
 	t.provider = e.provider,
@@ -321,13 +321,13 @@ set t.retrospective = IF(TIME_TO_SEC(date_created) - TIME_TO_SEC(obs_datetime) >
 
 create index temp_diagnoses_vi on temp_diagnoses(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_diagnoses t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 -- select final output
 select
@@ -345,7 +345,7 @@ d.locality,
 d.street_landmark,
 d.encounter_id,
 d.encounter_location,
-d.facility,
+d.site,
 d.obs_id,
 d.obs_datetime,
 d.entered_by,

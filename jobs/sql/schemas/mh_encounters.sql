@@ -9,7 +9,7 @@ CREATE TABLE mh_encounters
 	visit_location                    varchar(255),
 	user_entered                      text,         
 	encounter_location                varchar(255),
-	facility                          varchar(255),
+	site                          varchar(255),
 	entered_datetime                  datetime,     
 	provider                          text,         
 	loc_registered                    varchar(255), 

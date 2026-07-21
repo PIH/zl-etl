@@ -26,7 +26,7 @@ CREATE TEMPORARY TABLE temp_covid_lab_encounters
     user_entered        VARCHAR(50),
     visit_id            INT,
     visit_location      VARCHAR(255),
-    facility            VARCHAR(255),
+    site            VARCHAR(255),
     specimen_source     VARCHAR(255),
     concept_id			INT,
     value_coded		    INT,
@@ -69,7 +69,7 @@ CREATE TEMPORARY TABLE temp_covid_lab_results_app_encounter
     user_entered        VARCHAR(50),
     visit_id            INT,
     visit_location      VARCHAR(255),
-    facility            VARCHAR(255),
+    site            VARCHAR(255),
     specimen_source     VARCHAR(255),
     concept_id			INT,
     value_coded			INT,
@@ -129,20 +129,20 @@ UPDATE temp_final_covid_lab_encounters tc
 INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
 SET tc.visit_id = e.visit_id;
 
--- Sets facility as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
 UPDATE temp_final_covid_lab_encounters tc
 INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
 INNER JOIN locations l ON l.location_id = e.location_id
-SET tc.facility = l.facility;
+SET tc.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 UPDATE temp_final_covid_lab_encounters tc
 INNER JOIN visit v ON v.visit_id = tc.visit_id
 INNER JOIN locations l ON l.location_id = v.location_id
 SET tc.visit_location = l.location_name,
-    tc.facility = l.location_name;
+    tc.site = l.location_name;
 
 ### lab set(specimen set) -- parent obs
 DROP TEMPORARY TABLE IF EXISTS temp_covid_lab_specimen_set;
@@ -317,7 +317,7 @@ CREATE TEMPORARY TABLE temp_covid_lab_app_result
     user_entered        VARCHAR(50),
     visit_id            INT,
     visit_location      VARCHAR(255),
-    facility            VARCHAR(255),
+    site            VARCHAR(255),
     specimen_date       DATE,
     date_for_reporting  DATE,
     specimen_source     VARCHAR(255),
@@ -341,7 +341,7 @@ UPDATE temp_covid_lab_app_result tcl INNER JOIN temp_final_covid_lab_encounters 
         tcl.date_for_reporting = tfcl.encounter_date,
         tcl.visit_id = tfcl.visit_id,
         tcl.visit_location = tfcl.visit_location,
-        tcl.facility = tfcl.facility;
+        tcl.site = tfcl.site;
 
 ### Antibody lab results app
 UPDATE temp_covid_lab_app_result tcl INNER JOIN temp_final_covid_lab_encounters tfc ON tcl.encounter_id = tfc.encounter_id AND concept_id = CONCEPT_FROM_MAPPING('CIEL', '165853')
@@ -374,7 +374,7 @@ SELECT
     e.user_entered,
     e.visit_id,
     e.visit_location,
-    e.facility,
+    e.site,
     DATE(lspd.value_datetime) specimen_date,
     COALESCE(DATE(lspd.value_datetime), e.encounter_date) date_for_reporting,
     lss.specimen_source,
@@ -410,7 +410,7 @@ SELECT * FROM
     user_entered,
     IF(visit_id IS NULL, NULL, concat(@partition,'-',visit_id)) visit_id,
     visit_location,
-    facility,
+    site,
     specimen_date,
     date_for_reporting,
     specimen_source,
@@ -434,7 +434,7 @@ SELECT * FROM
     user_entered,
     IF(visit_id IS NULL, NULL, concat(@partition,'-',visit_id)) visit_id,
     visit_location,
-    facility,
+    site,
     specimen_date,
     date_for_reporting,
     specimen_source,

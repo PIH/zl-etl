@@ -21,7 +21,7 @@ CREATE TEMPORARY TABLE temp_covid_discharge
     user_entered          VARCHAR(50),
 	visit_id              INT,
 	visit_location        VARCHAR(255),
-	facility              VARCHAR(255),
+	site              VARCHAR(255),
 	location				        TEXT,
 	oxygen_therapy				      	VARCHAR(11),
 	non_inv_ventilation 	      			VARCHAR(11),
@@ -85,20 +85,20 @@ UPDATE temp_covid_discharge tc
 INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
 SET tc.visit_id = e.visit_id;
 
--- Sets facility as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
 UPDATE temp_covid_discharge tc
 INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
 INNER JOIN locations l ON l.location_id = e.location_id
-SET tc.facility = l.facility;
+SET tc.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 UPDATE temp_covid_discharge tc
 INNER JOIN visit v ON v.visit_id = tc.visit_id
 INNER JOIN locations l ON l.location_id = v.location_id
 SET tc.visit_location = l.location_name,
-    tc.facility = l.location_name;
+    tc.site = l.location_name;
 
 ## Therapy
 -- oxygen therapy
@@ -153,7 +153,7 @@ SELECT
       user_entered,
       IF(visit_id IS NULL, NULL, concat(@partition,'-',visit_id)) visit_id,
       visit_location,
-      facility,
+      site,
       location,
       oxygen_therapy,
       non_inv_ventilation,

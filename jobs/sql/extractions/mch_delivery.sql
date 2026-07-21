@@ -15,7 +15,7 @@ CREATE TEMPORARY TABLE temp_delivery
     mch_program_id                       int(11),
     encounter_datetime                   datetime,
     encounter_location                   varchar(255),
-    facility                             varchar(255),
+    site                             varchar(255),
     visit_id                             int(11),
     visit_location                       varchar(255),
     encounter_type                       varchar(255),
@@ -185,20 +185,20 @@ update temp_delivery set zlemrid = zlemr(patient_id);
 update temp_delivery set dossierid = dosid(patient_id);
 update temp_delivery set loc_registered = loc_registered(patient_id);
 update temp_delivery set encounter_location = encounter_location_name(encounter_id);
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_delivery t
 inner join encounter e on e.encounter_id = t.encounter_id
 inner join locations l on l.location_id = e.location_id
-set t.facility = l.facility;
+set t.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_delivery t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations l on l.location_id = v.location_id
 set t.visit_location = l.location_name,
-    t.facility = l.location_name;
+    t.site = l.location_name;
 
 update temp_delivery set provider = provider(encounter_id);
 
@@ -767,7 +767,7 @@ loc_registered,
 concat(@partition, '-', mch_program_id),
 encounter_datetime,
 encounter_location,
-facility,
+site,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
 visit_location,
 encounter_type,

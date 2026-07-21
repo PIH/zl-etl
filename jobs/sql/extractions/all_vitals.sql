@@ -14,7 +14,7 @@ CREATE TEMPORARY TABLE temp_vitals
     visit_location		varchar(255),
     encounter_location_id	int(11),
     encounter_location	varchar(255),
-    facility			varchar(255),
+    site			varchar(255),
     encounter_datetime	datetime,
     encounter_provider_id	int(11),
     encounter_provider 	VARCHAR(255),
@@ -85,21 +85,21 @@ inner join temp_providers tp on tp.provider_id = tv.encounter_provider_id
 set tv.encounter_provider = tp.provider_name;
 
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_vitals tv
 inner join locations tl on tl.location_id = tv.encounter_location_id
 set tv.encounter_location = tl.location_name,
-    tv.facility = tl.facility;
+    tv.site = tl.site;
 
 create index temp_vitals_vi on temp_vitals(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_vitals tv
 inner join visit v on v.visit_id = tv.visit_id
 inner join locations tl on tl.location_id = v.location_id
 set tv.visit_location = tl.location_name,
-    tv.facility = tl.location_name;
+    tv.site = tl.location_name;
 
 -- user entered
 DROP TEMPORARY TABLE IF EXISTS temp_creators;
@@ -281,7 +281,7 @@ select
 	concat(@partition,'-',visit_id),
 	visit_location,
 	encounter_location,
-	facility,
+	site,
 	encounter_datetime,
 	encounter_provider,
 	date_entered,

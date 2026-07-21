@@ -17,7 +17,7 @@ CREATE TABLE all_lab_orders
     ordering_location            TEXT,
     visit_id                     VARCHAR(50),
     visit_location               VARCHAR(255),
-    facility                     VARCHAR(255),
+    site                     VARCHAR(255),
     urgency                      VARCHAR(50),
     specimen_collection_datetime DATETIME,
     collection_date_estimated    VARCHAR(11),

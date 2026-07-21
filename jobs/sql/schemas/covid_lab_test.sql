@@ -10,7 +10,7 @@ CREATE TABLE covid_lab_test
     user_entered       VARCHAR(50),
     visit_id           VARCHAR(25),
     visit_location     VARCHAR(255),
-    facility           VARCHAR(255),
+    site           VARCHAR(255),
     specimen_date      DATE,
     date_for_reporting DATE,
     specimen_source    VARCHAR(255),

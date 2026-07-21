@@ -22,7 +22,7 @@ CREATE TEMPORARY TABLE temp_covid_visit
     user_entered                  VARCHAR(50),
 	visit_id                      INT,
 	visit_location                VARCHAR(255),
-	facility                      VARCHAR(255),
+	site                      VARCHAR(255),
 	case_condition                VARCHAR(255),
 	overall_condition             VARCHAR(255),
 	fever                         VARCHAR(11),
@@ -197,20 +197,20 @@ UPDATE temp_covid_visit tc
 INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
 SET tc.visit_id = e.visit_id;
 
--- Sets facility as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
 UPDATE temp_covid_visit tc
 INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
 INNER JOIN locations l ON l.location_id = e.location_id
-SET tc.facility = l.facility;
+SET tc.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 UPDATE temp_covid_visit tc
 INNER JOIN visit v ON v.visit_id = tc.visit_id
 INNER JOIN locations l ON l.location_id = v.location_id
 SET tc.visit_location = l.location_name,
-    tc.facility = l.location_name;
+    tc.site = l.location_name;
 
 ### COVID 19 admission
 -- case condition
@@ -1102,7 +1102,7 @@ SELECT
         user_entered,
         IF(visit_id IS NULL, NULL, concat(@partition,'-',visit_id)) visit_id,
         visit_location,
-        facility,
+        site,
         case_condition,
 	      overall_condition,
         IF(fever like "%Yes%", 1, NULL)	                fever,

@@ -1,6 +1,6 @@
 drop table if exists census_staging;
 create table census_staging (
-site varchar(255),
+server varchar(255),
 reporting_year int,
 reporting_month int,
 FirstDayOfMonth date,
@@ -12,11 +12,11 @@ total int)
 
 drop table if exists #location_mapping;
 create table #location_mapping (
-site varchar(255),
+server varchar(255),
 location varchar(255),
 clinical_category varchar(255));
 
-insert into #location_mapping (site, location, clinical_category)
+insert into #location_mapping (server, location, clinical_category)
 values
 ('belladere','Belladère','other'),
 ('cange','Sal Timoun | Cange','pediatric'),
@@ -102,8 +102,8 @@ values
 ('humci','Sal Avan Operasyon | PACU','pediatric') -- not this is not currently tagged as an admin location
 ;
 
-insert into census_staging(site, reporting_year, reporting_month, FirstDayOfMonth, LastDayOfMonth, indicator, clinical_category)
-select site, year, month, FirstDayOfMonth,LastDayOfMonth,clinical_indicator, clinical_category from
+insert into census_staging(server, reporting_year, reporting_month, FirstDayOfMonth, LastDayOfMonth, indicator, clinical_category)
+select server, year, month, FirstDayOfMonth,LastDayOfMonth,clinical_indicator, clinical_category from
 	(select distinct year, month, FirstDayOfMonth, LastDayOfMonth  from dim_date dd
 	where dd.Date <= current_timestamp and dd.Date >= dateadd(year, -1, getdate())) d
 cross join
@@ -121,7 +121,7 @@ cross join
 	select 'deaths_greater_than_48_hours' union
 	select 'days_hospitalized') i
 cross join 
-	(select distinct site from #location_mapping) s;
+	(select distinct server from #location_mapping) s;
 	
 -- create table of each admission slotted into locations/categories
 drop table if exists #admission_month_categories;
@@ -129,7 +129,7 @@ create table #admission_month_categories (
 encounter_id varchar(50),
 reporting_year int,
 reporting_month int,
-site varchar(255),
+server varchar(255),
 encounter_location varchar(255),
 clinical_category varchar(255),
 indicator varchar(255),
@@ -141,13 +141,13 @@ died_greater_48hrs int,
 total_patient_days int,
 total_days_hospitalized int);
 
-insert into #admission_month_categories(reporting_year, reporting_month, site, encounter_location, clinical_category, encounter_id,effective_start_datetime, effective_end_datetime)
-select reporting_year, reporting_month, a.site, encounter_location,c.clinical_category, a.encounter_id,
+insert into #admission_month_categories(reporting_year, reporting_month, server, encounter_location, clinical_category, encounter_id,effective_start_datetime, effective_end_datetime)
+select reporting_year, reporting_month, a.server, encounter_location,c.clinical_category, a.encounter_id,
 iif(start_datetime < FirstDayOfMonth, FirstDayOfMonth, start_datetime) "effective_start_datetime",
 iif(end_datetime > LastDayOfMonth or end_datetime is null, dateadd(day,1,iif(LastDayOfMonth < getdate(), LastDayOfMonth, getdate())), end_datetime) "effective_end_datetime"
-	from (select distinct cs.site, cs.reporting_year , cs.reporting_month, cs.FirstDayOfMonth, cs.LastDayOfMonth, cs.clinical_category from census_staging cs) c
-inner join #location_mapping l on l.clinical_category = c.clinical_category and c.site = l.site
-inner join all_admissions a on a.encounter_location = l.location and a.site = l.site
+	from (select distinct cs.server, cs.reporting_year , cs.reporting_month, cs.FirstDayOfMonth, cs.LastDayOfMonth, cs.clinical_category from census_staging cs) c
+inner join #location_mapping l on l.clinical_category = c.clinical_category and c.server = l.server
+inner join all_admissions a on a.encounter_location = l.location and a.server = l.server
 	and (cast(start_datetime as date) <= LastDayOfMonth
 	     and (cast(end_datetime as date) >=  FirstDayOfMonth or end_datetime is null))	
 ;
@@ -193,10 +193,10 @@ update c
 set c.total = i.sum_patient_days
 from census_staging c 
 inner join 
-	(select site, reporting_year, reporting_month, clinical_category, indicator, SUM(total_patient_days) "sum_patient_days"
+	(select server, reporting_year, reporting_month, clinical_category, indicator, SUM(total_patient_days) "sum_patient_days"
 	from #admission_month_categories 
-	group by site, reporting_year, reporting_month, clinical_category, indicator) i
-	on c.site = i.site 
+	group by server, reporting_year, reporting_month, clinical_category, indicator) i
+	on c.server = i.server 
 	and c.reporting_year = i.reporting_year
 	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
@@ -206,10 +206,10 @@ update c
 set c.total = i.sum_days_hospitalized
 from census_staging c 
 inner join 
-	(select site, reporting_year, reporting_month, clinical_category, indicator, SUM(total_days_hospitalized) "sum_days_hospitalized"
+	(select server, reporting_year, reporting_month, clinical_category, indicator, SUM(total_days_hospitalized) "sum_days_hospitalized"
 	from #admission_month_categories 
-	group by site, reporting_year, reporting_month, clinical_category, indicator) i
-	on c.site = i.site 
+	group by server, reporting_year, reporting_month, clinical_category, indicator) i
+	on c.server = i.server 
 	and c.reporting_year = i.reporting_year
 	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
@@ -219,10 +219,10 @@ update c
 set c.total = i.sum_hospitalizations
 from census_staging c 
 inner join 
-	(select site, reporting_year, reporting_month, clinical_category, indicator, count(*) "sum_hospitalizations"
+	(select server, reporting_year, reporting_month, clinical_category, indicator, count(*) "sum_hospitalizations"
 	from #admission_month_categories 
-	group by site, reporting_year, reporting_month, clinical_category, indicator) i
-	on c.site = i.site 
+	group by server, reporting_year, reporting_month, clinical_category, indicator) i
+	on c.server = i.server 
 	and c.reporting_year = i.reporting_year
 	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
@@ -232,10 +232,10 @@ update c
 set c.total = i.sum_discharges
 from census_staging c 
 inner join 
-	(select site, reporting_year, reporting_month, clinical_category, indicator, sum(discharged) "sum_discharges"
+	(select server, reporting_year, reporting_month, clinical_category, indicator, sum(discharged) "sum_discharges"
 	from #admission_month_categories 
-	group by site, reporting_year, reporting_month, clinical_category, indicator) i
-	on c.site = i.site 
+	group by server, reporting_year, reporting_month, clinical_category, indicator) i
+	on c.server = i.server 
 	and c.reporting_year = i.reporting_year
 	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
@@ -245,10 +245,10 @@ update c
 set c.total = i.sum_died_within_48hrs
 from census_staging c 
 inner join 
-	(select site, reporting_year, reporting_month, clinical_category, indicator, sum(died_within_48hrs) "sum_died_within_48hrs"
+	(select server, reporting_year, reporting_month, clinical_category, indicator, sum(died_within_48hrs) "sum_died_within_48hrs"
 	from #admission_month_categories 
-	group by site, reporting_year, reporting_month, clinical_category, indicator) i
-	on c.site = i.site 
+	group by server, reporting_year, reporting_month, clinical_category, indicator) i
+	on c.server = i.server 
 	and c.reporting_year = i.reporting_year
 	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category
@@ -258,10 +258,10 @@ update c
 set c.total = i.sum_died_greater_48hrs
 from census_staging c 
 inner join 
-	(select site, reporting_year, reporting_month, clinical_category, indicator, sum(died_greater_48hrs) "sum_died_greater_48hrs"
+	(select server, reporting_year, reporting_month, clinical_category, indicator, sum(died_greater_48hrs) "sum_died_greater_48hrs"
 	from #admission_month_categories 
-	group by site, reporting_year, reporting_month, clinical_category, indicator) i
-	on c.site = i.site 
+	group by server, reporting_year, reporting_month, clinical_category, indicator) i
+	on c.server = i.server 
 	and c.reporting_year = i.reporting_year
 	and c.reporting_month = i.reporting_month
 	and c.clinical_category = i.clinical_category

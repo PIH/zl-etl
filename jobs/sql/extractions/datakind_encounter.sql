@@ -14,7 +14,7 @@ SELECT
     e.encounter_datetime 'encounter_datetime',
     ENCOUNTER_TYPE_NAME(e.encounter_id) 'encounter_type',
     ENCOUNTER_LOCATION_NAME(e.encounter_id) 'encounter_location',
-    NULL 'facility',
+    NULL 'site',
     e.visit_id,
     NULL 'visit_location',
     PROVIDER(e.encounter_id) 'provider',
@@ -32,20 +32,20 @@ WHERE
 CREATE INDEX temp_datakind_enc_patientid ON temp_datakind_enc(patient_id);
 CREATE INDEX temp_datakind_enc_encounterid ON temp_datakind_enc(encounter_id);
 
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 UPDATE temp_datakind_enc t
 INNER JOIN encounter e ON e.encounter_id = t.encounter_id
 INNER JOIN locations l ON l.location_id = e.location_id
-SET t.facility = l.facility;
+SET t.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 UPDATE temp_datakind_enc t
 INNER JOIN visit v ON v.visit_id = t.visit_id
 INNER JOIN locations l ON l.location_id = v.location_id
 SET t.visit_location = l.location_name,
-    t.facility = l.location_name;
+    t.site = l.location_name;
 
 /*
 -- index asc
@@ -102,7 +102,7 @@ concat(@partition,'-',t.patient_id),
     t.encounter_datetime,
     t.encounter_type,
     t.encounter_location,
-    t.facility,
+    t.site,
     concat(@partition,'-',t.visit_id) as visit_id,
     t.visit_location,
     t.provider,

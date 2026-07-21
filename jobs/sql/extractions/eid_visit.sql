@@ -11,7 +11,7 @@ e.location_id,
 encounter_type_name_from_id(encounter_type) encounter_type,
 date(encounter_datetime) visit_date,
 cast(null as char(255)) as visit_location,
-cast(null as char(255)) as facility,
+cast(null as char(255)) as site,
 date(date_created) date_entered,
 encounter_creator_name(encounter_id) user_entered,
 DATE(obs_value_datetime(encounter_id, 'CIEL', '5096')) next_visit_date
@@ -21,20 +21,20 @@ and e.voided = 0;
 
 create index temp_eid_visit_li on temp_eid_visit(location_id);
 -- Sets visit_location from the encounter's location as a fallback when no visit is linked.
--- Sets facility as the Visit Location ancestor of the encounter location.
+-- Sets site as the Visit Location ancestor of the encounter location.
 update temp_eid_visit t
 inner join locations ls on ls.location_id = t.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 
 create index temp_eid_visit_vi on temp_eid_visit(visit_id);
--- Overrides visit_location and facility from the visit's location when a visit exists.
+-- Overrides visit_location and site from the visit's location when a visit exists.
 -- Uses the visit's location directly — more accurate than the ancestor walk.
 update temp_eid_visit t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 /*
 -- index asc
@@ -112,7 +112,7 @@ SELECT
     CAST(encounter_type AS char(50)) AS encounter_type,
     CAST(visit_date AS date) visit_date,
     CAST(visit_location AS char(100)) visit_location,
-    CAST(facility AS char(255)) facility,
+    CAST(site AS char(255)) site,
     CAST(date_entered AS date) AS date_entered,
     CAST(user_entered AS char(255)) user_entered,
     CAST(next_visit_date AS date) next_visit_date,

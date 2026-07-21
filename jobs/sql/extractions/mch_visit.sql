@@ -20,7 +20,7 @@ CREATE TEMPORARY TABLE temp_obgyn_visit
  encounter_location               VARCHAR(100),
  visit_id                         INT(11),
  visit_location                   VARCHAR(255),
- facility                         VARCHAR(255),
+ site                         VARCHAR(255),
  age_at_visit                     DOUBLE,       
  date_entered                     DATETIME,     
  user_entered                     VARCHAR(50),  
@@ -1008,20 +1008,20 @@ update temp_obgyn_visit t
 inner join encounter e on e.encounter_id = t.encounter_id
 set t.visit_id = e.visit_id;
 
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_obgyn_visit t
 inner join encounter e on e.encounter_id = t.encounter_id
 inner join locations l on l.location_id = e.location_id
-set t.facility = l.facility;
+set t.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_obgyn_visit t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations l on l.location_id = v.location_id
 set t.visit_location = l.location_name,
-    t.facility = l.location_name;
+    t.site = l.location_name;
 
 # final query
 SELECT
@@ -1030,7 +1030,7 @@ SELECT
     concat(@partition, '-', mch_program_id),
     visit_date,
     encounter_location,
-    facility,
+    site,
     if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
     visit_location,
     visit_type,

@@ -5,7 +5,7 @@ CREATE TABLE mh_medications
     emr_id                  varchar(50),
     encounter_datetime      datetime,
     encounter_location_name varchar(50),
-    facility                varchar(255),
+    site                varchar(255),
     visit_id                varchar(25),
     visit_location          varchar(255),
     encounter_creator       varchar(50),

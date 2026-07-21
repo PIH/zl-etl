@@ -5,7 +5,7 @@ CREATE TABLE mch_visit
     mch_program_id                   VARCHAR(25),
     visit_date                       DATE,
     encounter_location               VARCHAR(100),
-    facility                         VARCHAR(255),
+    site                         VARCHAR(255),
     visit_id                         VARCHAR(25),
     visit_location                   VARCHAR(255),
     visit_type                       VARCHAR(100),

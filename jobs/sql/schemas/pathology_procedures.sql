@@ -6,7 +6,7 @@ order_number 			  VARCHAR(50),
 encounter_id			  VARCHAR(50),
 coded_procedure		  VARCHAR(255),
 noncoded_procedure  VARCHAR(255),
-facility			  VARCHAR(255),
+site			  VARCHAR(255),
 visit_id			  VARCHAR(50),
 visit_location		  VARCHAR(255)
 );

@@ -25,7 +25,7 @@ CREATE TEMPORARY TABLE temp_labresults
   loc_registered                  VARCHAR(255), 
   encounter_location_id           INT(11),
   encounter_location              VARCHAR(255),
-  facility                        VARCHAR(255),
+  site                        VARCHAR(255),
   unknown_patient                 VARCHAR(50),  
   gender                          VARCHAR(50),  
   age_at_encounter                INT(11),      
@@ -137,7 +137,7 @@ CREATE TEMPORARY TABLE temp_lab_encounter
  encounter_type           VARCHAR(255),
  encounter_location_id    INT(11),
  encounter_location       VARCHAR(255),
- facility                 VARCHAR(255),
+ site                 VARCHAR(255),
  date_created             DATETIME,
  creator                  INT(11),
  user_entered             TEXT,
@@ -165,11 +165,11 @@ set encounter_type = encounter_type_name_from_id(encounter_type_id);
 
 create index temp_lab_encounter_li on temp_lab_encounter(encounter_location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_lab_encounter t
 inner join locations ls on ls.location_id = t.encounter_location_id
 set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 
 update temp_lab_encounter t
 set user_entered = person_name_of_user(creator);
@@ -182,7 +182,7 @@ inner join temp_lab_encounter e on e.encounter_id = t.encounter_id
 set t.encounter_location_id = e.encounter_location_id,
 	t.encounter_type = e.encounter_type,
 	t.encounter_location =  e.encounter_location,
-	t.facility = e.facility,
+	t.site = e.site,
 	t.specimen_collection_date = e.specimen_collection_date,
 	t.specimen_collection_entry_date =  e.date_created,
 	t.age_at_encounter = e.age_at_encounter,
@@ -248,13 +248,13 @@ set results_date = o.value_datetime,
 
 create index temp_labresults_vi on temp_labresults(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_labresults t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 -- select final output
 SELECT
@@ -266,7 +266,7 @@ SELECT
     if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',t.encounter_id),t.encounter_id) "encounter_id",
     t.encounter_type,
     t.encounter_location,
-    t.facility,
+    t.site,
     t.loc_registered,
     t.unknown_patient,
     t.gender,

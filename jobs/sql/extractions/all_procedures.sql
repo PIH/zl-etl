@@ -16,7 +16,7 @@ concept_id int,
 value_coded int,
 encounter_datetime datetime,
 encounter_location varchar(150),
-facility varchar(255),
+site varchar(255),
 encounter_type  varchar(150),
 obs_datetime  datetime,
 entered_by varchar(150),
@@ -81,11 +81,11 @@ set tp.visit_id =  e.visit_id,
 
 create index temp_procedure_li on temp_procedure(location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_procedure tp
 inner join locations ls on ls.location_id = tp.location_id
 set tp.encounter_location = ls.location_name,
-    tp.facility = ls.facility;
+    tp.site = ls.site;
 
 update temp_procedure tp set procedures = 
 if(concept_id in (@procedure1, @procedure2), concept_name(tp.value_coded, 'en'), 
@@ -246,13 +246,13 @@ IF(TIMESTAMPDIFF(MINUTE, encounter_datetime, date_created) > 30, @yes, @non);
 
 create index temp_procedure_vi on temp_procedure(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_procedure t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 select
 zlemr(patient_id) emr_id,
@@ -264,7 +264,7 @@ creator,
 encounter_datetime,
 obs_datetime,
 encounter_location,
-facility,
+site,
 encounter_type,
 entered_by,
 provider,

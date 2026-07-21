@@ -12,7 +12,7 @@ CREATE TEMPORARY TABLE all_mh_diagnosis
     encounter_id            int,
     encounter_datetime      datetime,
     encounter_location_name varchar(50),
-    facility                varchar(255),
+    site                varchar(255),
     visit_id                int,
     visit_location          varchar(100),
     encounter_creator       text,
@@ -55,20 +55,20 @@ value_coded_name(o.obs_id,'en') diagnosis
 FROM temp_encounter e INNER JOIN temp_obs o ON e.encounter_id=o.encounter_id
 INNER JOIN person p ON p.person_id = e.patient_id;
 
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 UPDATE all_mh_diagnosis t
 INNER JOIN encounter e ON e.encounter_id = t.encounter_id
 INNER JOIN locations l ON l.location_id = e.location_id
-SET t.facility = l.facility;
+SET t.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 UPDATE all_mh_diagnosis t
 INNER JOIN visit v ON v.visit_id = t.visit_id
 INNER JOIN locations l ON l.location_id = v.location_id
 SET t.visit_location = l.location_name,
-    t.facility = l.location_name;
+    t.site = l.location_name;
 
 SELECT
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
@@ -76,7 +76,7 @@ if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',patient_id),patient_id
 emr_id,
 encounter_datetime,
 encounter_location_name,
-facility,
+site,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
 visit_location,
 encounter_creator,

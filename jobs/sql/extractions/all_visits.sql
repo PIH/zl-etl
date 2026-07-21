@@ -17,7 +17,7 @@ visit_checkin		bit,
 visit_reason		varchar(255),
 location_id			int(11),
 visit_location		varchar(255),
-facility			varchar(255),
+site			varchar(255),
 first_visit_this_year boolean,
 index_asc			int,
 index_desc			int);
@@ -58,9 +58,9 @@ update temp_visits tv
 inner join locations tl on tl.location_id = tv.location_id
 set tv.visit_location = tl.location_name;
 
--- Sets facility to visit_location.
+-- Sets site to visit_location.
 update temp_visits tv
-set tv.facility = tv.visit_location;
+set tv.site = tv.visit_location;
 
 -- user entered
 DROP TEMPORARY TABLE IF EXISTS temp_users;
@@ -108,7 +108,7 @@ visit_type,
 if(checkin_encounter_id is null, null, 1) as visit_checkin,
 visit_reason,
 visit_location,
-facility,
+site,
 first_visit_this_year,
 index_asc,
 index_desc

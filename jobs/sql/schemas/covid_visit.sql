@@ -9,7 +9,7 @@ CREATE TABLE covid_visit
     user_entered             VARCHAR(50),
     visit_id                 VARCHAR(25),
     visit_location           VARCHAR(255),
-    facility                 VARCHAR(255),
+    site                 VARCHAR(255),
     case_condition           VARCHAR(255),
     overall_condition        VARCHAR(255),
     fever                    VARCHAR(11),

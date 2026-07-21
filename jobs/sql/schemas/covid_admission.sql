@@ -7,7 +7,7 @@ CREATE TABLE covid_admission
     user_entered                 VARCHAR(50),
     visit_id                     VARCHAR(25),
     visit_location               VARCHAR(255),
-    facility                     VARCHAR(255),
+    site                     VARCHAR(255),
     health_care_worker           VARCHAR(11),
     health_care_worker_type      VARCHAR(255),
     home_medications             TEXT,

@@ -5,7 +5,7 @@ create table outpatient_encounters
    visit_id             varchar(255),
    visit_location       varchar(255),
    encounter_location   varchar(255),
-   facility             varchar(255),
+   site             varchar(255),
    encounter_datetime   datetime,
    date_created         datetime,
    encounter_type       varchar(255),

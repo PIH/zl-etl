@@ -48,5 +48,5 @@ create or replace view locations as
 select
     location_id,
     name as location_name,
-    location_tag_ancestor(location_id, 'Visit Location') as facility
+    location_tag_ancestor(location_id, 'Visit Location') as site
 from location#

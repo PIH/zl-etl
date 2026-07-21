@@ -4,7 +4,7 @@ CREATE TABLE covid_disposition
     encounter_id        VARCHAR(25),
     encounter_type      VARCHAR(255),
     location            TEXT,
-    facility            VARCHAR(255),
+    site            VARCHAR(255),
     visit_id            VARCHAR(25),
     visit_location      VARCHAR(255),
     encounter_date      DATE,

@@ -13,7 +13,7 @@ encounter_id        int,
 encounter_datetime  datetime,
 location_id         int(11),
 encounter_location  varchar(100),
-facility            varchar(255),
+site            varchar(255),
 visit_id            int,
 visit_location      varchar(100),
 datetime_entered    datetime,         
@@ -179,23 +179,23 @@ where md.status = @complete_status;
 update all_medication_dispensing m
 set encounter_location = location_name(location_id);
 
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update all_medication_dispensing m
 inner join locations l on l.location_id = m.location_id
-set m.facility = l.facility;
+set m.site = l.site;
 
 update all_medication_dispensing m
 inner join encounter e on e.encounter_id = m.encounter_id
 set m.visit_id = e.visit_id;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update all_medication_dispensing m
 inner join visit v on v.visit_id = m.visit_id
 inner join locations l on l.location_id = v.location_id
 set m.visit_location = l.location_name,
-    m.facility = l.location_name;
+    m.site = l.location_name;
 
 -- user names of creator
 -- copy all distinct creators to a table, find the name and join back to main table
@@ -289,7 +289,7 @@ emr_id,
 CONCAT(@partition,'-',encounter_id) "encounter_id",
 encounter_datetime,
 encounter_location,
-facility,
+site,
 CONCAT(@partition,'-',visit_id) "visit_id",
 visit_location,
 datetime_entered,

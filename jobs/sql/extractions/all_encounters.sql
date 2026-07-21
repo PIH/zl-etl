@@ -14,7 +14,7 @@ create temporary table temp_all_encounters
     user_entered         varchar(255),
     location_id          int(11),
     encounter_location   varchar(255),
-    facility             varchar(255),
+    site             varchar(255),
     encounter_type_id    int(11),
     encounter_type_name  varchar(50),
     entered_datetime     datetime,
@@ -72,21 +72,21 @@ set t.encounter_type_name = et.encounter_type_name;
 
 create index temp_all_encounters_li on temp_all_encounters(location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_all_encounters t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 create index temp_all_encounters_vi on temp_all_encounters(visit_id);
 update temp_all_encounters t
 inner join visit v on t.visit_id = v.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 -- update user entered
 drop temporary table if exists user_names;
@@ -173,7 +173,7 @@ select emr_id,
        visit_location,
        encounter_type_name,
        encounter_location,
-       facility,
+       site,
        encounter_datetime,
        entered_datetime,
        user_entered,

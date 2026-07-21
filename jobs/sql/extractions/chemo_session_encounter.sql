@@ -15,7 +15,7 @@ date_created               datetime,
 provider_name              varchar(255),
 location_id                int(11),
 encounter_location         varchar(255),
-facility                   varchar(255),
+site                   varchar(255),
 cycle_number               double,       
 planned_chemo_sessions     double,       
 treatment_plan             varchar(255), 
@@ -73,21 +73,21 @@ inner join temp_users u on u.user_id = t.creator
 set user_entered = u.user_name;
 
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update chemo_encounters t
 inner join locations u on u.location_id = t.location_id
 set t.encounter_location = u.location_name,
-    t.facility = u.facility;
+    t.site = u.site;
 
 create index chemo_encounters_vi on chemo_encounters(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update chemo_encounters t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations u on u.location_id = v.location_id
 set t.visit_location = u.location_name,
-    t.facility = u.location_name;
+    t.site = u.location_name;
 
 -- provider
 drop temporary table if exists temp_providers;
@@ -146,7 +146,7 @@ e.provider_name,
 e.user_entered,
 e.date_created,
 e.encounter_location,
-e.facility,
+e.site,
 e.cycle_number,
 e.planned_chemo_sessions,
 e.treatment_plan,

@@ -21,7 +21,7 @@ configuration:
     table: "${tableName}"
     schema: "sql/schemas/${tableName}.sql"
     extraColumns:
-      - name: "site"
+      - name: "server"
         type: "VARCHAR(100)"
         value: "'${siteName}'"
       - name: "partition_num"

@@ -16,7 +16,7 @@ CREATE TEMPORARY TABLE temp_soc
  location_id                           int(11),
  visit_location                        varchar(255),
  encounter_location                    varchar(255),
- facility                              varchar(255),
+ site                              varchar(255),
  encounter_datetime                    datetime,     
  encounter_provider                    VARCHAR(255), 
  date_entered                          datetime,     
@@ -112,11 +112,11 @@ set encounter_provider = provider(encounter_id);
 
 create index temp_soc_li on temp_soc(location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_soc t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 
 update  temp_soc tv
 set user_entered = encounter_creator_name(encounter_id);
@@ -300,13 +300,13 @@ set household_no_assets = obs_value_coded_list(encounter_id, 'CIEL', '165500', @
 
 create index temp_soc_vi on temp_soc(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_soc t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 select
 	emr_id,
@@ -314,7 +314,7 @@ select
 	if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
 	visit_location,
 	encounter_location,
-	facility,
+	site,
 	encounter_datetime,
 	encounter_provider,
 	date_entered,

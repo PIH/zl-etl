@@ -9,7 +9,7 @@ CREATE TABLE covid_diagnoses
     user_entered           VARCHAR(50),
     visit_id               VARCHAR(25),
     visit_location         VARCHAR(255),
-    facility               VARCHAR(255),
+    site               VARCHAR(255),
     diagnosis_order        TEXT,
     diagnosis              TEXT,
     diagnosis_confirmation TEXT,

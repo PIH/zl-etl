@@ -21,7 +21,7 @@ CREATE TEMPORARY TABLE temp_covid_encounters
     	user_entered          VARCHAR(50),
 	visit_id              INT,
 	visit_location        VARCHAR(255),
-	facility              VARCHAR(255),
+	site              VARCHAR(255),
 	covid19_diagnosis     VARCHAR(255)
 );
 
@@ -72,20 +72,20 @@ UPDATE temp_covid_encounters tc
 INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
 SET tc.visit_id = e.visit_id;
 
--- Sets facility as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter's location (fallback for rows with no visit).
 UPDATE temp_covid_encounters tc
 INNER JOIN encounter e ON e.encounter_id = tc.encounter_id
 INNER JOIN locations l ON l.location_id = e.location_id
-SET tc.facility = l.facility;
+SET tc.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 UPDATE temp_covid_encounters tc
 INNER JOIN visit v ON v.visit_id = tc.visit_id
 INNER JOIN locations l ON l.location_id = v.location_id
 SET tc.visit_location = l.location_name,
-    tc.facility = l.location_name;
+    tc.site = l.location_name;
 
 -- COVID 19
 UPDATE temp_covid_encounters SET covid19_diagnosis = OBS_VALUE_CODED_LIST(encounter_id, 'CIEL', '165793', 'en');
@@ -244,7 +244,7 @@ SELECT
   ce.user_entered,
   IF(ce.visit_id IS NULL, NULL, concat(@partition,'-',ce.visit_id)) visit_id,
   ce.visit_location,
-  ce.facility,
+  ce.site,
   dor.diagnosis_order,
   d.diagnosis,
   dc.diagnosis_confirmation,

@@ -21,7 +21,7 @@ order_number 				VARCHAR(50),
 encounter_id				INT(11),
 location_id				INT(11),
 encounter_location			VARCHAR(255),
-facility				VARCHAR(255),
+site				VARCHAR(255),
 order_datetime				DATETIME,
 order_entered_datetime		DATETIME,
 order_user_entered			VARCHAR(100),
@@ -100,11 +100,11 @@ set t.location_id = e.location_id;
 
 create index temp_pathology_li on temp_pathology(location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_pathology t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 
 update temp_pathology t
 set order_entered_datetime = encounter_date_created(t.encounter_id);
@@ -303,7 +303,7 @@ if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',order_id),order_id) "o
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',order_number),order_number) "order_number",
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',encounter_id),encounter_id) "encounter_id",
 encounter_location,
-facility,
+site,
 order_datetime,
 order_entered_datetime,
 order_user_entered,

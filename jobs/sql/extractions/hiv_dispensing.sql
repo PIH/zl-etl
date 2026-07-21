@@ -13,7 +13,7 @@ encounter_location_id  int(11),
 date_entered DATETIME,
 user_entered VARCHAR(50),
 dispense_site  varchar(255),
-facility varchar(255),
+site varchar(255),
 age_at_dispense_date int,
 dispense_date_ascending int,
 dispense_date_descending int,
@@ -76,11 +76,11 @@ create index temp_obs_ci2 on temp_obs(obs_group_id, concept_id);
 
 create index temp_HIV_dispensing_li on temp_HIV_dispensing(encounter_location_id);
 -- Sets dispense_site from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_HIV_dispensing t
 inner join locations ls on ls.location_id = t.encounter_location_id
 set t.dispense_site = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 
 update temp_HIV_dispensing t
 inner join person p on p.person_id = t.patient_id
@@ -358,13 +358,13 @@ where t.dispense_date_descending = 1;
 
 create index temp_HIV_dispensing_vi on temp_HIV_dispensing(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_HIV_dispensing t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 # final query
 Select
@@ -374,7 +374,7 @@ concat(@partition,'-',t.visit_id),
 t.visit_location,
 t.dispense_date,
 t.dispense_site,
-t.facility,
+t.site,
 t.date_entered,
 t.user_entered,
 t.age_at_dispense_date,

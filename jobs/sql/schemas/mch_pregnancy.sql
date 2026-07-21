@@ -7,7 +7,7 @@ CREATE TABLE mch_pregnancy
     encounter_date             DATE,
     date_entered               DATETIME,
     user_entered               VARCHAR(50),
-    facility                   VARCHAR(255),
+    site                   VARCHAR(255),
     visit_id                   VARCHAR(25),
     visit_location             VARCHAR(255),
     gravidity                  INT,

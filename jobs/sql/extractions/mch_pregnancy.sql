@@ -16,7 +16,7 @@ CREATE TEMPORARY TABLE temp_mch_pregnancy(
     user_entered                    VARCHAR(50),
     visit_id                        int(11),
     visit_location                  varchar(255),
-    facility                        varchar(255),
+    site                        varchar(255),
     gravidity                       INT,
     parity                          INT,
     num_abortions                   INT,
@@ -139,20 +139,20 @@ update temp_mch_pregnancy t
 inner join encounter e on e.encounter_id = t.encounter_id
 set t.visit_id = e.visit_id;
 
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_mch_pregnancy t
 inner join encounter e on e.encounter_id = t.encounter_id
 inner join locations l on l.location_id = e.location_id
-set t.facility = l.facility;
+set t.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_mch_pregnancy t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations l on l.location_id = v.location_id
 set t.visit_location = l.location_name,
-    t.facility = l.location_name;
+    t.site = l.location_name;
 
 SELECT
 pregnancy_id,
@@ -162,7 +162,7 @@ emr_id,
 encounter_date,
 date_entered,
 user_entered,
-facility,
+site,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
 visit_location,
 gravidity,

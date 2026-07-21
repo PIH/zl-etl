@@ -6,7 +6,7 @@ create table vaccinations_anc
     encounter_id       VARCHAR(25),
     encounter_datetime DATETIME,
     encounter_location VARCHAR(50),
-    facility           VARCHAR(255),
+    site           VARCHAR(255),
     visit_id           VARCHAR(25),
     visit_location     VARCHAR(255),
     encounter_type     VARCHAR(50),

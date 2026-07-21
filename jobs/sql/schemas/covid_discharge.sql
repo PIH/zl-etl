@@ -8,7 +8,7 @@ CREATE TABLE covid_discharge
     user_entered                VARCHAR(50),
     visit_id                    VARCHAR(25),
     visit_location              VARCHAR(255),
-    facility                    VARCHAR(255),
+    site                    VARCHAR(255),
     location                    TEXT,
     oxygen_therapy              VARCHAR(255),
     non_inv_ventilation         VARCHAR(255),

@@ -34,7 +34,7 @@ CREATE TEMPORARY TABLE temp_report
     fulfiller_status VARCHAR(255),
     ordering_location VARCHAR(255),
     visit_location       VARCHAR(255),
-    facility             VARCHAR(255),
+    site             VARCHAR(255),
     urgency         VARCHAR(255),
     specimen_collection_datetime DATETIME,
     collection_date_estimated VARCHAR(255),
@@ -177,20 +177,20 @@ update temp_report t
 inner join encounter e on e.encounter_id = t.order_encounter_id
 set t.visit_id = e.visit_id;
 
--- Sets facility as the Visit Location ancestor of the order encounter's location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the order encounter's location (fallback for rows with no visit).
 update temp_report t
 inner join encounter e on e.encounter_id = t.order_encounter_id
 inner join locations l on l.location_id = e.location_id
-set t.facility = l.facility;
+set t.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_report t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations l on l.location_id = v.location_id
 set t.visit_location = l.location_name,
-    t.facility = l.location_name;
+    t.site = l.location_name;
 
 update temp_report t
   inner join encounter e on e.encounter_id = t.specimen_encounter_id
@@ -230,7 +230,7 @@ order_datetime,
 ordering_location,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
 visit_location,
-facility,
+site,
 urgency,
 specimen_collection_datetime,
 collection_date_estimated,

@@ -40,7 +40,7 @@ last_breastfeeding_date              DATETIME,
 next_visit_date                      DATE,         
 encounter_location_id                INT(11),
 visit_location                       VARCHAR(255),
-facility                             VARCHAR(255),
+site                             VARCHAR(255),
 inh_line                             VARCHAR(50),  
 inh_start_date                       DATE,         
 inh_end_date                         DATE,     
@@ -117,11 +117,11 @@ set thv.emr_id = ti.emr_id,
 
 create index temp_hiv_visit_li on temp_hiv_visit(encounter_location_id);
 -- Sets visit_location from the encounter's location as a fallback when no visit is linked.
--- Sets facility as the Visit Location ancestor of the encounter location.
+-- Sets site as the Visit Location ancestor of the encounter location.
 update temp_hiv_visit t
 inner join locations ls on ls.location_id = t.encounter_location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 update temp_hiv_visit t set user_entered = username(creator);   
 
 
@@ -472,13 +472,13 @@ update temp_hiv_visit t
 set hiv_program_id = patient_program_id_from_encounter(patient_id, @hiv_program, encounter_id);
 
 create index temp_hiv_visit_vi on temp_hiv_visit(visit_id);
--- Overrides visit_location and facility from the visit's location when a visit exists.
+-- Overrides visit_location and site from the visit's location when a visit exists.
 -- Uses the visit's location directly — more accurate than the ancestor walk.
 update temp_hiv_visit t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 SELECT
 	concat(@partition, '-', encounter_id),
@@ -512,7 +512,7 @@ SELECT
 	DATE(visit_date),
 	next_visit_date,
 	visit_location,
-	facility,
+	site,
 	sexually_active_with_men,
 	sexually_active_with_women,
 	intravenous_drug_use,

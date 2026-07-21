@@ -27,7 +27,7 @@ create temporary table adt_encounters
     datetime_created     datetime,
     location_id          int(11),
     encounter_location   varchar(255),
-    facility             varchar(255),
+    site             varchar(255),
     provider 			 varchar(255),
     encounter_type 		 int,
     encounter_type_name  varchar(50),
@@ -51,11 +51,11 @@ SET creator = encounter_creator_name(encounter_id);
 
 create index adt_encounters_li on adt_encounters(location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update adt_encounters t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 
 UPDATE adt_encounters
 SET provider = provider(encounter_id);
@@ -66,13 +66,13 @@ SET emr_id = patient_identifier(patient_id, @emr_identifier_type);
 
 create index adt_encounters_vi on adt_encounters(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update adt_encounters t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 SELECT
 emr_id,
@@ -84,7 +84,7 @@ creator AS user_entered,
 datetime_created,
 encounter_type_name AS encounter_type,
 encounter_location,
-facility,
+site,
 provider,
 index_asc,
 index_desc

@@ -11,7 +11,7 @@ encounter_id                       int,
 visit_id                           int,
 location_id                        int,
 encounter_location                 varchar(255),
-facility                           varchar(255),
+site                           varchar(255),
 visit_location                     varchar(255),
 encounter_datetime                 datetime,     
 datetime_created                   datetime,     
@@ -125,28 +125,28 @@ SET action_reinforce_adherence = value_coded_as_boolean(obs_id_from_temp(encount
 
 create index temp_hiv_encs_li on temp_hiv_encs(location_id);
 -- Sets encounter_location from the encounter's location.
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 update temp_hiv_encs t
 inner join locations ls on ls.location_id = t.location_id
 set t.encounter_location = ls.location_name,
-    t.facility = ls.facility;
+    t.site = ls.site;
 
 create index temp_hiv_encs_vi on temp_hiv_encs(visit_id);
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 update temp_hiv_encs t
 inner join visit v on v.visit_id = t.visit_id
 inner join locations ls on ls.location_id = v.location_id
 set t.visit_location = ls.location_name,
-    t.facility = ls.location_name;
+    t.site = ls.location_name;
 
 SELECT
 emr_id,
 encounter_id,
 visit_id,
 encounter_location,
-facility,
+site,
 visit_location,
 encounter_datetime,
 datetime_created,

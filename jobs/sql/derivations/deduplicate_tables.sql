@@ -32,7 +32,7 @@ ncd_status                varchar(50),
 ncd_status_date           date,         
 deceased                  bit,          
 date_of_death             date,         
-site                      varchar(100), 
+server                      varchar(100), 
 partition_num             int           
 );
 
@@ -86,7 +86,7 @@ t.ncd_status = n.ncd_status,
 t.ncd_status_date = n.ncd_status_date,
 t.deceased = n.deceased,
 t.date_of_death = n.date_of_death,
-t.site = n.site,
+t.server = n.server,
 t.partition_num = n.partition_num
 from ncd_patient_table t
 inner join ncd_patient_table_staging n on n.emr_id = t.emr_id and n.ncd_latest_encounter_date  = t.ncd_latest_encounter_date 
@@ -108,7 +108,7 @@ hf_congestive     BIT,
 hf_rheumatic      BIT,          
 last_visit_date   DATE,         
 deceased          BIT,          
-site              varchar(100), 
+server              varchar(100), 
 partition_num     int           
 );
 
@@ -138,17 +138,17 @@ t.birthdate = nhfp.birthdate,
 t.hf_diagnosis_date = nhfp.hf_diagnosis_date,
 t.last_visit_date = nhfp.last_visit_date,
 t.deceased = nhfp.deceased,
-t.site = nhfp.site,
+t.server = nhfp.server,
 t.partition_num = nhfp.partition_num
 from ncd_heart_failure_patient t
 inner join ncd_patient_table npt on npt.emr_id = t.emr_id
-inner join ncd_heart_failure_patient_staging nhfp on nhfp.emr_id = npt.emr_id and nhfp.site = npt.site
+inner join ncd_heart_failure_patient_staging nhfp on nhfp.emr_id = npt.emr_id and nhfp.server = npt.server
 ;
 
 
 -- -------------- deduplicate mch_patient_table -------------------
 -- since the mch_patient table is simply a row per patient with the most recent information
--- if there is a record for the same patient at a different site, it should just remove the older one
+-- if there is a record for the same patient at a different server, it should just remove the older one
 delete mch_patient 
 where exists
 (select 1 from mch_patient m2

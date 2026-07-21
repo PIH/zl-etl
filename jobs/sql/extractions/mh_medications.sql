@@ -12,7 +12,7 @@ encounter_id int,
 obs_group_id int,
 encounter_datetime datetime,
 encounter_location_name varchar(50),
-facility varchar(255),
+site varchar(255),
 visit_id int,
 visit_location varchar(50),
 encounter_creator varchar(50),
@@ -57,20 +57,20 @@ provider(e.encounter_id) provider
 FROM temp_encounter e INNER JOIN temp_obs o ON e.encounter_id=o.encounter_id
 AND concept_id=concept_from_mapping('PIH','10742');
 
--- Sets facility as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
+-- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
 UPDATE all_mh_medications t
 INNER JOIN encounter e ON e.encounter_id = t.encounter_id
 INNER JOIN locations l ON l.location_id = e.location_id
-SET t.facility = l.facility;
+SET t.site = l.site;
 
 -- Sets visit_location from the visit's location.
--- Overrides facility with visit_location when a visit exists, since visits are
+-- Overrides site with visit_location when a visit exists, since visits are
 -- associated directly with the Visit Location — more accurate than the ancestor walk.
 UPDATE all_mh_medications t
 INNER JOIN visit v ON v.visit_id = t.visit_id
 INNER JOIN locations l ON l.location_id = v.location_id
 SET t.visit_location = l.location_name,
-    t.facility = l.location_name;
+    t.site = l.location_name;
 
 
 UPDATE all_mh_medications SET medication_name=obs_from_group_id_value_coded_list(obs_group_id,'PIH','10634','en');
@@ -84,7 +84,7 @@ if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',patient_id),patient_id
 emr_id,
 encounter_datetime,
 encounter_location_name,
-facility,
+site,
 if(@partition REGEXP '^[0-9]+$' = 1,concat(@partition,'-',visit_id),visit_id) "visit_id",
 visit_location,
 encounter_creator,
