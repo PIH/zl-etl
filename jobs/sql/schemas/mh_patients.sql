@@ -7,6 +7,7 @@ CREATE TABLE mh_patients
     dob                     date,
     gender                  varchar(50),
     health_center           varchar(255),
+    site                    varchar(255),
     town                    varchar(500),
     referral                varchar(500),
     program_enrollment_date date,

@@ -14,6 +14,7 @@ CREATE TEMPORARY TABLE all_mh_patients
     dob                     date,
     gender                  varchar(50),
     health_center           varchar(255),
+    site                    varchar(255),
     town                    varchar(500),
     referral                varchar(500),
     program_enrollment_date date,
@@ -47,13 +48,14 @@ SET emr_id = zlemr(patient_id),
     gender = gender(patient_id),
 	dob = birthdate(patient_id);
 
--- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
+-- Sets health_center (and site for backwards compatibility) from the patient's registered Health Center person attribute (stored as a location reference).
 update all_mh_patients t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
 inner join location l on l.location_id = pa.value
-set t.health_center = l.name;
+set t.health_center = l.name,
+    t.site = l.name;
 
 UPDATE all_mh_patients tgt
 SET town=(
@@ -82,6 +84,7 @@ CONCAT(@partition,'-',emr_id) as emr_id_deprecated,
 dob,
 gender,
 health_center,
+site,
 town,
 referral,
 program_enrollment_date,

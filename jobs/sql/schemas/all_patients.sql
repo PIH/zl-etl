@@ -30,6 +30,7 @@ cause_of_death            varchar(100),
 last_modified_datetime    datetime,
 patient_uuid              char(38),
 patient_url               text,
-health_center             varchar(255)
+health_center             varchar(255),
+site                      varchar(255)
 )
 ;

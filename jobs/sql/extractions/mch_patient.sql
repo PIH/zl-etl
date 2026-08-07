@@ -143,7 +143,8 @@ CREATE TEMPORARY TABLE IF NOT EXISTS temp_mch_patient
     latest_enrollment_location  VARCHAR(255),
     first_encounter_date        DATETIME,
     latest_encounter_date       DATETIME,
-    health_center               VARCHAR(255)
+    health_center               VARCHAR(255),
+    site                        VARCHAR(255)
 );
 
 INSERT INTO temp_mch_patient(patient_id, mch_emr_id, last_encounter_id, initial_enrollment_location, latest_enrollment_location, initial_encounter_type_name, encounter_type_name,
@@ -215,19 +216,21 @@ UPDATE temp_mch_patient tm SET age_cat_1 =  CASE WHEN tm.age < 10 THEN "Group 1"
 # Dossier Number
 UPDATE temp_mch_patient tm SET tm.dossier_id = dosId(tm.patient_id);
 
--- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
+-- Sets health_center (and site for backwards compatibility) from the patient's registered Health Center person attribute (stored as a location reference).
 update temp_mch_patient t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
 inner join location l on l.location_id = pa.value
-set t.health_center = l.name;
+set t.health_center = l.name,
+    t.site = l.name;
 
 ### Final query
 SELECT
     mch_emr_id                      emr_id,
     dossier_id                      dossier_id,
     health_center,
+    site,
     initial_encounter_type_name     first_encounter_type,
     encounter_type_name             last_encounter_type,
     first_encounter_date,
