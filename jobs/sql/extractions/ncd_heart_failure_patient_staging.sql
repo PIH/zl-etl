@@ -183,13 +183,14 @@ SET t.ncd_enrolled = 1;
 UPDATE temp_ncd_heart_failure t
 SET t.ncd_enrolled = 0 WHERE t.ncd_enrolled IS NULL;
 
--- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
+-- Sets health_center (and site for backwards compatibility) from the patient's registered Health Center person attribute (stored as a location reference).
 update temp_ncd_heart_failure t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
 inner join location l on l.location_id = pa.value
-set t.health_center = l.name;
+set t.health_center = l.name,
+    t.site = l.name;
 
 # final query
 SELECT
@@ -206,5 +207,6 @@ hf_congestive,
 hf_rheumatic,
 last_visit_date,
 deceased,
-health_center
+health_center,
+site
 FROM temp_ncd_heart_failure order by patient_id;

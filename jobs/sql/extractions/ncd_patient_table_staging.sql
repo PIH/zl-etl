@@ -114,13 +114,14 @@ SELECT person_id, dead , death_date FROM person p WHERE voided=0) st on  st.pers
 SET tt.deceased = dead,
 	tt.date_of_death = CAST(st.death_date AS date);
 
--- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
+-- Sets health_center (and site for backwards compatibility) from the patient's registered Health Center person attribute (stored as a location reference).
 update ncd_patient_table tt
 inner join person_attribute pa on pa.person_id = tt.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
 inner join location l on l.location_id = pa.value
-set tt.health_center = l.name;
+set tt.health_center = l.name,
+    tt.site = l.name;
 
 -- -------------------------------------------------------- program state, last status date -----------------------
 
@@ -332,7 +333,8 @@ ncd_status ,
 ncd_status_date ,
 deceased ,
 date_of_death ,
-health_center
+health_center ,
+site
 FROM ncd_patient_table
 WHERE (diabetes IS NOT NULL AND  respiratory IS NOT NULL AND htn IS NOT NULL AND epilepsy IS NOT NULL AND heart_failure IS NOT NULL 
 AND cerebrovascular_accident IS NOT NULL AND renal_failure IS NOT NULL

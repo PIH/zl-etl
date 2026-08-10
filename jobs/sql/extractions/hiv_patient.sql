@@ -184,13 +184,14 @@ UPDATE temp_patient t JOIN person_attribute m ON t.patient_id = m.person_id AND
 m.voided = 0 AND  m.person_attribute_type_id = @telephone_number
 SET telephone_number = m.value;
 
--- Sets health_center from the patient's registered Health Center person attribute (stored as a location reference).
+-- Sets health_center (and site for backwards compatibility) from the patient's registered Health Center person attribute (stored as a location reference).
 update temp_patient t
 inner join person_attribute pa on pa.person_id = t.patient_id
     and pa.voided = 0
     and pa.person_attribute_type_id = @healthCenterAttr
 inner join location l on l.location_id = pa.value
-set t.health_center = l.name;
+set t.health_center = l.name,
+    t.site = l.name;
 
 # key populations
 DROP TEMPORARY TABLE IF EXISTS temp_key_popn_encounter;
@@ -874,6 +875,7 @@ tehd.agent,
 t.mothers_first_name,
 t.telephone_number,
 t.health_center,
+t.site,
 t.address,
 t.department,
 t.commune,
