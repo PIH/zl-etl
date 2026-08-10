@@ -54,6 +54,7 @@ CREATE TEMPORARY TABLE temp_patient
     mothers_first_name          VARCHAR(50),
     telephone_number            VARCHAR(100),
     health_center               VARCHAR(255),
+    site                        VARCHAR(255),
     address                     TEXT,
     department                  VARCHAR(100),
     commune                     VARCHAR(100),
