@@ -4,6 +4,7 @@ DROP TEMPORARY TABLE IF EXISTS temp_users;
 
 CREATE TEMPORARY TABLE temp_users (
     user_id             int,
+    uuid                char(38),
     username            varchar(50),
     first_name          varchar(50),
     last_name           varchar(50),
@@ -17,8 +18,9 @@ CREATE TEMPORARY TABLE temp_users (
     mfa_status          varchar(50)
 );
 
-INSERT INTO temp_users(user_id, username, first_name, last_name, account_enabled, created_date, created_by, provider_type, email)
+INSERT INTO temp_users(user_id, uuid, username, first_name, last_name, account_enabled, created_date, created_by, provider_type, email)
 SELECT      u.user_id,
+            u.uuid,
             username(u.user_id),
             person_given_name(u.person_id),
             person_family_name(u.person_id),

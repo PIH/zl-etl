@@ -1,5 +1,6 @@
 CREATE TABLE users
 (
+    uuid                char(38),
     username            varchar(50),
     first_name          varchar(50),
     last_name           varchar(50),
