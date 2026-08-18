@@ -1,6 +1,5 @@
 CREATE TABLE users
 (
-    uuid                char(38),
     username            varchar(50),
     first_name          varchar(50),
     last_name           varchar(50),
@@ -11,6 +10,8 @@ CREATE TABLE users
     provider_type       varchar(50),
     last_login_date     datetime,
     num_logins_recorded int,
-    mfa_status          varchar(50)
+    mfa_status          varchar(50),
+    uuid                char(38),
+    provider_uuid       char(38)
 )
 ;
