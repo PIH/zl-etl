@@ -1,0 +1,7 @@
+type: "sql-execution"
+description: "Hack: force site = 'hiv' for every warehouse row where server = 'hiv'"
+configuration:
+  datasource: "warehouse.yml"
+  delimiter: ";"
+  scripts:
+    - "sql/derivations/force_site_for_hiv_server.sql"

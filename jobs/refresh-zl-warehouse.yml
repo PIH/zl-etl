@@ -23,4 +23,6 @@ configuration:
         jobTemplate:
           path: "refresh-${siteName}.yml"
 
+    - path: "force-site-for-hiv-server.yml"
+
     - path: "refresh-derived-tables.yml"
