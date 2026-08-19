@@ -7,14 +7,16 @@
 -- (see the equivalent constraint documented in sql/derivations/dim_date.sql).
 DECLARE @sql NVARCHAR(MAX) = N''
 
+-- generate an UPDATE statement for each table that has both a "site" and a "server" column
 SELECT @sql = @sql + N'
 UPDATE ' + QUOTENAME(s.name) + N'.' + QUOTENAME(t.name) + N'
 SET site = ''hiv''
-WHERE server = ''hiv'' AND (site IS NULL OR site <> ''hiv'')
+WHERE server = ''hiv''
 '
 FROM sys.tables t
 INNER JOIN sys.schemas s ON s.schema_id = t.schema_id
 WHERE EXISTS (SELECT 1 FROM sys.columns c WHERE c.object_id = t.object_id AND c.name = 'site')
   AND EXISTS (SELECT 1 FROM sys.columns c WHERE c.object_id = t.object_id AND c.name = 'server')
 
+-- execute the generated UPDATE statements
 EXEC sp_executesql @sql
