@@ -9,6 +9,7 @@ configuration:
       configuration:
         maxConcurrentJobs: 4
         iterations:
+          - siteName: "hiv"
           - siteName: "mirebalais"
           - siteName: "cange"
           - siteName: "hinche"
@@ -19,10 +20,7 @@ configuration:
           - siteName: "belladere"
           - siteName: "boucancarre"
           - siteName: "cercalasource"
-          - siteName: "hiv"
         jobTemplate:
           path: "refresh-${siteName}.yml"
-
-    - path: "force-site-for-hiv-server.yml"
 
     - path: "refresh-derived-tables.yml"

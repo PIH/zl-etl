@@ -49,6 +49,8 @@ configuration:
             conditional: "select table_exists('authentication_event_log')"
           - tableName: "summary_db_restore"
 
+    - path: "force-site-for-hiv-server.yml"
+
     # Run the refresh-derived-tables job here to ensure these exist even if the rest of the pipeline fails.
     # We can hopefully remove this if/when the pipeline overall is completing consistently.
     - path: "refresh-derived-tables.yml"
