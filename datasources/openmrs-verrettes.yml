@@ -1,0 +1,8 @@
+databaseType: "mysql"
+host: ${datasources.openmrs.verrettes.host}
+port: ${datasources.openmrs.verrettes.port}
+databaseName: ${datasources.openmrs.verrettes.databaseName}
+user: ${datasources.openmrs.verrettes.user}
+password: ${datasources.openmrs.verrettes.password}
+options: ${datasources.openmrs.verrettes.options}
+containerName: ${datasources.openmrs.verrettes.containerName}

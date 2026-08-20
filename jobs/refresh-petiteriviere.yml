@@ -1,0 +1,8 @@
+type: "iterating-job"
+description: "Refresh Petite Riviere Data"
+configuration:
+  iterations:
+    - siteName: "petiteriviere"
+      partitionNum: "13"
+  jobTemplate:
+    path: "load-common-data-from-openmrs.yml"

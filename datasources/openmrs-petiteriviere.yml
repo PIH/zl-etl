@@ -1,0 +1,8 @@
+databaseType: "mysql"
+host: ${datasources.openmrs.petiteriviere.host}
+port: ${datasources.openmrs.petiteriviere.port}
+databaseName: ${datasources.openmrs.petiteriviere.databaseName}
+user: ${datasources.openmrs.petiteriviere.user}
+password: ${datasources.openmrs.petiteriviere.password}
+options: ${datasources.openmrs.petiteriviere.options}
+containerName: ${datasources.openmrs.petiteriviere.containerName}

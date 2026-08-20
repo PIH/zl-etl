@@ -20,6 +20,8 @@ configuration:
           - siteName: "belladere"
           - siteName: "boucancarre"
           - siteName: "cercalasource"
+          - siteName: "petiteriviere"
+          - siteName: "verrettes"
         jobTemplate:
           path: "refresh-${siteName}.yml"
 
