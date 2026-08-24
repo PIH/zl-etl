@@ -14,6 +14,7 @@ CREATE TEMPORARY TABLE temp_hiv_vl
 	patient_id                      INT(11),
     order_encounter_id              INT(11),
     specimen_encounter_id           INT(11),
+    order_id                        INT(11),
     order_number                    TEXT,
     visit_id                        INT,
     location_id                     INT(11), 
@@ -44,8 +45,8 @@ PRIMARY KEY (hiv_vl_id)
 
 -- -------------------------------------------------------------------- add rows from orders
 set @VL_panel = concept_from_mapping('PIH','15124');
-INSERT INTO temp_hiv_vl (patient_id, order_encounter_id, order_number, date_activated, date_stopped, auto_expire_date, fulfiller_status, vl_type_concept_id)
-select ord.patient_id, ord.encounter_id, ord.order_number, date_activated, date_stopped, auto_expire_date, fulfiller_status, order_reason 
+INSERT INTO temp_hiv_vl (patient_id, order_encounter_id, order_id, order_number, date_activated, date_stopped, auto_expire_date, fulfiller_status, vl_type_concept_id)
+select ord.patient_id, ord.encounter_id, ord.order_id, ord.order_number, date_activated, date_stopped, auto_expire_date, fulfiller_status, order_reason 
 from orders ord
 where ord.concept_id = @VL_panel;
 
@@ -54,9 +55,8 @@ create index temp_hiv_vl_oei on temp_hiv_vl(order_encounter_id);
 update temp_hiv_vl t
 set t.vl_type = concept_name(vl_type_concept_id, @locale);
 
-set @order_num = concept_from_mapping('PIH','10781');
 update temp_hiv_vl t
-inner join obs o on o.concept_id = @order_num and o.value_text = t.order_number and o.voided = 0
+inner join obs o on o.order_id = t.order_id and o.voided = 0
 set t.specimen_encounter_id = o.encounter_id;
 
 -- -------------------------------------------------------------------- add rows from non-orders
@@ -146,9 +146,25 @@ UPDATE temp_hiv_vl t SET status =
     END 
 ;
 
-update temp_hiv_vl t SET emr_id = zlemr(patient_id);
+-- emr_id
+drop temporary table if exists temp_emrids;
+create temporary table temp_emrids
+(
+    patient_id int(11),
+    emr_id     varchar(50)
+);
 
+insert into temp_emrids(patient_id)
+select DISTINCT patient_id
+from temp_hiv_vl
+;
+create index temp_emrids_patient_id on temp_emrids (patient_id);
 
+update temp_emrids t
+set emr_id = patient_identifier(patient_id, 'ZL EMR ID');
+
+update temp_hiv_vl t
+set t.emr_id = zlemrid_from_temp(t.patient_id);
 
 ### Final query
 SELECT
