@@ -28,6 +28,9 @@ INSERT INTO temp_od_encounters(patient_id, last_encounter_date, mch_emr_id)
 SELECT patient_id,  MAX(encounter_datetime), ZLEMR(e.patient_id)
 FROM encounter e WHERE e.voided = 0 AND e.encounter_type IN (@mch_encounter, @delivery) GROUP BY e.patient_id;
 
+CREATE INDEX tode_pid ON temp_od_encounters(patient_id);
+CREATE INDEX tode_leid ON temp_od_encounters(last_encounter_id);
+
 UPDATE temp_od_encounters t JOIN encounter e ON t.patient_id = e.patient_id AND last_encounter_date = e.encounter_datetime AND e.encounter_type IN (@mch_encounter, @delivery) AND e.voided = 0
     SET t.last_encounter_id = e.encounter_id;
 
@@ -60,8 +63,14 @@ UPDATE temp_od_encounters te JOIN temp_obs o ON te.last_encounter_id = o.encount
 UPDATE temp_od_encounters tv SET tv.pregnant = IF(tv.antenatal_visit IS NULL, NULL, 1);
 
 -- first encounter
-UPDATE temp_od_encounters t SET first_encounter_date = (SELECT MIN(e.encounter_datetime) FROM encounter e WHERE t.patient_id = e.patient_id AND e.voided = 0
-                                                                                                            AND encounter_type IN (@mch_encounter, @delivery) GROUP BY e.patient_id);
+UPDATE temp_od_encounters t
+JOIN (
+    SELECT patient_id, MIN(encounter_datetime) AS min_dt
+    FROM encounter
+    WHERE voided = 0 AND encounter_type IN (@mch_encounter, @delivery)
+    GROUP BY patient_id
+) agg ON agg.patient_id = t.patient_id
+SET t.first_encounter_date = agg.min_dt;
 
 UPDATE temp_od_encounters t JOIN encounter e ON t.patient_id = e.patient_id AND first_encounter_date = e.encounter_datetime AND e.encounter_type IN (@mch_encounter, @delivery) AND e.voided = 0
     SET t.first_encounter_id = e.encounter_id;
@@ -152,6 +161,8 @@ INSERT INTO temp_mch_patient(patient_id, mch_emr_id, last_encounter_id, initial_
 SELECT patient_id, mch_emr_id, last_encounter_id, initial_enrollment_location, latest_enrollment_location, initial_encounter_type_name, encounter_type_name,
        first_encounter_date, last_encounter_date, estimated_delivery_date, antenatal_visit, pregnant
 FROM temp_final_mch;
+
+CREATE INDEX tmp_pid ON temp_mch_patient(patient_id);
 
 ## Delete test patients
 DELETE FROM temp_mch_patient WHERE
