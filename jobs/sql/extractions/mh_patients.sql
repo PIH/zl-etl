@@ -31,17 +31,23 @@ FROM encounter e
 WHERE e.encounter_type =@mh_enctype
   AND e.voided =0;
 
+CREATE INDEX te_eid ON temp_encounter(encounter_id);
+
 DROP TABLE IF EXISTS temp_obs;
 CREATE TEMPORARY TABLE temp_obs AS
 SELECT o.person_id, o.obs_id , o.obs_datetime , o.encounter_id, o.value_coded, o.concept_id, o.voided
 FROM obs o INNER JOIN temp_encounter te ON te.encounter_id=o.encounter_id
 WHERE o.voided =0;
 
+CREATE INDEX to_eci ON temp_obs(encounter_id, concept_id);
+
 INSERT INTO all_mh_patients(patient_program_id, patient_id, program_enrollment_date)
 SELECT pp.patient_program_id, pp.patient_id, pp.date_enrolled
 FROM patient_program pp 
 WHERE pp.program_id = @mh_prog_id
 AND pp.voided = 0;
+
+CREATE INDEX amp_pid ON all_mh_patients(patient_id);
 
 UPDATE all_mh_patients
 SET emr_id = zlemr(patient_id),
