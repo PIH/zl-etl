@@ -285,6 +285,8 @@ inh_line varchar(50),
 inh_start_date date, 
 inh_end_date date);
 
+CREATE INDEX temp_hiv_inh_eid ON temp_hiv_inh(encounter_id);
+
 set @isoniazid = concept_from_mapping('PIH', 'ISONIAZID');
 set @rif_inh = concept_from_mapping('PIH','20468');
 set @prevProphConstruct = concept_from_mapping('PIH', 'PREVIOUS TREATMENT PROPHYLAXIS CONSTRUCT');
