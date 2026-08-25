@@ -76,6 +76,9 @@ WHERE o.concept_id = CONCEPT_FROM_MAPPING('PIH', 'Type of HUM visit')
     GROUP BY patient_id
 );
 
+CREATE INDEX temp_mch_pregnancy_eid ON temp_mch_pregnancy(encounter_id);
+CREATE INDEX temp_mch_pregnancy_pid ON temp_mch_pregnancy(patient_id);
+
 UPDATE temp_mch_pregnancy t 
 SET mch_program_id = patient_program_id_from_encounter(patient_id, @mch_program, encounter_id);
 

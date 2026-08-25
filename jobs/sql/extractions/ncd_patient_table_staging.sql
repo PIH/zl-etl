@@ -57,6 +57,8 @@ SELECT patient_id  FROM (
 ) x
 ;
 
+CREATE INDEX ncd_patient_table_pid ON ncd_patient_table(patient_id);
+
 -- -------------------------------------------------------- birth date, gender, state, city-----------------------
 
 UPDATE ncd_patient_table tt
@@ -74,6 +76,7 @@ where e.voided = 0
 and e.encounter_type in (@ncd_init_enc, @ncd_follow_enc));
 
 create index temp_ncd_encounters_pi on temp_ncd_encounters(patient_id);
+CREATE INDEX ncd_encounters_eid ON ncd_encounters(encounter_id);
 
 update ncd_patient_table t 
 set  t.ncd_first_encounter_date =
@@ -179,6 +182,8 @@ CREATE TEMPORARY TABLE ncd_obs  AS
 		  AND o.encounter_id IN (SELECT encounter_id FROM ncd_encounters )
 			AND o.concept_id = concept_from_mapping('PIH','10529')
 			GROUP BY person_id;
+
+CREATE INDEX ncd_obs_pid ON ncd_obs(patient_id);
 
 UPDATE ncd_patient_table tt inner  JOIN (
 	SELECT patient_id,Hypertension,
