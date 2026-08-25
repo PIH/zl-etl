@@ -109,6 +109,8 @@ FROM (SELECT
             ORDER BY patient_id, dispense_date ASC, encounter_id ASC
         ) index_ascending );
 
+CREATE INDEX tdia_eid ON temp_dispensing_index_asc(encounter_id);
+
 update temp_HIV_dispensing t
 inner join temp_dispensing_index_asc tdia on tdia.encounter_id = t.encounter_id
 set dispense_date_ascending = tdia.index_asc;
@@ -132,6 +134,8 @@ FROM (SELECT
                     (SELECT @u:= 0) AS u
             ORDER BY patient_id, dispense_date DESC, encounter_id DESC
         ) index_descending );
+
+CREATE INDEX tdid_eid ON temp_dispensing_index_desc(encounter_id);
 
 update temp_HIV_dispensing t
 inner join temp_dispensing_index_desc tdid on tdid.encounter_id = t.encounter_id
