@@ -114,8 +114,7 @@ CREATE TEMPORARY TABLE temp_obs
 select encounter_id, concept_id, value_coded, value_datetime
 from obs
 where concept_id in ( @next_appt_date_concept_id, @disposition_concept_id)
-  and voided = 0
-group by encounter_id;
+  and voided = 0;
 
 DROP TEMPORARY TABLE IF EXISTS temp_obs_collated;
 CREATE TEMPORARY TABLE temp_obs_collated
@@ -159,6 +158,8 @@ select o.encounter_id, GROUP_CONCAT(distinct username(o.creator) separator ', ')
 from obs o 
 inner join temp_all_encounters t where t.encounter_id = o.encounter_id  and o.creator <> t.creator
 group by encounter_id;
+
+CREATE INDEX temp_other_modifiers_ei ON temp_other_modifiers(encounter_id);
 
 update temp_all_encounters t
 inner join temp_other_modifiers m on m.encounter_id = t.encounter_id 
