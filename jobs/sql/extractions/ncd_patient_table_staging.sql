@@ -76,7 +76,7 @@ where e.voided = 0
 and e.encounter_type in (@ncd_init_enc, @ncd_follow_enc));
 
 create index temp_ncd_encounters_pi on temp_ncd_encounters(patient_id);
-CREATE INDEX ncd_encounters_eid ON ncd_encounters(encounter_id);
+CREATE INDEX temp_ncd_encounters_eid ON temp_ncd_encounters(encounter_id);
 
 update ncd_patient_table t 
 set  t.ncd_first_encounter_date =
