@@ -578,6 +578,8 @@ INSERT INTO temp_hiv_next_visit_date (person_id, next_visit_date)
 SELECT person_id, MAX(value_datetime) FROM obs WHERE voided = 0 AND concept_id = CONCEPT_FROM_MAPPING("PIH", "RETURN VISIT DATE")
 AND encounter_id IN (SELECT encounter_id FROM encounter WHERE encounter_type IN (@hiv_initial_encounter_type, @hiv_followup_encounter_type) AND voided = 0) GROUP BY person_id;
 
+CREATE INDEX temp_hiv_next_visit_date_pid ON temp_hiv_next_visit_date(person_id);
+
 UPDATE temp_hiv_next_visit_date t SET days_late_to_visit =  TIMESTAMPDIFF(DAY, next_visit_date, NOW());
 
 --
@@ -672,6 +674,8 @@ arv3_drug			varchar(255)
 
 insert into temp_art_summary(patient_id)
 select distinct person_id from temp_min_art_obs_dates;
+
+CREATE INDEX temp_art_summary_pid ON temp_art_summary(patient_id);
 
 create index temp_min_art_obs_dates1 on temp_min_art_obs_dates(person_id, value_coded);
 create index temp_art_obs1 on temp_art_obs(person_id, obs_datetime, value_coded);
