@@ -69,6 +69,8 @@ where program_id = @mchProgram
 and voided = 0
 ;
 
+CREATE INDEX temp_j9_pid ON temp_j9(patient_id);
+
 -- patient fields
 drop temporary table if exists temp_j9_patients;
 create temporary table temp_j9_patients
