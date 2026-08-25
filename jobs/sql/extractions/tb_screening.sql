@@ -148,6 +148,8 @@ FROM (SELECT
             ORDER BY patient_id ASC, tb_screening_date ASC, encounter_id ASC
         ) index_ascending);
 
+CREATE INDEX tsia_eid ON temp_screening_index_asc(encounter_id);
+
 UPDATE temp_TB_screening t
 INNER JOIN temp_screening_index_asc tsia ON tsia.encounter_id = t.encounter_id
 SET t.index_ascending = tsia.index_asc;
@@ -172,6 +174,8 @@ FROM (SELECT
                     (SELECT @u:= 0) AS u
             ORDER BY patient_id DESC, tb_screening_date DESC, encounter_id DESC
         ) index_DESCending);
+
+CREATE INDEX tsid_eid ON temp_screening_index_desc(encounter_id);
 
 UPDATE temp_TB_screening t
 INNER JOIN temp_screening_index_desc tsid ON tsid.encounter_id = t.encounter_id
