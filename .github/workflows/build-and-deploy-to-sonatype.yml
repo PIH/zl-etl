@@ -26,25 +26,6 @@ jobs:
     uses: PIH/openmrs-contrib-distro-tools/.github/workflows/build-and-deploy-to-sonatype.yml@main
     secrets: inherit
 
-  deploy-to-humci:
-    if: github.repository_owner == 'PIH'
-    needs: build-and-publish
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-to-humci-${{ github.ref }}
-      cancel-in-progress: true
-    steps:
-      - name: Deploy to humci
-        uses: fjogeleit/http-request-action@v1
-        with:
-          url: 'https://bamboo-ci.pih-emr.org/rest/api/latest/queue/OMRS-ETLDEPLOYZLETLTOHUMCI'
-          method: 'POST'
-          bearerToken: ${{ secrets.PIH_BAMBOO_API_KEY }}
-          customHeaders: '{"Accept": "application/json"}'
-          retry: 60
-          retryWait: 60000
-          ignoreStatusCodes: 400
-
   deploy-to-zl-ci:
     if: github.repository_owner == 'PIH'
     needs: build-and-publish
