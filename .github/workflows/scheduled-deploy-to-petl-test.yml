@@ -1,0 +1,21 @@
+name: Scheduled deploy to petl-test
+
+# Replaces the old Bamboo plan etl-deploy-to-petl-test, which was
+# cron-triggered rather than kicked off by a push to this repo -- kept as its
+# own workflow (rather than a job in build-and-deploy-to-sonatype.yml) so it
+# doesn't fire on every push.
+
+on:
+  workflow_dispatch:
+  schedule:
+    # Daily at 21:45 UTC, matching the old Bamboo cron trigger
+    - cron: '45 21 * * *'
+
+jobs:
+  deploy-to-petl-test:
+    if: github.repository_owner == 'PIH'
+    uses: PIH/openmrs-contrib-distro-tools/.github/workflows/deploy-via-runner.yml@main
+    with:
+      runner-label: zt-cloud-dw-petl-test
+      notify_ci_dashboard: true
+    secrets: inherit
