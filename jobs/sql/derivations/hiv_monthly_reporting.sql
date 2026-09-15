@@ -212,7 +212,8 @@ UPDATE t1
 SET t1.latest_hiv_viral_load_collection_date = vl.vl_sample_taken_date,
 	t1.latest_hiv_viral_load_results_date = vl.vl_result_date,
 	t1.latest_hiv_viral_load_order_date = vl.order_date,
-	t1.latest_hiv_viral_load_status = vl.status
+	t1.latest_hiv_viral_load_status = vl.status,
+	t1.latest_hiv_viral_load_coded = vl.vl_coded_results
 FROM hiv_monthly_reporting_staging t1
 INNER JOIN hiv_viral_load vl ON vl.hiv_vl_id = t1.latest_hiv_vl_id;
 
