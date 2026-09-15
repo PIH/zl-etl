@@ -111,6 +111,12 @@ set @vlCoded = concept_from_mapping('CIEL', '1305');
 UPDATE temp_hiv_vl 
 SET vl_coded_results =  obs_value_coded_list_from_temp_using_concept_id(specimen_encounter_id, @vlCoded, @locale);
 
+set @beyondDetectableLimit = concept_from_mapping('PIH','11547');
+set @notDetected = concept_from_mapping('PIH','11471');
+UPDATE temp_hiv_vl 
+set vl_coded_results = concept_name(@notDetected, 'en')
+where vl_coded_results = concept_name(@beyondDetectableLimit, 'en');
+
 -- viral load results (numeric)
 set @vlNumeric = concept_from_mapping('CIEL', '856');
 UPDATE temp_hiv_vl  
