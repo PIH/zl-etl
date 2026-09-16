@@ -10,6 +10,7 @@ create table hiv_monthly_reporting_staging
     latest_program_status_outcome_date    DATE,
     latest_hiv_visit_date                 DATETIME,
     latest_expected_hiv_visit_date        DATETIME,
+    latest_expected_pmtct_visit_date      DATETIME,  
     hiv_visit_days_late                   INT,
     second_to_latest_hiv_visit_date       DATE,
     latest_transfer_in_date               DATE,
@@ -131,6 +132,16 @@ LEFT OUTER JOIN all_reporting_visits av
 ON t1.emr_id =  av.emr_id
     AND t1.reporting_date=av.reporting_date
     AND t1.latest_hiv_visit_date=av.visit_date;
+
+UPDATE t1
+SET
+    t1.latest_expected_hiv_visit_date =pv.next_visit_date
+FROM  hiv_monthly_reporting_staging t1
+LEFT OUTER JOIN pmtct_visits pv on pv.encounter_id  = 
+	(select top 1 pv2.encounter_id from pmtct_visits pv2
+	WHERE t1.emr_id =  pv.emr_id
+	AND pv.visit_date <= t1.reporting_date
+	order by pv.visit_date desc, pv.encounter_id desc);
 
 UPDATE t1
 SET t1.latest_transfer_in_date = v.visit_date,
