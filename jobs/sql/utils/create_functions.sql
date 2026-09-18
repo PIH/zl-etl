@@ -4740,3 +4740,29 @@ limit 1
 RETURN ret;
 
 END
+#
+-- This function accepts encounter_id, concept_id
+-- It will find a single, best observation that matches this, and return the concept name
+-- from the temporary table temp_obs
+#
+DROP FUNCTION IF EXISTS obs_value_coded_from_temp_using_concept_id;
+#
+CREATE FUNCTION obs_value_coded_from_temp_using_concept_id(_encounterId int(11), _concept_id int(11), _locale varchar(50))
+    RETURNS text
+    DETERMINISTIC
+
+BEGIN
+
+    DECLARE ret text;
+
+    select      concept_name(o.value_coded, _locale) into ret
+    from        temp_obs o
+    where       o.voided = 0
+      and       o.encounter_id = _encounterId
+      and       o.concept_id = _concept_id
+    order by o.obs_datetime desc, obs_id desc
+    limit 1;
+
+    RETURN ret;
+
+END
