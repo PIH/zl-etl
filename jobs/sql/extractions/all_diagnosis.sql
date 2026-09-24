@@ -1,404 +1,314 @@
 SET @locale = 'en';
 SET @partition = '${partitionNum}';
 
-DROP TEMPORARY TABLE IF EXISTS temp_diagnoses;
-CREATE TEMPORARY TABLE temp_diagnoses
+-- ---------------------------------------------------------------
+-- 0. Resolve every concept / metadata lookup ONCE up front.
+--    (Calling concept_from_mapping() inside a WHERE clause or an UPDATE
+--    can make MySQL evaluate it for every row and skip the concept_id index.)
+-- ---------------------------------------------------------------
+set @coded_dx_concept     = concept_from_mapping('PIH','3064');
+set @noncoded_dx_concept  = concept_from_mapping('PIH','Diagnosis or problem, non-coded');
+set @dx_order             = concept_from_mapping('PIH','7537');
+set @certainty            = concept_from_mapping('PIH','1379');
+set @set_weekly_notifiable = concept_from_mapping('PIH','7676');
+set @set_santeFamn        = concept_from_mapping('PIH','7957');
+set @set_urgent           = concept_from_mapping('PIH','7679');
+set @set_psychological    = concept_from_mapping('PIH','7942');
+set @set_pediatric        = concept_from_mapping('PIH','7933');
+set @set_outpatient       = concept_from_mapping('PIH','7936');
+set @set_ncd              = concept_from_mapping('PIH','7935');
+set @set_ed               = concept_from_mapping('PIH','7934');
+set @set_age_restricted   = concept_from_mapping('PIH','7677');
+set @set_oncology         = concept_from_mapping('PIH','8934');
+select concept_id into @non_diagnoses from concept where uuid = 'a2d2124b-fc2e-4aa2-ac87-792d4205dd8d';
+set @primary_id_type      = metadata_uuid('org.openmrs.module.emrapi', 'emr.primaryIdentifierType');
+
+-- date window: same meaning as date(obs_datetime) between @startDate and @endDate,
+-- but written so the obs_datetime column isn't wrapped in a function
+-- (assumes @startDate / @endDate are plain dates, as before)
+set @startDateTime = @startDate;
+set @endDateExcl   = date_add(@endDate, interval 1 day);
+
+-- ---------------------------------------------------------------
+-- 1. Base rows: one per diagnosis obs (narrow table)
+-- ---------------------------------------------------------------
+DROP TEMPORARY TABLE IF EXISTS temp_dx_obs;
+CREATE TEMPORARY TABLE temp_dx_obs
 (
- patient_id               int(11),       
- dossierId                varchar(50),    
- patient_primary_id       varchar(50),    
- loc_registered           varchar(255),   
- unknown_patient          varchar(50),    
- gender                   varchar(50),    
- department               varchar(255),   
- commune                  varchar(255),   
- section                  varchar(255),   
- locality                 varchar(255),   
- street_landmark          varchar(255),   
- birthdate                datetime,       
- birthdate_estimated      boolean,        
- section_communale_CDC_ID varchar(11),   
- encounter_id             int(11),
- age_at_encounter         int(3),
- encounter_location       varchar(255),
- site                 varchar(255),
- encounter_type           varchar(255),
- entered_by               varchar(1000),
- provider                 varchar(1000),
- visit_id                 int(11),
- visit_location           varchar(255),
- obs_id                   int(11),
- obs_group_id             int(11),       
- obs_datetime             datetime,       
- diagnosis_entered        text,           
- dx_order                 varchar(255),   
- certainty                varchar(255),   
- coded                    varchar(255),   
- diagnosis_concept        int(11),        
- diagnosis_coded_fr       varchar(255),  
- diagnosis_coded_en       varchar(255),
- date_created             datetime,      
- icd10_code               varchar(255),   
- weekly_notifiable        int(1),         
- urgent                   int(1),         
- santeFamn                int(1),         
- psychological            int(1),         
- pediatric                int(1),         
- outpatient               int(1),         
- ncd                      int(1),         
- non_diagnosis            int(1),         
- ed                       int(1),         
- age_restricted           int(1),         
- oncology                 int(1),
- retrospective            boolean,
- first_diagnosis          boolean
- );
+ obs_id             int(11) primary key,
+ patient_id         int(11),
+ encounter_id       int(11),
+ obs_group_id       int(11),
+ obs_datetime       datetime,
+ date_created       datetime,
+ diagnosis_concept  int(11),
+ diagnosis_entered  text,
+ coded              varchar(255)
+);
 
--- insert diagnoses obs groups for coded dxs
-insert into temp_diagnoses (
-patient_id,
-encounter_id,
-obs_id,
-obs_group_id,
-obs_datetime,
-date_created, 
-diagnosis_concept,
-coded
-)
-select 
-o.person_id,
-o.encounter_id,
-obs_id,
-o.obs_group_id,
-o.obs_datetime,
-o.date_created,
-o.value_coded, 
-1 
-from obs o 
-where concept_id = concept_from_mapping('PIH','3064')
-AND o.voided = 0
-AND ((date(o.obs_datetime) >=@startDate) or @startDate is null)
-AND ((date(o.obs_datetime) <=@endDate)  or @endDate is null)
-;
-create index temp_diagnoses_e on temp_diagnoses(encounter_id);
-create index temp_diagnoses_p on temp_diagnoses(patient_id);
-create index temp_diagnoses_o on temp_diagnoses(obs_id);
-create index temp_diagnoses_og on temp_diagnoses(obs_group_id);
-create index temp_diagnoses_dc on temp_diagnoses(diagnosis_concept);
-
- -- diagnosis info
-DROP TEMPORARY TABLE IF EXISTS temp_obs;
-create temporary table temp_obs 
-select o.obs_id, o.voided ,o.obs_group_id , o.encounter_id, o.person_id, o.concept_id, o.value_coded, o.value_numeric, o.value_text,o.value_datetime, o.value_coded_name_id ,o.comments 
+-- coded diagnoses
+insert into temp_dx_obs (obs_id, patient_id, encounter_id, obs_group_id, obs_datetime, date_created, diagnosis_concept, coded)
+select o.obs_id, o.person_id, o.encounter_id, o.obs_group_id, o.obs_datetime, o.date_created, o.value_coded, 1
 from obs o
-inner join temp_diagnoses t on (t.obs_group_id = o.obs_group_id or t.obs_id = o.obs_id)
-where o.voided = 0;
+where o.concept_id = @coded_dx_concept
+  and o.voided = 0
+  and (@startDateTime is null or o.obs_datetime >= @startDateTime)
+  and (@endDateExcl   is null or o.obs_datetime <  @endDateExcl);
 
-create index temp_obs_concept_id on temp_obs(concept_id);
-create index temp_obs_ogi on temp_obs(obs_group_id);
-create index temp_obs_ci1 on temp_obs(obs_group_id, concept_id);
+-- non-coded diagnoses (obs_group_id intentionally left NULL, as in the original,
+-- so these rows get no dx_order / certainty)
+insert into temp_dx_obs (obs_id, patient_id, encounter_id, obs_datetime, date_created, diagnosis_entered, coded)
+select o.obs_id, o.person_id, o.encounter_id, o.obs_datetime, o.date_created, o.value_text, 0
+from obs o
+where o.concept_id = @noncoded_dx_concept
+  and o.voided = 0
+  and (@startDateTime is null or o.obs_datetime >= @startDateTime)
+  and (@endDateExcl   is null or o.obs_datetime <  @endDateExcl);
 
- -- details for coded diagnoses
-update temp_diagnoses t set t.diagnosis_entered = concept_name(diagnosis_concept,'fr');
-update temp_diagnoses t set t.diagnosis_coded_fr = concept_name(diagnosis_concept,'fr');
-update temp_diagnoses t set t.diagnosis_coded_en = concept_name(diagnosis_concept,'en');
+-- ---------------------------------------------------------------
+-- 2. Lookup tables, each keyed by a primary key
+-- ---------------------------------------------------------------
 
-set @dx_order =  concept_from_mapping( 'PIH','7537');
-update temp_diagnoses t
-inner join temp_obs o on o.obs_group_id = t.obs_group_id and o.concept_id = @dx_order
-set t.dx_order = concept_name(o.value_coded, @locale);
+-- dx order + certainty, one row per obs group (coded dxs only)
+-- replaces the temp_obs table, whose OR join couldn't use an index
+DROP TEMPORARY TABLE IF EXISTS temp_dx_group;
+CREATE TEMPORARY TABLE temp_dx_group
+(
+ obs_group_id int(11) primary key,
+ dx_order     varchar(255),
+ certainty    varchar(255)
+);
+insert into temp_dx_group (obs_group_id, dx_order, certainty)
+select o.obs_group_id,
+       max(case when o.concept_id = @dx_order  then concept_name(o.value_coded, @locale) end),
+       max(case when o.concept_id = @certainty then concept_name(o.value_coded, @locale) end)
+from (select distinct obs_group_id from temp_dx_obs where obs_group_id is not null) g
+inner join obs o on o.obs_group_id = g.obs_group_id
+where o.concept_id in (@dx_order, @certainty)
+  and o.voided = 0
+group by o.obs_group_id;
 
-set @certainty = concept_from_mapping( 'PIH','1379');
-update temp_diagnoses t
-inner join temp_obs o on o.obs_group_id = t.obs_group_id and o.concept_id = @certainty
-set t.certainty = concept_name(o.value_coded, @locale);
+-- first diagnosis: earliest date per (patient, concept) across the patient's
+-- WHOLE history of coded dxs (not just the @startDate-@endDate window).
+-- A row is "first" when its date equals that earliest date.
+DROP TEMPORARY TABLE IF EXISTS temp_dx_first;
+CREATE TEMPORARY TABLE temp_dx_first
+(
+ patient_id        int(11),
+ diagnosis_concept int(11),
+ first_date        date,
+ primary key (patient_id, diagnosis_concept)
+);
+insert into temp_dx_first (patient_id, diagnosis_concept, first_date)
+select o.person_id, o.value_coded, min(date(o.obs_datetime))
+from (select distinct patient_id, diagnosis_concept
+      from temp_dx_obs
+      where coded = '1'
+        and diagnosis_concept is not null) pc
+inner join obs o on o.person_id   = pc.patient_id
+                and o.value_coded = pc.diagnosis_concept
+where o.concept_id = @coded_dx_concept
+  and o.voided = 0
+group by o.person_id, o.value_coded;
 
-DROP TEMPORARY TABLE IF EXISTS temp_dx_exist;
-CREATE TEMPORARY TABLE temp_dx_exist
-select patient_id, diagnosis_concept, date(obs_datetime) "obs_date" from temp_diagnoses;
-
-create index temp_dx_exist_p on temp_dx_exist(patient_id,diagnosis_concept);
-
-update temp_diagnoses t
-set first_diagnosis = 0 where t.diagnosis_concept is not null;
-
-update temp_diagnoses t
-set first_diagnosis = 1
-where not exists 
-	(select 1 from temp_dx_exist e 
-	where e.patient_id = t.patient_id
-	and e.diagnosis_concept = t.diagnosis_concept
-	and e.obs_date < date(t.obs_datetime)
-and t.diagnosis_concept is not null);
-
-
--- diagnosis concept-level info
+-- concept-level info: names, ICD10 and set membership, once per distinct concept
 DROP TEMPORARY TABLE IF EXISTS temp_dx_concept;
 CREATE TEMPORARY TABLE temp_dx_concept
 (
- diagnosis_concept int(11),       
- icd10_code        varchar(255), 
- weekly_notifiable int(1),       
- urgent            int(1),       
- santeFamn         int(1),       
- psychological     int(1),       
- pediatric         int(1),       
- outpatient        int(1),       
- ncd               int(1),       
- non_diagnosis     int(1),        
- ed                int(1),        
- age_restricted    int(1),       
- oncology          int(1)        
+ diagnosis_concept  int(11) primary key,
+ diagnosis_coded_fr varchar(255),
+ diagnosis_coded_en varchar(255),
+ icd10_code         varchar(255),
+ weekly_notifiable  int(1),
+ urgent             int(1),
+ santeFamn          int(1),
+ psychological      int(1),
+ pediatric          int(1),
+ outpatient         int(1),
+ ncd                int(1),
+ non_diagnosis      int(1),
+ ed                 int(1),
+ age_restricted     int(1),
+ oncology           int(1)
 );
-   
-insert into temp_dx_concept(diagnosis_concept)
-select distinct diagnosis_concept from temp_diagnoses;
+insert into temp_dx_concept
+select c.diagnosis_concept,
+       concept_name(c.diagnosis_concept, 'fr'),
+       concept_name(c.diagnosis_concept, 'en'),
+       retrieveICD10(c.diagnosis_concept),
+       concept_in_set(c.diagnosis_concept, @set_weekly_notifiable),
+       concept_in_set(c.diagnosis_concept, @set_urgent),
+       concept_in_set(c.diagnosis_concept, @set_santeFamn),
+       concept_in_set(c.diagnosis_concept, @set_psychological),
+       concept_in_set(c.diagnosis_concept, @set_pediatric),
+       concept_in_set(c.diagnosis_concept, @set_outpatient),
+       concept_in_set(c.diagnosis_concept, @set_ncd),
+       concept_in_set(c.diagnosis_concept, @non_diagnoses),
+       concept_in_set(c.diagnosis_concept, @set_ed),
+       concept_in_set(c.diagnosis_concept, @set_age_restricted),
+       concept_in_set(c.diagnosis_concept, @set_oncology)
+from (select distinct diagnosis_concept from temp_dx_obs where diagnosis_concept is not null) c;
 
-create index temp_dx_patient_dc on temp_dx_concept(diagnosis_concept);
-
-
-update temp_dx_concept set icd10_code = retrieveICD10(diagnosis_concept);
-    
-select concept_id into @non_diagnoses from concept where uuid = 'a2d2124b-fc2e-4aa2-ac87-792d4205dd8d';    
-update temp_dx_concept set weekly_notifiable = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7676'));
-update temp_dx_concept set santeFamn = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7957'));
-update temp_dx_concept set urgent = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7679'));
-update temp_dx_concept set psychological = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7942'));
-update temp_dx_concept set pediatric = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7933'));
-update temp_dx_concept set outpatient = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7936'));
-update temp_dx_concept set ncd = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7935'));
-update temp_dx_concept set non_diagnosis = concept_in_set(diagnosis_concept, @non_diagnoses);
-update temp_dx_concept set ed = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7934'));
-update temp_dx_concept set age_restricted = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','7677'));
-update temp_dx_concept set oncology = concept_in_set(diagnosis_concept, concept_from_mapping('PIH','8934'));
-
-update temp_diagnoses d
-inner join temp_dx_concept dc on dc.diagnosis_concept = d.diagnosis_concept
-set d.icd10_code = dc.icd10_code,
-	d.weekly_notifiable = dc.weekly_notifiable,
-	d.urgent = dc.urgent,
-	d.santeFamn = dc.santeFamn,
-	d.psychological = dc.psychological,
-	d.pediatric = dc.pediatric,
-	d.outpatient = dc.outpatient,
-	d.ncd = dc.ncd,
-	d.non_diagnosis = dc.non_diagnosis,
-	d.ed = dc.ed,
-	d.age_restricted = dc.age_restricted,
-	d.oncology = dc.oncology;
-
--- non coded dxs
-insert into temp_diagnoses (
-patient_id,
-encounter_id,
-obs_id,
-obs_datetime,
-date_created,
-diagnosis_entered,
-coded
-)
-select 
-o.person_id,
-o.encounter_id,
-o.obs_id,
-o.obs_datetime,
-o.date_created,
-o.value_text,
-0
-from obs o 
-where concept_id = concept_from_mapping('PIH','Diagnosis or problem, non-coded')
-AND o.voided = 0
-AND ((date(o.obs_datetime) >=@startDate) or @startDate is null)
-AND ((date(o.obs_datetime) <=@endDate)  or @endDate is null)
-;
-
--- patient level info
+-- patient-level info, once per distinct patient
 DROP TEMPORARY TABLE IF EXISTS temp_dx_patient;
 CREATE TEMPORARY TABLE temp_dx_patient
 (
-patient_id               int(11),      
-dossierId                varchar(50),  
-patient_primary_id       varchar(50),  
-loc_registered           varchar(255), 
-unknown_patient          varchar(50),  
-gender                   varchar(50),  
-department               varchar(255), 
-commune                  varchar(255), 
-section                  varchar(255),  
-locality                 varchar(255), 
-street_landmark          varchar(255), 
-birthdate                datetime,     
-birthdate_estimated      boolean,      
-section_communale_CDC_ID varchar(11)    
-    );
-   
-insert into temp_dx_patient(patient_id)
-select distinct patient_id from temp_diagnoses;
+ patient_id               int(11) primary key,
+ dossierId                varchar(50),
+ patient_primary_id       varchar(50),
+ loc_registered           varchar(255),
+ unknown_patient          varchar(50),
+ gender                   varchar(50),
+ department               varchar(255),
+ commune                  varchar(255),
+ section                  varchar(255),
+ locality                 varchar(255),
+ street_landmark          varchar(255),
+ birthdate                datetime,
+ birthdate_estimated      boolean,
+ section_communale_CDC_ID varchar(11)
+);
+insert into temp_dx_patient
+select p.patient_id,
+       dosid(p.patient_id),
+       patient_identifier(p.patient_id, @primary_id_type),
+       loc_registered(p.patient_id),
+       unknown_patient(p.patient_id),
+       gender(p.patient_id),
+       a.state_province,
+       a.city_village,
+       a.address3,
+       a.address1,
+       a.address2,
+       pe.birthdate,
+       pe.birthdate_estimated,
+       cdc_id(p.patient_id)
+from (select distinct patient_id from temp_dx_obs) p
+left join person pe on pe.person_id = p.patient_id
+left join person_address a on a.person_address_id =
+      (select a2.person_address_id from person_address a2
+       where a2.person_id = p.patient_id
+       order by a2.preferred desc, a2.date_created desc limit 1);
 
-create index temp_dx_patient_pi on temp_dx_patient(patient_id);
+-- user names and encounter type names (small tables; function runs once per user / type)
+DROP TEMPORARY TABLE IF EXISTS temp_dx_users;
+CREATE TEMPORARY TABLE temp_dx_users
+(
+ user_id   int(11) primary key,
+ user_name varchar(255)
+);
+insert into temp_dx_users
+select user_id, person_name_of_user(user_id) from users;
 
-update temp_dx_patient set patient_primary_id = patient_identifier(patient_id, metadata_uuid('org.openmrs.module.emrapi', 'emr.primaryIdentifierType'));
-update temp_dx_patient set dossierid = dosid(patient_id);
-update temp_dx_patient set loc_registered = loc_registered(patient_id);
-update temp_dx_patient set unknown_patient = unknown_patient(patient_id);
-update temp_dx_patient set gender = gender(patient_id);
+DROP TEMPORARY TABLE IF EXISTS temp_dx_enc_types;
+CREATE TEMPORARY TABLE temp_dx_enc_types
+(
+ encounter_type_id int(11) primary key,
+ encounter_type    varchar(255)
+);
+insert into temp_dx_enc_types
+select encounter_type_id, encounter_type_name_from_id(encounter_type_id) from encounter_type;
 
-update temp_dx_patient t
-inner join person p on p.person_id  = t.patient_id
-set t.birthdate = p.birthdate,
-	t.birthdate_estimated = t.birthdate_estimated;
-
-update temp_dx_patient t
-inner join person_address a on a.person_address_id =
-	(select a2.person_address_id from person_address a2
-	where a2.person_id = t.patient_id
-	order by preferred desc, date_created desc limit 1)
-set 	t.department = a.state_province,
-	t.commune = a.city_village,
-	t.section = a.address3,
-	t.locality = a.address1,
-	t.street_landmark = a.address2;
-
-update temp_dx_patient set section_communale_CDC_ID = cdc_id(patient_id);
-
-update temp_diagnoses t
-inner join temp_dx_patient p on t.patient_id = p.patient_id
-set t.dossierId = p.dossierId,
-	t.patient_primary_id = p.patient_primary_id,
-	t.loc_registered = p.loc_registered,
-	t.unknown_patient = p.unknown_patient,
-	t.gender = p.gender,
-	t.department = p.department,
-	t.commune = p.commune,
-	t.section = p.section,
-	t.locality = p.locality,
-	t.street_landmark = p.street_landmark,
-	t.birthdate = p.birthdate,
-	t.birthdate_estimated = p.birthdate_estimated,
-	t.section_communale_CDC_ID = p.section_communale_CDC_ID;
-
--- encounter level information
+-- encounter-level info, once per distinct encounter
 DROP TEMPORARY TABLE IF EXISTS temp_dx_encounter;
 CREATE TEMPORARY TABLE temp_dx_encounter
 (
- patient_id          int(11),
- encounter_id        int(11),
- encounter_location_id int(11),
- encounter_location  varchar(255),
- site            varchar(255),
- encounter_type_id   int(11),
- encounter_type      varchar(255),
- age_at_encounter    int(3),
- entered_by_user_id  int(11),
- entered_by          varchar(255),
- provider            varchar(255),
- date_created        datetime,
- visit_id            int(11),
- birthdate           datetime,
- birthdate_estimated boolean
+ encounter_id       int(11) primary key,
+ visit_id           int(11),
+ date_created       datetime,
+ encounter_location varchar(255),
+ site               varchar(255),
+ visit_location     varchar(255),
+ encounter_type     varchar(255),
+ entered_by         varchar(255),
+ provider           varchar(255),
+ age_at_encounter   int(3)
 );
+insert into temp_dx_encounter
+select e.encounter_id,
+       e.visit_id,
+       e.date_created,
+       el.location_name,
+       -- site: visit's location when there is one, otherwise the
+       -- Visit Location ancestor of the encounter location (same as before)
+       coalesce(vl.location_name, el.site),
+       vl.location_name,
+       et.encounter_type,
+       u.user_name,
+       provider(e.encounter_id),
+       age_at_enc(e.patient_id, e.encounter_id)
+from (select distinct encounter_id from temp_dx_obs where encounter_id is not null) de
+inner join encounter e          on e.encounter_id       = de.encounter_id
+left join locations el          on el.location_id       = e.location_id
+left join visit v               on v.visit_id           = e.visit_id
+left join locations vl          on vl.location_id       = v.location_id
+left join temp_dx_enc_types et  on et.encounter_type_id = e.encounter_type
+left join temp_dx_users u       on u.user_id            = e.creator;
 
-insert into temp_dx_encounter(encounter_id)
-select distinct encounter_id from temp_diagnoses;
-
-create index temp_dx_encounter_ei on temp_dx_encounter(encounter_id);   
-
-update temp_dx_encounter t
-inner join encounter e on e.encounter_id  = t.encounter_id
-set t.entered_by_user_id = e.creator,
-	t.visit_id = e.visit_id,
-	t.encounter_type_id = e.encounter_type,
-	t.patient_id = e.patient_id,
-	t.encounter_location_id = e.location_id,
-	t.date_created = e.date_created 
-;
-
-create index temp_dx_encounter_li on temp_dx_encounter(encounter_location_id);
--- Sets encounter_location from the encounter's location.
--- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
-update temp_dx_encounter t
-inner join locations ls on ls.location_id = t.encounter_location_id
-set t.encounter_location = ls.location_name,
-    t.site = ls.site;
-update temp_dx_encounter set entered_by = person_name_of_user(entered_by_user_id);
-update temp_dx_encounter set encounter_type = encounter_type_name_from_id(encounter_type_id);
-
-update temp_dx_encounter set provider = provider(encounter_id);
-update temp_dx_encounter set age_at_encounter = age_at_enc(patient_id, encounter_id);
-
-update temp_diagnoses t
-inner join temp_dx_encounter e on e.encounter_id = t.encounter_id
-set t.age_at_encounter = e.age_at_encounter,
-	t.date_created = e.date_created,
-	t.encounter_id = e.encounter_id,
-	t.encounter_location = e.encounter_location,
-	t.site = e.site,
-	t.encounter_type = e.encounter_type,
-	t.entered_by = e.entered_by,
-	t.provider = e.provider,
-	t.visit_id = e.visit_id;
-
-update temp_diagnoses t
-set t.retrospective = IF(TIME_TO_SEC(date_created) - TIME_TO_SEC(obs_datetime) > 1800,1,0) ;
-
-create index temp_diagnoses_vi on temp_diagnoses(visit_id);
--- Sets visit_location from the visit's location.
--- Overrides site with visit_location when a visit exists, since visits are
--- associated directly with the Visit Location — more accurate than the ancestor walk.
-update temp_diagnoses t
-inner join visit v on v.visit_id = t.visit_id
-inner join locations ls on ls.location_id = v.location_id
-set t.visit_location = ls.location_name,
-    t.site = ls.location_name;
-
--- select final output
+-- ---------------------------------------------------------------
+-- 3. Final output: one pass joining everything (no full-table UPDATEs)
+-- ---------------------------------------------------------------
 select
 CONCAT(@partition, '-', d.patient_id) as patient_id,
-d.dossierId,
-d.patient_primary_id,
-d.loc_registered,
-d.unknown_patient,
-d.gender,
-d.age_at_encounter,
-d.department,
-d.commune,
-d.section,
-d.locality,
-d.street_landmark,
+p.dossierId,
+p.patient_primary_id,
+p.loc_registered,
+p.unknown_patient,
+p.gender,
+e.age_at_encounter,
+p.department,
+p.commune,
+p.section,
+p.locality,
+p.street_landmark,
 CONCAT(@partition, '-', d.encounter_id) as encounter_id,
-d.encounter_location,
-d.site,
+e.encounter_location,
+e.site,
 CONCAT(@partition, '-', d.obs_id) as obs_id,
 d.obs_datetime,
-d.entered_by,
-d.provider,
-d.diagnosis_entered,
-d.dx_order,
-d.certainty,
+e.entered_by,
+e.provider,
+case when d.coded = '1' then dc.diagnosis_coded_fr else d.diagnosis_entered end as diagnosis_entered,
+g.dx_order,
+g.certainty,
 d.coded,
 d.diagnosis_concept,
-d.diagnosis_coded_fr,
-d.diagnosis_coded_en,
-d.icd10_code,
-d.weekly_notifiable,
-d.urgent,
-d.santeFamn,
-d.psychological,
-d.pediatric,
-d.outpatient,
-d.ncd,
-d.non_diagnosis,
-d.ed,
-d.age_restricted,
-d.oncology,
-d.date_created,
-d.retrospective,
-CONCAT(@partition, '-', d.visit_id) as visit_id,
-d.visit_location,
-d.birthdate,
-d.birthdate_estimated,
-d.encounter_type,
-d.section_communale_CDC_ID,
-d.first_diagnosis
-from temp_diagnoses d
+dc.diagnosis_coded_fr,
+dc.diagnosis_coded_en,
+dc.icd10_code,
+dc.weekly_notifiable,
+dc.urgent,
+dc.santeFamn,
+dc.psychological,
+dc.pediatric,
+dc.outpatient,
+dc.ncd,
+dc.non_diagnosis,
+dc.ed,
+dc.age_restricted,
+dc.oncology,
+-- encounter's date_created overrides the obs date_created when there is an encounter (as before)
+coalesce(e.date_created, d.date_created) as date_created,
+-- retrospective: entered more than 30 minutes after the obs datetime
+-- (full datetime difference, so entries on a later day are counted)
+IF(TIMESTAMPDIFF(SECOND, d.obs_datetime, coalesce(e.date_created, d.date_created)) > 1800, 1, 0) as retrospective,
+CONCAT(@partition, '-', e.visit_id) as visit_id,
+e.visit_location,
+p.birthdate,
+p.birthdate_estimated,
+e.encounter_type,
+p.section_communale_CDC_ID,
+case
+  when d.coded <> '1' then null
+  when d.diagnosis_concept is null then 1
+  when date(d.obs_datetime) = f.first_date then 1
+  else 0
+end as first_diagnosis
+from temp_dx_obs d
+left join temp_dx_patient   p  on p.patient_id        = d.patient_id
+left join temp_dx_encounter e  on e.encounter_id      = d.encounter_id
+left join temp_dx_group     g  on g.obs_group_id      = d.obs_group_id
+left join temp_dx_concept   dc on dc.diagnosis_concept = d.diagnosis_concept
+left join temp_dx_first     f  on f.patient_id        = d.patient_id
+                              and f.diagnosis_concept = d.diagnosis_concept
 ;
