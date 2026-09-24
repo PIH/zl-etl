@@ -124,7 +124,9 @@ create temporary table temp_all_encounters
     disposition         varchar(255),
     voided              bit,
     users_modified      text,
-    dates_modified      text
+    dates_modified      text,
+    index_asc           int(11),
+    index_desc          int(11)
 );
 
 insert into temp_all_encounters
@@ -184,7 +186,7 @@ select emr_id,
        disposition,
        users_modified,
        dates_modified,
-       null as index_asc,
-       null as index_desc
+       index_asc,
+       index_desc
 from temp_all_encounters t
 ORDER BY t.patient_id, t.encounter_id;
