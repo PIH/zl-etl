@@ -1,6 +1,6 @@
 SET @partition = '${partitionNum}';
-SET sql_safe_updates = 0;
 SET @locale = 'fr';
+SET sql_safe_updates = 0;
 
 -- ---------------------------------------------------------------
 -- 0. Resolve every lookup ONCE up front
@@ -51,7 +51,6 @@ from (select distinct patient_id from encounter
       where voided = 0 and encounter_type = @consult_type_id) p;
 
 -- obs values collapsed to one row per encounter
--- (goes straight from encounter -> obs; the intermediate temp_obs table isn't needed)
 drop temporary table if exists temp_consult_obs;
 create temporary table temp_consult_obs
 (
@@ -85,35 +84,63 @@ where e.voided = 0
 group by o.encounter_id;
 
 -- ---------------------------------------------------------------
--- 2. Final output: one pass over the consult encounters
---    (no wide temp table, no full-table UPDATEs)
+-- 2. Main table with explicit column types, filled in ONE pass
+--    (typed table => service sees int(11) for index_asc / index_desc)
 -- ---------------------------------------------------------------
-SELECT
-em.emr_id,
-CONCAT(@partition,'-',e.encounter_id) "encounter_id",
-CONCAT(@partition,'-',e.visit_id) "visit_id",
-vl.location_name as visit_location,
-e.encounter_datetime,
-u.user_name as user_entered,
-e.date_created as datetime_created,
-el.location_name as encounter_location,
--- site: visit's location when there is one, otherwise the
--- Visit Location ancestor of the encounter location (same as before)
-coalesce(vl.location_name, el.site) as site,
-@consult_type_name AS encounter_type,
-provider(e.encounter_id) as provider,
-CASE o.trauma_value_coded
-     WHEN @yes THEN 1
-     WHEN @no  THEN 0
-END as trauma,
-o.trauma_type,
-date(o.return_visit_date) as return_visit_date,
-o.disposition,
-CASE WHEN o.disposition_code = @dispo_admit    THEN o.adm_location    ELSE NULL END AS admission_location,
-CASE WHEN o.disposition_code = @dispo_internal THEN o.location_within ELSE NULL END AS internal_transfer_location,
-CASE WHEN o.disposition_code = @dispo_external THEN o.location_out    ELSE NULL END AS external_transfer_location,
-null as index_asc,
-null as index_desc
+drop temporary table if exists temp_consult_encs;
+create temporary table temp_consult_encs
+(
+ encounter_id               int(11) primary key,
+ emr_id                     varchar(15),
+ visit_id                   int(11),
+ visit_location             varchar(255),
+ encounter_datetime         datetime,
+ user_entered               varchar(255),
+ datetime_created           datetime,
+ encounter_location         varchar(255),
+ site                       varchar(255),
+ encounter_type             varchar(50),
+ provider                   varchar(255),
+ trauma                     boolean,
+ trauma_type                varchar(255),
+ return_visit_date          date,
+ disposition                varchar(255),
+ admission_location         varchar(255),
+ internal_transfer_location varchar(255),
+ external_transfer_location varchar(255),
+ index_asc                  int(11),
+ index_desc                 int(11)
+);
+
+insert into temp_consult_encs
+(encounter_id, emr_id, visit_id, visit_location, encounter_datetime, user_entered,
+ datetime_created, encounter_location, site, encounter_type, provider,
+ trauma, trauma_type, return_visit_date, disposition,
+ admission_location, internal_transfer_location, external_transfer_location)
+select
+ e.encounter_id,
+ em.emr_id,
+ e.visit_id,
+ vl.location_name,
+ e.encounter_datetime,
+ u.user_name,
+ e.date_created,
+ el.location_name,
+ -- site: visit's location when there is one, otherwise the
+ -- Visit Location ancestor of the encounter location
+ coalesce(vl.location_name, el.site),
+ @consult_type_name,
+ provider(e.encounter_id),
+ CASE o.trauma_value_coded
+      WHEN @yes THEN 1
+      WHEN @no  THEN 0
+ END,
+ o.trauma_type,
+ o.return_visit_date,
+ o.disposition,
+ CASE WHEN o.disposition_code = @dispo_admit    THEN o.adm_location    END,
+ CASE WHEN o.disposition_code = @dispo_internal THEN o.location_within END,
+ CASE WHEN o.disposition_code = @dispo_external THEN o.location_out    END
 FROM encounter e
 left join temp_consult_emrids em on em.patient_id   = e.patient_id
 left join temp_consult_users  u  on u.user_id       = e.creator
@@ -122,5 +149,31 @@ left join visit               v  on v.visit_id      = e.visit_id
 left join locations           vl on vl.location_id  = v.location_id
 left join temp_consult_obs    o  on o.encounter_id  = e.encounter_id
 where e.voided = 0
-  and e.encounter_type = @consult_type_id
-ORDER BY e.encounter_datetime desc;
+  and e.encounter_type = @consult_type_id;
+
+-- ---------------------------------------------------------------
+-- 3. Final output
+-- ---------------------------------------------------------------
+SELECT
+emr_id,
+CONCAT(@partition,'-',encounter_id) "encounter_id",
+CONCAT(@partition,'-',visit_id) "visit_id",
+visit_location,
+encounter_datetime,
+user_entered,
+datetime_created,
+encounter_location,
+site,
+encounter_type,
+provider,
+trauma,
+trauma_type,
+return_visit_date,
+disposition,
+admission_location,
+internal_transfer_location,
+external_transfer_location,
+index_asc,
+index_desc
+FROM temp_consult_encs
+ORDER BY encounter_datetime desc;
