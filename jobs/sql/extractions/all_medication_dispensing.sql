@@ -1,7 +1,153 @@
-SELECT encounter_type_id  INTO @disp_enc_type FROM encounter_type et WHERE uuid='8ff50dea-18a1-4609-b4c9-3f8f2d611b84';
+SELECT encounter_type_id INTO @disp_enc_type FROM encounter_type et WHERE uuid='8ff50dea-18a1-4609-b4c9-3f8f2d611b84';
 SET @partition = '${partitionNum}';
 set @locale = 'fr';
 
+-- ---------------------------------------------------------------
+-- 0. Resolve every lookup ONCE up front
+-- ---------------------------------------------------------------
+set @dispensing_construct = concept_from_mapping('PIH','9070');
+set @dose            = concept_from_mapping('PIH','9073');
+set @doseUnit        = concept_from_mapping('PIH','9074');
+set @drug            = concept_from_mapping('PIH','1282');
+set @duration        = concept_from_mapping('PIH','9075');
+set @duration_unit   = concept_from_mapping('PIH','6412');
+set @frequency       = concept_from_mapping('PIH','9363');
+set @inxs            = concept_from_mapping('PIH','9072');
+set @quantity        = concept_from_mapping('PIH','9071');
+set @qunits          = concept_from_mapping('PIH','9074');
+set @complete_status = concept_from_mapping('PIH','1267');
+set @primary_emr_id  = METADATA_UUID('org.openmrs.module.emrapi', 'emr.primaryIdentifierType');
+
+-- ---------------------------------------------------------------
+-- 1. Small lookup tables, each keyed by a primary key.
+--    Built from the (small) source tables, so every function runs once
+--    per user / provider / drug / location / patient instead of once per row.
+-- ---------------------------------------------------------------
+
+-- user names (creator)
+drop temporary table if exists temp_user_names;
+create temporary table temp_user_names
+(user_id   int(11) primary key,
+ user_name text);
+insert into temp_user_names
+select user_id, person_name_of_user(user_id) from users;
+
+-- provider names (dispenser, new form)
+drop temporary table if exists temp_providers;
+create temporary table temp_providers
+(provider_id   int(11) primary key,
+ provider_name text);
+insert into temp_providers
+select provider_id, provider_name_from_provider_id(provider_id) from provider;
+
+-- drug name + openboxes code
+drop temporary table if exists temp_drug_ids;
+create temporary table temp_drug_ids
+(drug_id             int(11) primary key,
+ drug_name           varchar(255),
+ drug_openboxes_code int);
+insert into temp_drug_ids
+select drug_id, drugName(drug_id), openboxesCode(drug_id) from drug;
+
+-- location names (same location_name() function as before)
+drop temporary table if exists temp_location_names;
+create temporary table temp_location_names
+(location_id   int(11) primary key,
+ location_name varchar(255));
+insert into temp_location_names
+select location_id, location_name(location_id) from location;
+
+-- EMR ids, once per patient across both forms
+drop temporary table if exists temp_emr_ids;
+create temporary table temp_emr_ids
+(patient_id int(11) primary key,
+ emr_id     varchar(50));
+insert into temp_emr_ids
+select p.patient_id, PATIENT_IDENTIFIER(p.patient_id, @primary_emr_id)
+from (select person_id as patient_id from obs
+      where concept_id = @dispensing_construct and voided = 0
+      union
+      select patient_id from medication_dispense
+      where status = @complete_status) p;
+
+-- old form: provider, once per encounter
+drop temporary table if exists temp_encounter;
+create temporary table temp_encounter
+(encounter_id       int(11) primary key,
+ encounter_provider text);
+insert into temp_encounter
+select g.encounter_id, provider(g.encounter_id)
+from (select distinct encounter_id from obs
+      where concept_id = @dispensing_construct and voided = 0
+        and encounter_id is not null) g;
+
+-- old form: obs values collapsed to one row per dispensing obs group
+-- (goes straight from obs; the intermediate temp_obs table isn't needed)
+drop temporary table if exists temp_obs_collated;
+create temporary table temp_obs_collated
+(obs_group_id  int(11) primary key,
+ dose          double,
+ doseUnit      text,
+ drugId        int(11),
+ duration      double,
+ duration_unit varchar(255),
+ frequency     varchar(255),
+ quantity      double,
+ qunits        text,
+ inxs          text);
+insert into temp_obs_collated
+select o.obs_group_id,
+       max(case when o.concept_id = @dose          then o.value_numeric end),
+       max(case when o.concept_id = @doseUnit      then o.value_text end),
+       max(case when o.concept_id = @drug          then o.value_drug end),
+       max(case when o.concept_id = @duration      then o.value_numeric end),
+       max(case when o.concept_id = @duration_unit then concept_name(o.value_coded, @locale) end),
+       max(case when o.concept_id = @frequency     then concept_name(o.value_coded, @locale) end),
+       max(case when o.concept_id = @quantity      then o.value_numeric end),
+       max(case when o.concept_id = @qunits        then o.value_text end),
+       max(case when o.concept_id = @inxs          then o.value_text end)
+from obs g
+inner join obs o on o.obs_group_id = g.obs_id
+where g.concept_id = @dispensing_construct
+  and g.voided = 0
+  and o.voided = 0
+  and o.concept_id in (@dose, @doseUnit, @drug, @duration, @duration_unit,
+                       @frequency, @inxs, @quantity, @qunits)
+group by o.obs_group_id;
+
+-- new form: concept names for units and frequency
+-- (separate tables because MySQL can't join the same temp table twice in one query)
+drop temporary table if exists temp_md_dose_units;
+create temporary table temp_md_dose_units
+(concept_id int(11) primary key,
+ name       varchar(255));
+insert into temp_md_dose_units
+select u.concept_id, concept_name(u.concept_id, @locale)
+from (select distinct dose_units as concept_id from medication_dispense
+      where status = @complete_status and dose_units is not null) u;
+
+drop temporary table if exists temp_md_qty_units;
+create temporary table temp_md_qty_units
+(concept_id int(11) primary key,
+ name       varchar(255));
+insert into temp_md_qty_units
+select u.concept_id, concept_name(u.concept_id, @locale)
+from (select distinct quantity_units as concept_id from medication_dispense
+      where status = @complete_status and quantity_units is not null) u;
+
+drop temporary table if exists temp_md_frequency;
+create temporary table temp_md_frequency
+(order_frequency_id int(11) primary key,
+ name               varchar(255));
+insert into temp_md_frequency
+select order_frequency_id, concept_name(concept_id, @locale) from order_frequency;
+
+-- ---------------------------------------------------------------
+-- 2. Main table: each form inserted fully populated in ONE pass
+--    (replaces ~12 full-table UPDATEs). Column types are unchanged.
+--    ORDER BY keeps dispensing_id assigned in the same order as before
+--    (old form by obs_id, then new form by medication_dispense_id).
+-- ---------------------------------------------------------------
 DROP TEMPORARY TABLE IF EXISTS all_medication_dispensing;
 CREATE TEMPORARY TABLE all_medication_dispensing
 (dispensing_id      int(11) NOT NULL AUTO_INCREMENT,
@@ -13,275 +159,140 @@ encounter_id        int,
 encounter_datetime  datetime,
 location_id         int(11),
 encounter_location  varchar(100),
-site            varchar(255),
+site                varchar(255),
 visit_id            int,
 visit_location      varchar(100),
-datetime_entered    datetime,         
-user_entered        varchar(30),  
-creator             int(11),      
-encounter_provider  text,         
-dispenser           int(11),      
-drug_id             int(11),      
-drug_name           varchar(500), 
-drug_openboxes_code int,          
-duration            int,          
-duration_unit       varchar(20),  
-quantity_per_dose   double,       
-dose_unit           text,         
-frequency           varchar(50),  
-quantity_dispensed  int,          
-quantity_unit       varchar(30),  
-order_id            int,           
-dispensing_status   varchar(50),  
-status_reason       varchar(50),  
+datetime_entered    datetime,
+user_entered        text,
+creator             int(11),
+encounter_provider  text,
+dispenser           int(11),
+drug_id             int(11),
+drug_name           varchar(500),
+drug_openboxes_code int,
+duration            int,
+duration_unit       varchar(20),
+quantity_per_dose   double,
+dose_unit           text,
+frequency           varchar(50),
+quantity_dispensed  int,
+quantity_unit       varchar(30),
+order_id            int,
+dispensing_status   varchar(50),
+status_reason       varchar(50),
 instructions        text,
 index_asc           int,
 index_desc          int,
 PRIMARY KEY (dispensing_id)
 );
 
-set @dispensing_construct =  concept_from_mapping('PIH','9070');
--- add a row for every dispensing obs group construct
+-- old form: one row per dispensing obs group
 insert into all_medication_dispensing
-(patient_id,
-encounter_id,
-obs_group_id,
-form
-)
-select 
-o.person_id,
-o.encounter_id,
-o.obs_id,
-'Old'
-from obs o 
-where concept_id =  @dispensing_construct
-AND o.voided = 0;
+(form, patient_id, encounter_id, obs_group_id, emr_id,
+ encounter_datetime, datetime_entered, creator, user_entered, location_id,
+ encounter_location, site, visit_id, visit_location, encounter_provider,
+ drug_id, drug_name, drug_openboxes_code,
+ duration, duration_unit, quantity_per_dose, dose_unit, frequency,
+ quantity_dispensed, quantity_unit, instructions)
+select
+ 'Old',
+ g.person_id,
+ g.encounter_id,
+ g.obs_id,
+ em.emr_id,
+ e.encounter_datetime,
+ e.date_created,
+ e.creator,
+ un.user_name,
+ e.location_id,
+ ln.location_name,
+ -- site: visit's location when there is one, otherwise the
+ -- Visit Location ancestor of the encounter location (same as before)
+ coalesce(vl.location_name, l.site),
+ e.visit_id,
+ vl.location_name,
+ te.encounter_provider,
+ c.drugId,
+ dr.drug_name,
+ dr.drug_openboxes_code,
+ c.duration,
+ c.duration_unit,
+ c.dose,
+ c.doseUnit,
+ c.frequency,
+ c.quantity,
+ c.qunits,
+ c.inxs
+from obs g
+left join encounter e               on e.encounter_id  = g.encounter_id
+left join temp_encounter te         on te.encounter_id = g.encounter_id
+left join temp_obs_collated c       on c.obs_group_id  = g.obs_id
+left join temp_emr_ids em           on em.patient_id   = g.person_id
+left join temp_user_names un        on un.user_id      = e.creator
+left join temp_location_names ln    on ln.location_id  = e.location_id
+left join locations l               on l.location_id   = e.location_id
+left join visit v                   on v.visit_id      = e.visit_id
+left join locations vl              on vl.location_id  = v.location_id
+left join temp_drug_ids dr          on dr.drug_id      = c.drugId
+where g.concept_id = @dispensing_construct
+  and g.voided = 0
+order by g.obs_id;
 
-create index med_encounter_id on all_medication_dispensing(encounter_id);
-create index med_obs_group on all_medication_dispensing(obs_group_id);
-create index med_patient_id on all_medication_dispensing(patient_id);
+-- new form: one row per completed medication_dispense
+-- (encounter_provider is the dispenser's provider name, as before)
+insert into all_medication_dispensing
+(form, patient_id, encounter_id, emr_id,
+ encounter_datetime, datetime_entered, creator, user_entered, dispenser, location_id,
+ encounter_location, site, visit_id, visit_location, encounter_provider,
+ drug_id, drug_name, drug_openboxes_code,
+ quantity_per_dose, dose_unit, frequency, quantity_dispensed, quantity_unit,
+ order_id, instructions)
+select
+ 'New',
+ md.patient_id,
+ md.encounter_id,
+ em.emr_id,
+ md.date_handed_over,
+ md.date_created,
+ md.creator,
+ un.user_name,
+ md.dispenser,
+ md.location_id,
+ ln.location_name,
+ coalesce(vl.location_name, l.site),
+ e.visit_id,
+ vl.location_name,
+ p.provider_name,
+ md.drug_id,
+ dr.drug_name,
+ dr.drug_openboxes_code,
+ md.dose,
+ du.name,
+ f.name,
+ md.quantity,
+ qu.name,
+ md.drug_order_id,
+ md.dosing_instructions
+from medication_dispense md
+left join temp_md_frequency f       on f.order_frequency_id = md.frequency
+left join temp_md_dose_units du     on du.concept_id   = md.dose_units
+left join temp_md_qty_units qu      on qu.concept_id   = md.quantity_units
+left join temp_emr_ids em           on em.patient_id   = md.patient_id
+left join temp_user_names un        on un.user_id      = md.creator
+left join temp_providers p          on p.provider_id   = md.dispenser
+left join temp_location_names ln    on ln.location_id  = md.location_id
+left join locations l               on l.location_id   = md.location_id
+left join encounter e               on e.encounter_id  = md.encounter_id
+left join visit v                   on v.visit_id      = e.visit_id
+left join locations vl              on vl.location_id  = v.location_id
+left join temp_drug_ids dr          on dr.drug_id      = md.drug_id
+where md.status = @complete_status
+order by md.medication_dispense_id;
 
--- copy all distinct encounters to a row-per-encounter table to update the encounter-level columns
-DROP TABLE IF EXISTS temp_encounter;
-CREATE TEMPORARY TABLE temp_encounter
-(
-encounter_id 			int(11),
-encounter_datetime		datetime,
-location_id             int(11),
-datetime_entered 		datetime,
-creator					int(11),
-encounter_provider      text,
-user_entered            varchar(255)
-);
-
-insert into temp_encounter (encounter_id)
-select distinct encounter_id from all_medication_dispensing;
-
-create index temp_encounter_encounter_id on temp_encounter(encounter_id);
-
-update temp_encounter t
-inner join encounter e on t.encounter_id = e.encounter_id 
-set t.encounter_datetime = e.encounter_datetime,
-	t.datetime_entered = e.date_created ,
-	t.creator = e.creator,
-	t.location_id = e.location_id;
-
-update temp_encounter t
-set encounter_provider = provider(encounter_id);
-
-update all_medication_dispensing md
-inner join temp_encounter t on md.encounter_id = t.encounter_id
-set md.encounter_datetime = t.encounter_datetime,
-	md.datetime_entered = t.datetime_entered,
-	md.user_entered = t.user_entered,
-	md.creator = t.creator,
-	md.location_id = t.location_id,
-	md.encounter_provider = t.encounter_provider;
-
-
--- create a reduced obs table with only rows for the dispensing obs groups for all of the obs-level columns
-drop temporary table if exists temp_obs;
-create temporary table temp_obs 
-select o.obs_group_id ,o.concept_id, o.value_coded, o.value_numeric, o.value_text,  o.value_drug  
-from obs o
-inner join all_medication_dispensing t on t.obs_group_id = o.obs_group_id 
-where o.voided = 0;
-
-create index temp_obs_obs_ci on temp_obs(obs_group_id, concept_id);
-create index temp_obs_obs_grp on temp_obs(obs_group_id);
-
--- collate and decode observations to each obs_group
-set @dose = concept_from_mapping('PIH','9073');
-set @doseUnit = concept_from_mapping('PIH','9074');
-set @drug = concept_from_mapping('PIH','1282');
-set @duration = concept_from_mapping('PIH','9075');
-set @duration_unit = concept_from_mapping('PIH','6412');
-set @frequency = concept_from_mapping('PIH','9363');
-set @inxs = concept_from_mapping('PIH','9072');
-set @quantity = concept_from_mapping('PIH','9071');
-set @qunits = concept_from_mapping('PIH','9074');
-drop temporary table if exists temp_obs_collated;
-create temporary table temp_obs_collated 
-select 
-obs_group_id,
-max(case when concept_id = @dose then value_numeric end) "dose",
-max(case when concept_id = @doseUnit then value_text end) "doseUnit",
-max(case when concept_id = @drug then value_drug end) "drugId",
-max(case when concept_id = @duration then value_numeric end) "duration",
-max(case when concept_id = @duration_unit then concept_name(value_coded,@locale) end) "duration_unit",
-max(case when concept_id = @frequency then concept_name(value_coded,@locale) end) "frequency",
-max(case when concept_id = @quantity then value_numeric end) "quantity",
-max(case when concept_id = @qunits then value_text end) "qunits",
-max(case when concept_id = @inxs then value_text end) "inxs"
-from temp_obs 
-group by obs_group_id;
-
-create index temp_obs_collated_ogi on temp_obs_collated(obs_group_id);
-
-update all_medication_dispensing t
-inner join  temp_obs_collated o on o.obs_group_id = t.obs_group_id
-set t.duration = o.duration,
-	t.quantity_unit = o.qunits,
-	t.duration_unit = o.duration_unit,
-	t.quantity_per_dose = o.dose,
-	t.dose_unit = o.doseUnit,
-	t.frequency= o.frequency,
-	t.quantity_dispensed = o.quantity,
-	t.drug_id = o.drugId,
-	t.instructions = o.inxs;
-
--- New Form --------
-set @complete_status = concept_from_mapping('PIH','1267');
-INSERT INTO all_medication_dispensing(form, patient_id, encounter_id, encounter_datetime, datetime_entered,  creator, dispenser, location_id, drug_id,
-quantity_per_dose,dose_unit, frequency,quantity_dispensed, quantity_unit, order_id, instructions)
+-- ---------------------------------------------------------------
+-- 3. Final select (unchanged)
+-- ---------------------------------------------------------------
 SELECT
-'New' AS form,
-patient_id,
-encounter_id,
-date_handed_over,
-md.date_created,
-md.creator,
-dispenser,
-location_id,
-drug_id ,
-dose quantity_per_dose,
-concept_name(dose_units, @locale) dose_units,
-concept_name(of2.concept_id , @locale) frequency,
-quantity quantity_dispensed,
-concept_name(quantity_units, @locale) AS quantity_unit, 
-drug_order_id AS order_id, 
-dosing_instructions prescription
-FROM medication_dispense md 
-LEFT OUTER JOIN order_frequency of2 ON of2.order_frequency_id = md.frequency
-where md.status = @complete_status;
-
--- update location
-update all_medication_dispensing m
-set encounter_location = location_name(location_id);
-
--- Sets site as the Visit Location ancestor of the encounter location (fallback for rows with no visit).
-update all_medication_dispensing m
-inner join locations l on l.location_id = m.location_id
-set m.site = l.site;
-
-update all_medication_dispensing m
-inner join encounter e on e.encounter_id = m.encounter_id
-set m.visit_id = e.visit_id;
-
--- Sets visit_location from the visit's location.
--- Overrides site with visit_location when a visit exists, since visits are
--- associated directly with the Visit Location — more accurate than the ancestor walk.
-update all_medication_dispensing m
-inner join visit v on v.visit_id = m.visit_id
-inner join locations l on l.location_id = v.location_id
-set m.visit_location = l.location_name,
-    m.site = l.location_name;
-
--- user names of creator
--- copy all distinct creators to a table, find the name and join back to main table
-drop temporary table if exists temp_user_names;
-CREATE TEMPORARY TABLE temp_user_names
-(user_id  int(11),
-user_name text);
-
-insert into temp_user_names (user_id)
-select distinct creator from all_medication_dispensing;
-
-create index temp_user_names_ui on temp_user_names(user_id);
-
-update temp_user_names 
-set user_name =  person_name_of_user(user_id);
-
-update all_medication_dispensing md
-inner join temp_user_names u on md.creator = u.user_id
-set md.user_entered = u.user_name;
-
--- user names of dispenser
--- copy all distinct dispensers to a table, find the name and join back to main table
-drop temporary table if exists temp_providers;
-CREATE TEMPORARY TABLE temp_providers
-(provider_id  int(11),
-provider_name text);
-
-insert into temp_providers (provider_id)
-select distinct dispenser from all_medication_dispensing;
-
-create index temp_providers_pi on temp_providers(provider_id);
-
-update temp_providers 
-set provider_name =  provider_name_from_provider_id(provider_id);
-
-update all_medication_dispensing md
-inner join temp_providers u on md.dispenser = u.provider_id
-set md.encounter_provider  = u.provider_name;
-
--- update emr ids 
--- copy all distinct patients to a row-per-encounter table
-DROP TEMPORARY TABLE IF EXISTS temp_emr_ids;
-CREATE TEMPORARY TABLE temp_emr_ids
-(patient_id int(11),
-emr_id		varchar(50)
-);
-
-insert into temp_emr_ids (patient_id)
-select distinct patient_id from all_medication_dispensing;
-
-create index temp_emr_ids_patient_id on temp_emr_ids(patient_id);
-
-set @primary_emr_id = METADATA_UUID('org.openmrs.module.emrapi', 'emr.primaryIdentifierType');
-UPDATE temp_emr_ids
-SET emr_id=PATIENT_IDENTIFIER(patient_id, @primary_emr_id); 
-
-update all_medication_dispensing md
-inner join temp_emr_ids ei on ei.patient_id = md.patient_id
-set md.emr_id = ei.emr_id;
-
--- -- copy all distinct drugs to a row-per-drug table to update the drug level columns
-DROP TABLE IF EXISTS temp_drug_ids;
-CREATE TEMPORARY TABLE temp_drug_ids
-(drug_id            int(11),
-drug_name           varchar(255),
-drug_openboxes_code int
-);
-
-insert into temp_drug_ids (drug_id)
-select distinct drug_id from all_medication_dispensing;
-
-create index temp_drug_id_dr on temp_drug_ids(drug_id);
-
-UPDATE temp_drug_ids tgt 
-SET drug_name= drugName(drug_id);
-
-UPDATE temp_drug_ids tgt 
-SET drug_openboxes_code= openboxesCode (drug_id);
-
-update all_medication_dispensing tgt
-inner join temp_drug_ids t on t.drug_id = tgt.drug_id
-set tgt.drug_name = t.drug_name,
-	tgt.drug_openboxes_code = t.drug_openboxes_code;
-
--- final select of the data
-SELECT 
 CONCAT(@partition,'-',dispensing_id) "dispensing_id",
 form,
 CONCAT(@partition,'-',patient_id) "patient_id",
@@ -304,7 +315,7 @@ dose_unit,
 frequency,
 quantity_dispensed,
 quantity_unit,
-CONCAT(@partition,'-',order_id) "order_id",	
+CONCAT(@partition,'-',order_id) "order_id",
 instructions,
 index_asc,
 index_desc
