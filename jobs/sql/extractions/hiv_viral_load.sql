@@ -81,6 +81,7 @@ select x.encounter_id,
           where o.voided = 0 and o.encounter_id = x.encounter_id and o.concept_id = @lowLimit
           order by o.date_created desc, o.obs_id desc limit 1)
 from (select encounter_id from temp_vl_order_specimen
+      where encounter_id is not null      -- a result obs can have no encounter; its key can't be NULL
       union
       select encounter_id from obs
       where voided = 0 and concept_id = @vl_construct and encounter_id is not null) x;
