@@ -5,4 +5,4 @@ databaseName: ${datasources.openmrs.petiteriviere.databaseName}
 user: ${datasources.openmrs.petiteriviere.user}
 password: ${datasources.openmrs.petiteriviere.password}
 options: ${datasources.openmrs.petiteriviere.options}
-containerName: ${datasources.openmrs.petiteriviere.containerName}
+containerName: ${datasources.openmrs.petiteriviere.containerName:}

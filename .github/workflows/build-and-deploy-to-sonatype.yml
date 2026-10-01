@@ -7,24 +7,18 @@ on:
   repository_dispatch:
 
 jobs:
-  update-versions:
-    if: github.repository_owner == 'PIH'
-    permissions:
-      contents: write
-    concurrency:
-      group: update-versions-${{ github.ref }}
-      cancel-in-progress: true
-    uses: PIH/openmrs-contrib-distro-tools/.github/workflows/update-versions.yml@main
-    secrets: inherit
-
   build-and-publish:
     if: github.repository_owner == 'PIH'
-    needs: update-versions
     concurrency:
       group: build-and-deploy-${{ github.ref }}
       cancel-in-progress: true
     uses: PIH/openmrs-contrib-distro-tools/.github/workflows/build-and-deploy-to-sonatype.yml@main
     with:
+      image_name: partnersinhealth/zl-etl
+      docker_context: target/docker
+      # After a new PETL image (petl's workflow sends petl-image-published), build on exactly that image,
+      # so this build and its CI run test it; an event without one fails the build (empty base image).
+      docker_build_args: ${{ github.event.action == 'petl-image-published' && format('PETL_BASE_IMAGE={0}', github.event.client_payload.petl_image) || '' }}
       notify_ci_dashboard: true
     secrets: inherit
 

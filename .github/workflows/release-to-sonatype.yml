@@ -9,4 +9,7 @@ permissions:
 jobs:
   release:
     uses: PIH/openmrs-contrib-distro-tools/.github/workflows/release-to-sonatype.yml@main
+    with:
+      image_name: partnersinhealth/zl-etl
+      docker_context: target/docker
     secrets: inherit

@@ -5,4 +5,4 @@ databaseName: ${datasources.openmrs.zlci.databaseName}
 user: ${datasources.openmrs.zlci.user}
 password: ${datasources.openmrs.zlci.password}
 options: ${datasources.openmrs.zlci.options}
-containerName: ${datasources.openmrs.zlci.containerName}
+containerName: ${datasources.openmrs.zlci.containerName:}

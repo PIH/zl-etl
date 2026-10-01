@@ -79,6 +79,31 @@
                             <outputDirectory>${project.build.directory}/zl-etl/</outputDirectory>
                         </configuration>
                     </execution>
+                    <!-- The Docker build context (target/docker/), from the same files as the zip
+                         artifact; kept apart so Docker-only files stay out of the zip. -->
+                    <execution>
+                        <id>package-docker-context</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <encoding>UTF-8</encoding>
+                            <resources>
+                                <resource>
+                                    <directory>${basedir}</directory>
+                                    <filtering>false</filtering>
+                                    <includes>
+                                        <include>datasources/**</include>
+                                        <include>jobs/**</include>
+                                        <include>application-docker.yml</include>
+                                        <include>Dockerfile</include>
+                                    </includes>
+                                </resource>
+                            </resources>
+                            <outputDirectory>${project.build.directory}/docker/</outputDirectory>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
