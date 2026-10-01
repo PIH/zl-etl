@@ -7,8 +7,23 @@ on:
   repository_dispatch:
 
 jobs:
+  # After a new PETL image (petl-image-published), rebuild only if this project builds on one of the
+  # tags that just moved; one pinned to another PETL version isn't affected.
+  check-petl-base:
+    if: github.repository_owner == 'PIH' && github.event.action == 'petl-image-published'
+    runs-on: ubuntu-latest
+    outputs:
+      affected: ${{ steps.check.outputs.affected }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: check
+        uses: PIH/openmrs-contrib-distro-tools/.github/actions/etl-base-image-affected@main
+        with:
+          published_tags: ${{ toJSON(github.event.client_payload.petl_tags) }}
+
   build-and-publish:
-    if: github.repository_owner == 'PIH'
+    needs: check-petl-base
+    if: github.repository_owner == 'PIH' && !cancelled() && (github.event.action != 'petl-image-published' || needs.check-petl-base.outputs.affected == 'true')
     concurrency:
       group: build-and-deploy-${{ github.ref }}
       cancel-in-progress: true
@@ -16,8 +31,8 @@ jobs:
     with:
       image_name: partnersinhealth/zl-etl
       docker_context: target/docker
-      # After a new PETL image (petl's workflow sends petl-image-published), build on exactly that image,
-      # so this build and its CI run test it; an event without one fails the build (empty base image).
+      # After a new PETL image this project builds on (check-petl-base), build on exactly that image, so
+      # this build and its CI run test it; an event without one fails the build (empty base image).
       docker_build_args: ${{ github.event.action == 'petl-image-published' && format('PETL_BASE_IMAGE={0}', github.event.client_payload.petl_image) || '' }}
       notify_ci_dashboard: true
     secrets: inherit
