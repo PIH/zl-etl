@@ -1,0 +1,30 @@
+# The image's application.yml. Per-server values come from the environment (distro-tools' petl
+# service sets PETL_MYSQL_* and PETL_SQLSERVER_*); any other property can be set by its Spring env
+# name, e.g. DATASOURCES_OPENMRS_<SITE>_HOST for another site. PETL's own job history is
+# spring.datasource: H2 by default, or SQL Server from SPRING_DATASOURCE_* (puppet's job_store => 'sqlserver').
+petl:
+  homeDir: "/home/petl"
+  datasourceDir: "${petl.homeDir}/configurations/datasources"
+  jobDir: "${petl.homeDir}/configurations/jobs"
+
+logging:
+  level:
+    root: "WARN"
+    org.pih: "INFO"
+
+datasources:
+  openmrs:
+    # The instance's own OpenMRS database (the CI server's site, as in the legacy application-zl-ci config).
+    zlci:
+      host: "${PETL_MYSQL_HOST}"
+      port: "${PETL_MYSQL_PORT:3306}"
+      databaseName: "openmrs"
+      user: "${PETL_MYSQL_USER}"
+      password: "${PETL_MYSQL_PASSWORD}"
+      options: "${PETL_MYSQL_OPTIONS:}"
+  warehouse:
+    host: "${PETL_SQLSERVER_HOST}"
+    port: "${PETL_SQLSERVER_PORT:1433}"
+    databaseName: "${PETL_SQLSERVER_DATABASE}"
+    user: "${PETL_SQLSERVER_USER}"
+    password: "${PETL_SQLSERVER_PASSWORD}"

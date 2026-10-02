@@ -5,4 +5,4 @@ databaseName: ${datasources.openmrs.verrettes.databaseName}
 user: ${datasources.openmrs.verrettes.user}
 password: ${datasources.openmrs.verrettes.password}
 options: ${datasources.openmrs.verrettes.options}
-containerName: ${datasources.openmrs.verrettes.containerName}
+containerName: ${datasources.openmrs.verrettes.containerName:}
