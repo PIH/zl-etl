@@ -1,7 +1,6 @@
-# Pinned by digest; Renovate (renovate.json) keeps the digest current for the tag (latest).
 # Defaults to the published base image, so CI can build this. build-runtime-docker-image.sh
 # overrides it with partnersinhealth/petl:local for local builds.
-ARG PETL_BASE_IMAGE=partnersinhealth/petl:latest@sha256:f14cd8733c839645e41196e9907e56e76671aedee3776c109facb7bf88b61df6
+ARG PETL_BASE_IMAGE=partnersinhealth/petl:latest
 FROM ${PETL_BASE_IMAGE}
 
 COPY datasources /home/petl/configurations/datasources
