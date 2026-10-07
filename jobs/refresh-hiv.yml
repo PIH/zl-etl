@@ -34,6 +34,7 @@ configuration:
           - tableName: "hiv_viral_load"
           - tableName: "hiv_visit"
           - tableName: "hiv_pmtct_visit"
+          - tableName: "prep_visit"
           - tableName: "ovc_program_encounters"
           - tableName: "pmtct_infant_delivery"
           - tableName: "pmtct_contacts"
