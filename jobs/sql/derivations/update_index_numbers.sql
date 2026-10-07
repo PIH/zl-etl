@@ -50,6 +50,33 @@ set     t.index_asc = i.index_asc, t.index_desc = i.index_desc
 from    mh_encounters t inner join #derived_indexes i on i.encounter_id = t.encounter_id
 ;
 
+-- update index asc/desc on prep_visit table
+drop table if exists #derived_indexes;
+select  encounter_id,
+        ROW_NUMBER() over (PARTITION by patient_id order by encounter_datetime, encounter_id) as index_asc,
+        ROW_NUMBER() over (PARTITION by patient_id order by encounter_datetime DESC, encounter_id DESC) as index_desc
+into    #derived_indexes
+from    prep_visit;
+
+update  t
+set     t.index_asc = i.index_asc, t.index_desc = i.index_desc
+from    prep_visit t inner join #derived_indexes i on i.encounter_id = t.encounter_id
+;
+
+-- update program index asc/desc on prep_visit table (only rows linked to a PrEP program enrollment)
+drop table if exists #derived_indexes;
+select  encounter_id,
+        ROW_NUMBER() over (PARTITION by prep_program_id order by encounter_datetime, encounter_id) as index_program_asc,
+        ROW_NUMBER() over (PARTITION by prep_program_id order by encounter_datetime DESC, encounter_id DESC) as index_program_desc
+into    #derived_indexes
+from    prep_visit
+where   prep_program_id is not null;
+
+update  t
+set     t.index_program_asc = i.index_program_asc, t.index_program_desc = i.index_program_desc
+from    prep_visit t inner join #derived_indexes i on i.encounter_id = t.encounter_id
+;
+
 -- #########################################
 -- REFACTOR ALL OF THE BELOW IN THE STYLE OF THE ABOVE
 -- REVIEW ALL CRITERIA AND TEST TO ENSURE ORDERING IS CORRECT
