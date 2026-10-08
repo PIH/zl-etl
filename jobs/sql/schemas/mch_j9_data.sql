@@ -38,5 +38,7 @@ CREATE TABLE mch_j9_data (
     prenatal_teas                  VARCHAR(255),
     referral_type                  VARCHAR(255),
     referral_type_other            VARCHAR(255),
-    referred_from_facility         VARCHAR(100)
+    referred_from_facility         VARCHAR(100),
+    facility_enrolled              VARCHAR(255),
+    latest_visited_facility        VARCHAR(255)
 );
