@@ -10,6 +10,7 @@ set @partition = '${partitionNum}';
 select program_id into @mchProgram from program where uuid = '41a2715e-8a14-11e8-9a94-a6cf71072f73';
 select encounter_type('d83e98fd-dc7b-420f-aa3f-36f648b4483d') into @ob_gyn_enc_id;
 select encounter_type('873f968a-73a8-4f9c-ac78-9f4778b751b6') into @reg_enc_id;
+select encounter_type('00e5ebb2-90ec-11e8-9eb6-529269fb1459') into @mch_delivery_enc_id;
 select program_workflow_id into @mchWorkflow from program_workflow where uuid = '41a277d0-8a14-11e8-9a94-a6cf71072f73';
 
 set @ms_id                     = concept_from_mapping('CIEL','1054');
@@ -100,12 +101,17 @@ prenatal_teas                   varchar(255),
 referral_type                   VARCHAR(255),
 referral_type_other             VARCHAR(255),
 referred_from_facility          VARCHAR(100),
+facility_enrolled               VARCHAR(255),
+latest_visited_facility         VARCHAR(255),
 index temp_j9_pid (patient_id)
 );
 
 -- program_state inlined from currentProgramState() (same joins, filters and ORDER BY)
-insert into temp_j9 (patient_id, mch_program_id, date_enrolled, date_completed, program_state)
+-- facility_enrolled: the facility ('Health Facility Location' ancestor, via the
+-- locations view's site column) of the program enrollment location
+insert into temp_j9 (patient_id, mch_program_id, date_enrolled, date_completed, facility_enrolled, program_state)
 select pp.patient_id, pp.patient_program_id, pp.date_enrolled, pp.date_completed,
+       (select ls.site from locations ls where ls.location_id = pp.location_id),
        concept_name(
          (select pws.concept_id
           from patient_state ps
@@ -397,6 +403,31 @@ set t.number_anc_visit              = ifnull(w.number_anc_visit, 0),
     t.referral_type_other           = w.referral_type_other,
     t.referred_from_facility        = w.referred_from_facility;
 
+-- latest visited facility: facility ('Health Facility Location' ancestor, via the
+-- locations view's site column) of the most recent MCH encounter
+-- (OB/GYN or MCH Delivery) inside the enrollment window.
+-- Lets analysts compare against facility_enrolled to see e.g. HUM patients
+-- whose care moved to Cange, Hinche, etc.
+drop temporary table if exists temp_j9_latest_visit;
+create temporary table temp_j9_latest_visit
+(mch_program_id int primary key,
+ location_id    int);
+insert into temp_j9_latest_visit
+select k.mch_program_id,
+       (select e.location_id from encounter e
+        where e.patient_id = k.patient_id
+          and e.voided = 0
+          and e.encounter_type in (@ob_gyn_enc_id, @mch_delivery_enc_id)
+          and e.encounter_datetime >= k.date_enrolled
+          and e.encounter_datetime <= k.end_date
+        order by e.encounter_datetime desc, e.encounter_id desc limit 1)
+from temp_j9_keys k;
+
+update temp_j9 t
+inner join temp_j9_latest_visit l on l.mch_program_id = t.mch_program_id
+inner join locations ls on ls.location_id = l.location_id
+set t.latest_visited_facility = ls.site;
+
 -- ---------------------------------------------------------------
 -- 4. Final output (emr_id now comes from the lookup instead of zlemr() per row)
 -- ---------------------------------------------------------------
@@ -440,7 +471,9 @@ t.traditional_healer,
 t.prenatal_teas,
 t.referral_type,
 t.referral_type_other,
-t.referred_from_facility
+t.referred_from_facility,
+t.facility_enrolled,
+t.latest_visited_facility
 from temp_j9 t
 left join temp_j9_patients p on p.patient_id = t.patient_id
 ;
