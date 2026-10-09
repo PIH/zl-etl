@@ -1,0 +1,6 @@
+type: "job-pipeline"
+description: "Refreshing HIV CI data"
+configuration:
+  jobs:
+    - path: "refresh-hiv.yml"
+    - path: "refresh-derived-tables.yml"
