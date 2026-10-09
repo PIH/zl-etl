@@ -14,8 +14,16 @@ logging:
 
 datasources:
   openmrs:
-    # The instance's own OpenMRS database (the CI server's site, as in the legacy application-zl-ci config).
+    # The instance's own OpenMRS database, under the site names CI jobs use: zlci (refresh-ci-warehouse.yml)
+    # and hiv (refresh-hiv-ci-warehouse.yml, for the hiv-ci instance).
     zlci:
+      host: "${PETL_MYSQL_HOST}"
+      port: "${PETL_MYSQL_PORT:3306}"
+      databaseName: "openmrs"
+      user: "${PETL_MYSQL_USER}"
+      password: "${PETL_MYSQL_PASSWORD}"
+      options: "${PETL_MYSQL_OPTIONS:}"
+    hiv:
       host: "${PETL_MYSQL_HOST}"
       port: "${PETL_MYSQL_PORT:3306}"
       databaseName: "openmrs"

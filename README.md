@@ -82,7 +82,8 @@ It runs as [openmrs-contrib-distro-tools](https://github.com/PIH/openmrs-contrib
     PETL_FULL_REFRESH_JOBS="create-partitions.yml refresh-ci-warehouse.yml"
     PETL_SQLSERVER_DATABASE=openmrs_zl_ci
 
-`application-docker.yml` maps the `zlci` OpenMRS datasource and the `warehouse` SQL Server
+`application-docker.yml` maps the `zlci` and `hiv` OpenMRS datasources (both the instance's own
+database, for `refresh-ci-warehouse.yml` and `refresh-hiv-ci-warehouse.yml`) and the `warehouse` SQL Server
 datasource onto distro-tools' `PETL_MYSQL_*` and `PETL_SQLSERVER_*` variables. The other sites'
 datasources aren't set; set one by its Spring environment-variable name where it's needed (e.g.
 `DATASOURCES_OPENMRS_<SITE>_HOST`).
