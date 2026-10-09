@@ -32,3 +32,16 @@ jobs:
       run-etl: true
       notify_ci_dashboard: true
     secrets: inherit
+
+  deploy-to-hiv-ci:
+    if: github.repository_owner == 'PIH'
+    needs: build-and-publish
+    concurrency:
+      group: deploy-to-hiv-ci-${{ github.ref }}
+      cancel-in-progress: true
+    uses: PIH/openmrs-contrib-distro-tools/.github/workflows/run-petl-via-runner.yml@main
+    with:
+      runner-label: appclstr-01
+      instance: hiv-ci
+      notify_ci_dashboard: true
+    secrets: inherit
