@@ -216,12 +216,27 @@ CREATE INDEX temp_obs_oi ON temp_obs (obs_id);
 
 -- population category (intake checkboxes, CIEL:160581)
 UPDATE temp_prep_visit
-SET pop_msm                   = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '160578'),
-	pop_sex_worker            = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '166513'),
-	pop_transgender           = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '166415'),
-	pop_injection_drug_user   = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '105'),
-	pop_serodiscordant_couple = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '6096'),
-	pop_other                 = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '5622')
+SET pop_msm = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '160578')
+WHERE encounter_type_id = @prep_intake;
+
+UPDATE temp_prep_visit
+SET pop_sex_worker = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '166513')
+WHERE encounter_type_id = @prep_intake;
+
+UPDATE temp_prep_visit
+SET pop_transgender = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '166415')
+WHERE encounter_type_id = @prep_intake;
+
+UPDATE temp_prep_visit
+SET pop_injection_drug_user = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '105')
+WHERE encounter_type_id = @prep_intake;
+
+UPDATE temp_prep_visit
+SET pop_serodiscordant_couple = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '6096')
+WHERE encounter_type_id = @prep_intake;
+
+UPDATE temp_prep_visit
+SET pop_other = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '5622')
 WHERE encounter_type_id = @prep_intake;
 
 UPDATE temp_prep_visit
@@ -232,8 +247,11 @@ UPDATE temp_prep_visit
 SET hiv_test_obs_group_id = obs_id_from_temp(encounter_id, 'PIH', '11522', 0);
 
 UPDATE temp_prep_visit
-SET hiv_test_result = obs_from_group_id_value_coded_list_from_temp(hiv_test_obs_group_id, 'CIEL', '163722', @locale),
-	hiv_test_date = DATE(obs_from_group_id_value_datetime_from_temp(hiv_test_obs_group_id, 'PIH', 'DATE OF LABORATORY TEST'))
+SET hiv_test_result = obs_from_group_id_value_coded_list_from_temp(hiv_test_obs_group_id, 'CIEL', '163722', @locale)
+WHERE hiv_test_obs_group_id IS NOT NULL;
+
+UPDATE temp_prep_visit
+SET hiv_test_date = DATE(obs_from_group_id_value_datetime_from_temp(hiv_test_obs_group_id, 'PIH', 'DATE OF LABORATORY TEST'))
 WHERE hiv_test_obs_group_id IS NOT NULL;
 
 -- RPR / syphilis test (obs group PIH:11523)
@@ -241,8 +259,11 @@ UPDATE temp_prep_visit
 SET rpr_obs_group_id = obs_id_from_temp(encounter_id, 'PIH', '11523', 0);
 
 UPDATE temp_prep_visit
-SET rpr_result = obs_from_group_id_value_coded_list_from_temp(rpr_obs_group_id, 'PIH', 'RPR', @locale),
-	rpr_date = DATE(obs_from_group_id_value_datetime_from_temp(rpr_obs_group_id, 'PIH', 'DATE OF LABORATORY TEST'))
+SET rpr_result = obs_from_group_id_value_coded_list_from_temp(rpr_obs_group_id, 'PIH', 'RPR', @locale)
+WHERE rpr_obs_group_id IS NOT NULL;
+
+UPDATE temp_prep_visit
+SET rpr_date = DATE(obs_from_group_id_value_datetime_from_temp(rpr_obs_group_id, 'PIH', 'DATE OF LABORATORY TEST'))
 WHERE rpr_obs_group_id IS NOT NULL;
 
 UPDATE temp_prep_visit
@@ -250,62 +271,145 @@ SET creatinine_clearance = obs_value_numeric_from_temp(encounter_id, 'CIEL', '16
 
 -- intake: steps before PrEP, screening, consent, initiation
 UPDATE temp_prep_visit
-SET prep_counseling       = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'CIEL', '165335', 0)),
-	interested_in_prep    = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'CIEL', '166657', 0)),
-	hep_b_surface_antigen = obs_value_coded_list_from_temp(encounter_id, 'CIEL', '159430', @locale),
-	pregnancy_test_result = obs_value_coded_list_from_temp(encounter_id, 'CIEL', '45', @locale),
-	last_sex_date         = DATE(obs_value_datetime_from_temp(encounter_id, 'PIH', '20885')),
-	acute_hiv_signs       = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'PIH', '20888', 0)),
-	start_prep            = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'PIH', '20886', 0)),
-	prep_consent          = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'PIH', '20887', 0)),
-	prep_start_date       = DATE(obs_value_datetime_from_temp(encounter_id, 'PIH', '20897'));
+SET prep_counseling       = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'CIEL', '165335', 0));
+
+UPDATE temp_prep_visit
+SET interested_in_prep    = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'CIEL', '166657', 0));
+
+UPDATE temp_prep_visit
+SET hep_b_surface_antigen = obs_value_coded_list_from_temp(encounter_id, 'CIEL', '159430', @locale);
+
+UPDATE temp_prep_visit
+SET pregnancy_test_result = obs_value_coded_list_from_temp(encounter_id, 'CIEL', '45', @locale);
+
+UPDATE temp_prep_visit
+SET last_sex_date         = DATE(obs_value_datetime_from_temp(encounter_id, 'PIH', '20885'));
+
+UPDATE temp_prep_visit
+SET acute_hiv_signs       = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '20888', 0));
+
+UPDATE temp_prep_visit
+SET start_prep            = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '20886', 0));
+
+UPDATE temp_prep_visit
+SET prep_consent          = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '20887', 0));
+
+UPDATE temp_prep_visit
+SET prep_start_date       = DATE(obs_value_datetime_from_temp(encounter_id, 'PIH', '20897'));
 
 -- intake: transfer / referral in
 UPDATE temp_prep_visit
-SET followed_elsewhere_for_prep  = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'CIEL', '170089', 0)),
-	estimated_program_start_date = DATE(obs_value_datetime_from_temp(encounter_id, 'PIH', '21422')),
-	referral_clinic              = obs_value_text_from_temp(encounter_id, 'PIH', '11483'),
-	referral_date                = DATE(obs_value_datetime_from_temp(encounter_id, 'CIEL', '163181'));
+SET followed_elsewhere_for_prep  = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'CIEL', '170089', 0));
+
+UPDATE temp_prep_visit
+SET estimated_program_start_date = DATE(obs_value_datetime_from_temp(encounter_id, 'PIH', '21422'));
+
+UPDATE temp_prep_visit
+SET referral_clinic              = obs_value_text_from_temp(encounter_id, 'PIH', '11483');
+
+UPDATE temp_prep_visit
+SET referral_date                = DATE(obs_value_datetime_from_temp(encounter_id, 'CIEL', '163181'));
 
 -- followup: pregnancy / breastfeeding
 UPDATE temp_prep_visit
-SET pregnant             = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'CIEL', '5272', 0)),
-	breastfeeding_status = obs_value_coded_list_from_temp(encounter_id, 'CIEL', '985', @locale),
-	wean_date            = DATE(obs_value_datetime_from_temp(encounter_id, 'CIEL', '166566'));
+SET pregnant             = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'CIEL', '5272', 0));
+
+UPDATE temp_prep_visit
+SET breastfeeding_status = obs_value_coded_list_from_temp(encounter_id, 'CIEL', '985', @locale);
+
+UPDATE temp_prep_visit
+SET wean_date            = DATE(obs_value_datetime_from_temp(encounter_id, 'CIEL', '166566'));
 
 -- followup: medication side effects (checkboxes, PIH:ADVERSE EFFECT)
 UPDATE temp_prep_visit
-SET side_effect_abdominal_pain      = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '151'),
-	side_effect_rash                = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '512'),
-	side_effect_nausea              = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '5978'),
-	side_effect_vomiting            = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '122983'),
-	side_effect_diarrhea            = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '142412'),
-	side_effect_fatigue             = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '140501'),
-	side_effect_swollen_lymph_nodes = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'PIH', '161'),
-	side_effect_fever               = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '140238'),
-	side_effect_other               = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '5622'),
-	side_effect_other_text          = obs_value_text_from_temp(encounter_id, 'PIH', '1729')
+SET side_effect_abdominal_pain      = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '151')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET side_effect_rash                = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '512')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET side_effect_nausea              = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '5978')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET side_effect_vomiting            = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '122983')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET side_effect_diarrhea            = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '142412')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET side_effect_fatigue             = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '140501')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET side_effect_swollen_lymph_nodes = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'PIH', '161')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET side_effect_fever               = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '140238')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET side_effect_other               = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '5622')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET side_effect_other_text          = obs_value_text_from_temp(encounter_id, 'PIH', '1729')
 WHERE encounter_type_id = @prep_followup;
 
 -- followup: STI symptoms (checkboxes, PIH:1293)
 UPDATE temp_prep_visit
-SET sti_urethral_discharge        = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '123529'),
-	sti_genital_ulcers            = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '864'),
-	sti_abnormal_vaginal_bleeding = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '150802'),
-	sti_foul_vaginal_discharge    = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '165162'),
-	sti_abdominal_pain            = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '151'),
-	sti_scrotal_swelling          = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '125203'),
-	sti_inguinal_bubo             = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '137155'),
-	sti_other                     = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '5622'),
-	sti_other_text                = obs_value_text_from_temp(encounter_id, 'PIH', '1374')
+SET sti_urethral_discharge        = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '123529')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET sti_genital_ulcers            = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '864')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET sti_abnormal_vaginal_bleeding = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '150802')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET sti_foul_vaginal_discharge    = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '165162')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET sti_abdominal_pain            = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '151')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET sti_scrotal_swelling          = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '125203')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET sti_inguinal_bubo             = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '137155')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET sti_other                     = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '5622')
+WHERE encounter_type_id = @prep_followup;
+
+UPDATE temp_prep_visit
+SET sti_other_text                = obs_value_text_from_temp(encounter_id, 'PIH', '1374')
 WHERE encounter_type_id = @prep_followup;
 
 -- prevention and education (both forms)
 UPDATE temp_prep_visit
-SET hiv_risk_counseling = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'PIH', '20898', 0)),
-	condoms_provided    = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'CIEL', '159777', 0)),
-	lubricant_provided  = value_coded_as_boolean_from_temp(obs_id_from_temp(encounter_id, 'PIH', '21424', 0)),
-	other_prevention    = obs_value_text_from_temp(encounter_id, 'PIH', '21428');
+SET hiv_risk_counseling = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '20898', 0));
+
+UPDATE temp_prep_visit
+SET condoms_provided    = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'CIEL', '159777', 0));
+
+UPDATE temp_prep_visit
+SET lubricant_provided  = value_coded_as_boolean(obs_id_from_temp(encounter_id, 'PIH', '21424', 0));
+
+UPDATE temp_prep_visit
+SET other_prevention    = obs_value_text_from_temp(encounter_id, 'PIH', '21428');
 
 -- VMMC answers are not Yes/No concepts (CIEL:145096 = yes, CIEL:163841 = no on the form)
 UPDATE temp_prep_visit t
@@ -318,9 +422,13 @@ SET t.vmmc =
 
 -- followup: status
 UPDATE temp_prep_visit
-SET prep_adherence = obs_value_coded_list_from_temp(encounter_id, 'CIEL', '164847', @locale),
-	disposition    = obs_value_coded_list_from_temp(encounter_id, 'PIH', '8620', @locale),
-	remarks        = obs_value_text_from_temp(encounter_id, 'PIH', '1620');
+SET prep_adherence = obs_value_coded_list_from_temp(encounter_id, 'CIEL', '164847', @locale);
+
+UPDATE temp_prep_visit
+SET disposition    = obs_value_coded_list_from_temp(encounter_id, 'PIH', '8620', @locale);
+
+UPDATE temp_prep_visit
+SET remarks        = obs_value_text_from_temp(encounter_id, 'PIH', '1620');
 
 -- both forms
 UPDATE temp_prep_visit
