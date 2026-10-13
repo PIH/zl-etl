@@ -214,29 +214,33 @@ CREATE INDEX temp_obs_ci1 ON temp_obs (encounter_id, concept_id);
 CREATE INDEX temp_obs_ci2 ON temp_obs (obs_group_id, concept_id);
 CREATE INDEX temp_obs_oi ON temp_obs (obs_id);
 
+-- Checkbox questions (population category, side effects, STI symptoms):
+-- an unchecked box saves no obs, so it cannot be told apart from an unanswered question.
+-- Checked = 1, otherwise NULL (never 0). Yes/No radio questions below keep 1 / 0 / NULL.
+
 -- population category (intake checkboxes, CIEL:160581)
 UPDATE temp_prep_visit
-SET pop_msm = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '160578')
+SET pop_msm = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '160578'), 0)
 WHERE encounter_type_id = @prep_intake;
 
 UPDATE temp_prep_visit
-SET pop_sex_worker = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '166513')
+SET pop_sex_worker = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '166513'), 0)
 WHERE encounter_type_id = @prep_intake;
 
 UPDATE temp_prep_visit
-SET pop_transgender = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '166415')
+SET pop_transgender = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '166415'), 0)
 WHERE encounter_type_id = @prep_intake;
 
 UPDATE temp_prep_visit
-SET pop_injection_drug_user = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '105')
+SET pop_injection_drug_user = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '105'), 0)
 WHERE encounter_type_id = @prep_intake;
 
 UPDATE temp_prep_visit
-SET pop_serodiscordant_couple = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '6096')
+SET pop_serodiscordant_couple = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '6096'), 0)
 WHERE encounter_type_id = @prep_intake;
 
 UPDATE temp_prep_visit
-SET pop_other = answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '5622')
+SET pop_other = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'CIEL', '160581', 'CIEL', '5622'), 0)
 WHERE encounter_type_id = @prep_intake;
 
 UPDATE temp_prep_visit
@@ -322,39 +326,39 @@ SET wean_date            = DATE(obs_value_datetime_from_temp(encounter_id, 'CIEL
 
 -- followup: medication side effects (checkboxes, PIH:ADVERSE EFFECT)
 UPDATE temp_prep_visit
-SET side_effect_abdominal_pain      = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '151')
+SET side_effect_abdominal_pain      = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '151'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET side_effect_rash                = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '512')
+SET side_effect_rash                = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '512'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET side_effect_nausea              = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '5978')
+SET side_effect_nausea              = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '5978'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET side_effect_vomiting            = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '122983')
+SET side_effect_vomiting            = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '122983'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET side_effect_diarrhea            = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '142412')
+SET side_effect_diarrhea            = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '142412'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET side_effect_fatigue             = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '140501')
+SET side_effect_fatigue             = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '140501'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET side_effect_swollen_lymph_nodes = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'PIH', '161')
+SET side_effect_swollen_lymph_nodes = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'PIH', '161'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET side_effect_fever               = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '140238')
+SET side_effect_fever               = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '140238'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET side_effect_other               = answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '5622')
+SET side_effect_other               = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', 'ADVERSE EFFECT', 'CIEL', '5622'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
@@ -363,35 +367,35 @@ WHERE encounter_type_id = @prep_followup;
 
 -- followup: STI symptoms (checkboxes, PIH:1293)
 UPDATE temp_prep_visit
-SET sti_urethral_discharge        = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '123529')
+SET sti_urethral_discharge        = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '123529'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET sti_genital_ulcers            = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '864')
+SET sti_genital_ulcers            = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '864'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET sti_abnormal_vaginal_bleeding = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '150802')
+SET sti_abnormal_vaginal_bleeding = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '150802'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET sti_foul_vaginal_discharge    = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '165162')
+SET sti_foul_vaginal_discharge    = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '165162'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET sti_abdominal_pain            = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '151')
+SET sti_abdominal_pain            = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '151'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET sti_scrotal_swelling          = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '125203')
+SET sti_scrotal_swelling          = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '125203'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET sti_inguinal_bubo             = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '137155')
+SET sti_inguinal_bubo             = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '137155'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
-SET sti_other                     = answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '5622')
+SET sti_other                     = NULLIF(answer_exists_in_encounter_temp(encounter_id, 'PIH', '1293', 'CIEL', '5622'), 0)
 WHERE encounter_type_id = @prep_followup;
 
 UPDATE temp_prep_visit
