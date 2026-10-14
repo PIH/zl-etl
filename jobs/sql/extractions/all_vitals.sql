@@ -29,6 +29,7 @@ CREATE TEMPORARY TABLE temp_vitals
     bp_systolic			double,
     bp_diastolic		double,
     o2_saturation		double,
+    oxygen_flow_rate	double,
     muac_mm				double,
     chief_complaint		text,
     index_asc			int,
@@ -129,6 +130,7 @@ set @rr =  CONCEPT_FROM_MAPPING('PIH', '5242');
 set @bps =  CONCEPT_FROM_MAPPING('PIH', '5085');
 set @bpd =  CONCEPT_FROM_MAPPING('PIH', '5086');
 set @o2 =  CONCEPT_FROM_MAPPING('PIH', '5092');
+set @o2_flow =  CONCEPT_FROM_MAPPING('CIEL', '165986');
 set @muac =  CONCEPT_FROM_MAPPING('PIH', '7956');
 set @cc =  CONCEPT_FROM_MAPPING('PIH', '10137');
 
@@ -147,6 +149,7 @@ and o.concept_id in (
 @bps,
 @bpd,
 @o2,
+@o2_flow,
 @muac,
 @cc);
 
@@ -199,6 +202,12 @@ UPDATE temp_vitals t
 inner join temp_obs o ON t.encounter_id = o.encounter_id
         AND o.concept_id = @o2
 SET o2_saturation = o.value_numeric;
+
+-- oxygen_flow_rate
+UPDATE temp_vitals t
+inner join temp_obs o ON t.encounter_id = o.encounter_id
+        AND o.concept_id = @o2_flow
+SET oxygen_flow_rate = o.value_numeric;
 
 -- muac   
 UPDATE temp_vitals t
@@ -294,6 +303,7 @@ select
 	bp_systolic,
 	bp_diastolic,
 	o2_saturation,
+	oxygen_flow_rate,
 	muac_mm,
 	chief_complaint,
 	index_asc,
