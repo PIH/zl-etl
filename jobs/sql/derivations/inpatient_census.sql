@@ -19,7 +19,6 @@ clinical_category varchar(255));
 insert into #location_mapping (server, location, clinical_category)
 values
 ('belladere','Belladère','other'),
-('cange','Sal Timoun | Cange','pediatric'),
 ('lacolline','COVID-19 | Izolman | La Colline','other'),
 ('lacolline','Onkoloji | La Colline','other'),
 ('lacolline','Sal Aprè Akouchman | La Colline','maternity'),
@@ -47,6 +46,7 @@ values
 ('zl-central','Sal Reyabilitasyon','other'),
 ('zl-central','Sal Timoun','pediatric'),
 ('zl-central','S-NICU','pediatric'),
+('zl-central','Sal Timoun | Cange','pediatric'),
 ('zl-central','Suites de Couches','maternity'),
 ('zl-central','Swen Entansif','other'),
 ('zl-central','Swen Entansif Neonatal','other'),

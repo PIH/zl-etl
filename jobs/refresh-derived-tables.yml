@@ -8,6 +8,7 @@ configuration:
         jobTemplate:
           path: "create-derived-table-in-warehouse.yml"
         iterations:
+          - tableName: "remove_old_server_data"
           - tableName: "update_index_numbers"
           - tableName: "dim_date"
           - tableName: "drop_old_tables"

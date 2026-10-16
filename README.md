@@ -38,7 +38,6 @@ The directory structure should look like this:
 ```bash
 configurations/datasources#
 .
-├── openmrs-cange.yml
 ├── openmrs-hinche.yml
 ├── openmrs-hiv.yml
 ├── openmrs-humci.yml
