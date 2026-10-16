@@ -151,6 +151,15 @@ and not exists
     and pp.patient_id = e.patient_id )
 group by e.patient_id;
 
+-- --------------------------------------------------------- exclude voided patients (LIB-427)
+-- all_patients only includes non-voided patients (patient.voided = 0), so remove any
+-- warning whose patient is voided or missing. Covers every warning type above.
+delete t from temp_warnings t
+where not exists
+	(select 1 from patient p
+	where p.patient_id = t.patient_id
+	and p.voided = 0);
+
 -- final select
 select emr_id,
 concat(@partition,'-',patient_id) "patient_id",
