@@ -1,7 +1,7 @@
 type: "job-pipeline"
 description: "Refreshing HUMCI data"
 parameters:
-  siteName: "mirebalais"
+  siteName: "zl-central"
   partitionNum: "1"
   conditional: ""
 configuration:
