@@ -10,7 +10,7 @@ configuration:
         maxConcurrentJobs: 4
         iterations:
           - siteName: "hiv"
-          - siteName: "mirebalais"
+          - siteName: "zl-central"
           - siteName: "cange"
           - siteName: "hinche"
           - siteName: "saint_marc_hsn"
