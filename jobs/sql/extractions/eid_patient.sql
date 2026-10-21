@@ -27,6 +27,7 @@ CREATE TEMPORARY TABLE temp_patient
     health_center               VARCHAR(255),
     site                        VARCHAR(255),
     current_age                 FLOAT,
+    age_in_months               INT,
     initial_enrollment_date     DATE,
     initial_enrollment_location VARCHAR(100),
     latest_program_id           INT(11),
@@ -38,9 +39,15 @@ CREATE TEMPORARY TABLE temp_patient
     latest_hiv_test_date        DATE,
     latest_hiv_test_type        VARCHAR(255),
     latest_hiv_test_result      VARCHAR(255),
+    second_latest_hiv_test_date   DATE,
+    second_latest_hiv_test_type   VARCHAR(255),
+    second_latest_hiv_test_result VARCHAR(255),
+    results_received_by_patient VARCHAR(255),
     art_start_date              DATE,
     mother_patient_id           INT(11),
-    mother_emr_id               VARCHAR(50)
+    mother_emr_id               VARCHAR(50),
+    mother_hiv_status           VARCHAR(255),
+    feeding_status              VARCHAR(255)
  );
 
 INSERT INTO temp_patient (patient_id)
@@ -97,6 +104,7 @@ set t.health_center = l.name,
     t.site = l.name;
 
 update temp_patient t set current_age =  ROUND(DATEDIFF(NOW(),t.birthdate) / 365.25 , 1);
+update temp_patient t set age_in_months = current_age_in_months(t.patient_id);
 
 -- program detauls
 UPDATE temp_patient t SET initial_enrollment_date = initialEnrollmentDate(t.patient_id, @eid_program_id);
@@ -144,6 +152,27 @@ inner join obs o on o.obs_id =
 set t.latest_hiv_test_date = o.obs_datetime,
     t.latest_hiv_test_type = concept_short_name(concept_id , @locale),
     t.latest_hiv_test_result = concept_name(value_coded  , @locale);
+
+update temp_patient t
+inner join obs o on o.obs_id =
+	(select ht.obs_id from temp_hiv_tests ht
+	where ht.person_id = t.patient_id
+	order by obs_datetime desc, obs_id desc limit 1 offset 1)
+set t.second_latest_hiv_test_date = o.obs_datetime,
+    t.second_latest_hiv_test_type = concept_short_name(concept_id , @locale),
+    t.second_latest_hiv_test_result = concept_name(value_coded  , @locale);
+
+-- parent/patient notified of result (EID followup form)
+update temp_patient t
+set results_received_by_patient = value_coded_name(latest_obs(t.patient_id, 'CIEL', '163525'), @locale);
+
+-- mother's HIV serology (HIV intake form)
+update temp_patient t
+set mother_hiv_status = value_coded_name(latest_obs(t.patient_id, 'CIEL', '1396'), @locale);
+
+-- type of feeding (HIV intake / EID forms)
+update temp_patient t
+set feeding_status = value_coded_name(latest_obs(t.patient_id, 'CIEL', '1151'), @locale);
    
 -- art start date
 update temp_patient 
@@ -161,6 +190,7 @@ telephone_number,
 health_center,
 site,
 current_age,
+age_in_months,
 initial_enrollment_date,
 initial_enrollment_location,
 latest_enrollment_location,
@@ -170,6 +200,12 @@ outcome,
 latest_hiv_test_date,
 latest_hiv_test_type,
 latest_hiv_test_result,
+second_latest_hiv_test_date,
+second_latest_hiv_test_type,
+second_latest_hiv_test_result,
+results_received_by_patient,
 art_start_date,
-mother_emr_id
+mother_emr_id,
+mother_hiv_status,
+feeding_status
 from temp_patient;
