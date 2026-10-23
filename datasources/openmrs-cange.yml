@@ -1,8 +1,0 @@
-databaseType: "mysql"
-host: ${datasources.openmrs.cange.host}
-port: ${datasources.openmrs.cange.port}
-databaseName: ${datasources.openmrs.cange.databaseName}
-user: ${datasources.openmrs.cange.user}
-password: ${datasources.openmrs.cange.password}
-options: ${datasources.openmrs.cange.options}
-containerName: ${datasources.openmrs.cange.containerName:}

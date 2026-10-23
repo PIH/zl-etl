@@ -1,8 +1,0 @@
-databaseType: "mysql"
-host: ${datasources.openmrs.mirebalais.host}
-port: ${datasources.openmrs.mirebalais.port}
-databaseName: ${datasources.openmrs.mirebalais.databaseName}
-user: ${datasources.openmrs.mirebalais.user}
-password: ${datasources.openmrs.mirebalais.password}
-options: ${datasources.openmrs.mirebalais.options}
-containerName: ${datasources.openmrs.mirebalais.containerName:}

@@ -38,12 +38,11 @@ The directory structure should look like this:
 ```bash
 configurations/datasources#
 .
-├── openmrs-cange.yml
 ├── openmrs-hinche.yml
 ├── openmrs-hiv.yml
 ├── openmrs-humci.yml
 ├── openmrs-lacolline.yml
-├── openmrs-mirebalais.yml
+├── openmrs-zl-central.yml
 ├── openmrs-saint_marc_hsn.yml
 ├── openmrs-thomonde.yml
 └── warehouse.yml
