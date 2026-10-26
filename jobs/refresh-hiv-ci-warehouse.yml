@@ -2,5 +2,13 @@ type: "job-pipeline"
 description: "Refreshing HIV CI data"
 configuration:
   jobs:
+    # The CI warehouse has only this server, so it loads both the common and HIV tables the derived tables need
+    - type: "iterating-job"
+      configuration:
+        iterations:
+          - siteName: "hiv"
+            partitionNum: "8"
+        jobTemplate:
+          path: "load-common-data-from-openmrs.yml"
     - path: "refresh-hiv.yml"
     - path: "refresh-derived-tables.yml"
