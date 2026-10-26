@@ -44,7 +44,6 @@ configuration:
           - tableName: "echo_summary_table"
           - tableName: "echocardiogram_encounters"
           - tableName: "ed_triage"
-          - tableName: "hiv_psychosocial_encounter"
           - tableName: "mch_birth"
           - tableName: "mch_delivery"
           - tableName: "mch_diagnoses"

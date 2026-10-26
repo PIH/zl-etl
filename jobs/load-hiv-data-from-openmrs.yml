@@ -32,6 +32,7 @@ configuration:
           - tableName: "hiv_patient"
           - tableName: "hiv_patient_program"
           - tableName: "hiv_pmtct_visit"
+          - tableName: "hiv_psychosocial_encounter"
           - tableName: "hiv_regimens"
           - tableName: "hiv_status"
           - tableName: "hiv_tests"
