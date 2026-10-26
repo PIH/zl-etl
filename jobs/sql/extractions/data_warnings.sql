@@ -1,85 +1,168 @@
-/* =====================================================================
-   ZL data_warnings: before/after comparison (SQL Server / DWH)
+set @partition = '${partitionNum}';
+set @sitename = '${siteName}';
 
-   Setup (run once BEFORE deploying the new extract):
-       drop table if exists data_warnings_old;
-       select * into data_warnings_old from data_warnings;
-   Then run the ZL refresh with the new extract, so data_warnings holds the new version.
+set @hiv_exposed_infant_enrollment_program =  program('EID'); -- exposed infant enrollment
+set @hiv_program = program('HIV'); -- HIV enrollment
 
-   Only the warning types that existed in the old version are compared.
-   Two were renamed, so the mapping below lines the old names up with the new ones.
-   ===================================================================== */
+set @hiv_dispensing = encounter_type('cc1720c9-3e4c-4fa8-a7ec-40eeaad1958c');
+set @hiv_initial = encounter_type('c31d306a-40c4-11e7-a919-92ebcb67fe33');
+set @hiv_followup = encounter_type('c31d3312-40c4-11e7-a919-92ebcb67fe33');
+set @exposed_infant_followup = encounter_type('0f070640-279e-4ec0-9e6c-6ef1f6567030');
 
-drop table if exists #warning_map;
-create table #warning_map (old_warning_type varchar(255), new_warning_type varchar(255), expect_change varchar(255));
-insert into #warning_map values
-('blank emr_id',                     'blank emr_id',                    null),
-('blank gender',                     'blank gender',                    'yes - now skips unknown patients (old only flagged unknown patients)'),
-('blank birthdate',                  'blank birthdate',                 'yes - now skips unknown patients (old only flagged unknown patients)'),
-('blank given or family name',       'blank given or family name',      'yes - now skips unknown patients; ignores voided names; catches empty strings'),
-('death date before birth date',     'death date before birthdate',     'renamed only'),
-('overlapping program enrollments',  'overlapping program enrollments', null),
-('HIV dispensing without any prescriptions', 'HIV dispensing without any prescriptions', 'possible - now ignores voided encounters/orders and uses the drug order type uuid'),
-('HIV initial encounter without any HIV or exposed infant enrollment',  'HIV initial encounter without any HIV or exposed infant enrollment',  null),
-('HIV followup encounter without any HIV or exposed infant enrollment', 'HIV followup encounter without any HIV or exposed infant enrollment', null),
-('HIV exposed infant followup without any HIV or exposed infant enrollment', 'HIV exposed infant followup without any HIV or exposed infant enrollment', null),
-('HIV dispensing encounter without any HIV or exposed infant enrollment',    'HIV dispensing encounter without any HIV or exposed infant enrollment',    null);
+drop temporary table if exists temp_warnings;
+create temporary table temp_warnings
+(
+emr_id								varchar(255),
+patient_id							int(11),
+warning_type						text,
+warning_details						text
+);
 
--- ---------------------------------------------------------------------
--- 1. Counts by warning type and server, old vs new
--- ---------------------------------------------------------------------
-with old_counts as (
-	select m.new_warning_type, o.server, count(*) as old_rows, count(distinct o.patient_id) as old_patients
-	from data_warnings_old o
-	inner join #warning_map m on m.old_warning_type = o.warning_type
-	group by m.new_warning_type, o.server),
-new_counts as (
-	select n.warning_type as new_warning_type, n.server, count(*) as new_rows, count(distinct n.patient_id) as new_patients
-	from data_warnings n
-	inner join #warning_map m on m.new_warning_type = n.warning_type
-	group by n.warning_type, n.server)
-select
-	coalesce(o.new_warning_type, n.new_warning_type) as warning_type,
-	coalesce(o.server, n.server) as server,
-	isnull(o.old_rows, 0)     as old_rows,
-	isnull(n.new_rows, 0)     as new_rows,
-	isnull(o.old_patients, 0) as old_patients,
-	isnull(n.new_patients, 0) as new_patients,
-	case when isnull(o.old_patients, 0) = isnull(n.new_patients, 0) then 'match' else 'DIFFERENT' end as patient_check,
-	m.expect_change
-from old_counts o
-full outer join new_counts n on n.new_warning_type = o.new_warning_type and n.server = o.server
-inner join #warning_map m on m.new_warning_type = coalesce(o.new_warning_type, n.new_warning_type)
-order by warning_type, server;
+-- blank emr_id
+insert into temp_warnings (patient_id, warning_type, warning_details)
+select patient_id,'blank emr_id',
+concat('patient_id: ',patient_id,' on site: ',@sitename)
+from patient p 
+where p.voided = 0 and zlemr(p.patient_id) is null;
 
--- ---------------------------------------------------------------------
--- 2. Patient-level differences: who dropped out, who is new
---    (patient_id is partition-prefixed, so it is unique across sites)
--- ---------------------------------------------------------------------
-with old_pts as (
-	select distinct m.new_warning_type, o.patient_id, o.emr_id, o.server
-	from data_warnings_old o
-	inner join #warning_map m on m.old_warning_type = o.warning_type),
-new_pts as (
-	select distinct n.warning_type as new_warning_type, n.patient_id, n.emr_id, n.server
-	from data_warnings n
-	inner join #warning_map m on m.new_warning_type = n.warning_type)
-select 'in old only' as difference, o.new_warning_type as warning_type, o.patient_id, o.emr_id, o.server
-from old_pts o
-where not exists (select 1 from new_pts n where n.new_warning_type = o.new_warning_type and n.patient_id = o.patient_id)
-union all
-select 'in new only', n.new_warning_type, n.patient_id, n.emr_id, n.server
-from new_pts n
-where not exists (select 1 from old_pts o where o.new_warning_type = n.new_warning_type and o.patient_id = n.patient_id)
-order by warning_type, difference, server, patient_id;
+-- overlapping program segments
+insert into temp_warnings (patient_id, emr_id,warning_type, warning_details)
+select pp.patient_id ,zlemr(pp.patient_id),'overlapping program enrollments',
+concat('program name: ',p.name, ' | ',
+	'patient_program_ids: ',pp.patient_program_id ,',', pp2.patient_program_id)
+from patient_program pp
+inner join program p on p.program_id  = pp.program_id 
+inner join patient_program pp2 on pp2.voided = 0 
+	and pp2.patient_id = pp.patient_id 
+	and pp2.program_id = pp.program_id
+	and pp2.patient_program_id <> pp.patient_program_id 
+	and (pp.date_enrolled < pp2.date_enrolled and ifnull(pp.date_completed,'9999-12-31') >pp2.date_enrolled)
+where pp.voided = 0;	
 
--- ---------------------------------------------------------------------
--- 3. Overview of everything in the new table (including the new warning types)
--- ---------------------------------------------------------------------
-select warning_type, count(*) as row_count, count(distinct patient_id) as patients,
-	sum(case when encounter_id is not null then 1 else 0 end) as with_encounter,
-	sum(case when user_entered is null then 1 else 0 end) as missing_user_entered,
-	min(event_datetime) as earliest_event, max(event_datetime) as latest_event
-from data_warnings
-group by warning_type
-order by row_count desc;
+-- blank demographics
+insert into temp_warnings (patient_id, emr_id,warning_type)
+select pt.patient_id ,
+zlemr(pt.patient_id),
+'blank gender'
+from patient pt
+inner join person p on p.person_id = pt.patient_id and p.gender is null
+where pt.voided = 0
+and unknown_patient(patient_id) is not null;
+
+insert into temp_warnings (patient_id, emr_id,warning_type)
+select pt.patient_id ,
+zlemr(pt.patient_id),
+'blank birthdate'
+from patient pt
+inner join person p on p.person_id = pt.patient_id and p.birthdate  is null
+where pt.voided = 0
+and unknown_patient(patient_id) is not null;
+
+insert into temp_warnings (patient_id, emr_id,warning_type, warning_details)
+select pt.patient_id ,
+zlemr(pt.patient_id),
+'blank given or family name',
+concat('given name: ',pn.given_name,' | family name: ',pn.family_name)
+from patient pt
+inner join person_name pn on pn.person_id = pt.patient_id and (pn.given_name is null or pn.family_name is null)
+where pt.voided = 0
+and unknown_patient(patient_id) is not null;
+
+-- death date before birthdate
+insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
+select pt.patient_id ,
+zlemr(pt.patient_id),
+'death date before birth date', 
+concat('death date: ',p.death_date,' | birth date: ',p.birthdate, ' | unknown patient: ',ifnull(unknown_patient(1317),'0'))
+from patient pt 
+inner join person p on p.person_id = pt.patient_id and p.death_date < p.birthdate  
+where p.voided = 0;
+
+-- hiv dispensing without orders
+insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
+select patient_id, zlemr(patient_id), 
+'HIV dispensing without any prescriptions',
+concat('first HIV dispensing: ',min(e.encounter_datetime))
+from encounter e 
+where encounter_type = @hiv_dispensing
+and not exists
+	(select 1 from orders o
+	where o.order_type_id = 2
+	and o.patient_id = e.patient_id)
+group by zlemr(patient_id), patient_id ;
+
+-- hiv initial encounters without HIV or exposed infant enrollment
+insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
+select patient_id, zlemr(patient_id), 
+'HIV initial encounter without any HIV or exposed infant enrollment' , 
+concat('first HIV intake: ',min(e.encounter_datetime))
+from encounter e 
+where e.voided = 0
+and e.encounter_type = @hiv_initial
+and not exists
+    (select 1 from patient_program pp
+    where pp.voided = 0
+    and pp.program_id in (@hiv_program, @hiv_exposed_infant_enrollment_program)
+    and pp.patient_id = e.patient_id )
+group by e.patient_id; 
+ 
+-- hiv followup encounters without HIV or exposed infant enrollment    
+insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
+select patient_id, zlemr(patient_id), 
+'HIV followup encounter without any HIV or exposed infant enrollment' , 
+concat('first HIV followup: ',min(e.encounter_datetime))
+from encounter e 
+where e.voided = 0
+and e.encounter_type = @hiv_followup
+and not exists
+    (select 1 from patient_program pp
+    where pp.voided = 0
+    and pp.program_id in (@hiv_program, @hiv_exposed_infant_enrollment_program)
+    and pp.patient_id = e.patient_id )
+group by e.patient_id;
+
+-- hiv exposed infant followup encounters without HIV or exposed infant enrollment    
+insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
+select patient_id, zlemr(patient_id), 
+'HIV exposed infant followup without any HIV or exposed infant enrollment' ,
+concat('first HIV exposed infant followup: ',min(e.encounter_datetime))
+from encounter e 
+where e.voided = 0
+and e.encounter_type = @exposed_infant_followup
+and not exists
+    (select 1 from patient_program pp
+    where pp.voided = 0
+    and pp.program_id in (@hiv_program, @hiv_exposed_infant_enrollment_program)
+    and pp.patient_id = e.patient_id )
+group by e.patient_id;
+
+-- hiv dispensing encounters without HIV or exposed infant enrollment    
+insert into temp_warnings (patient_id, emr_id, warning_type, warning_details)
+select patient_id, zlemr(patient_id), 
+'HIV dispensing encounter without any HIV or exposed infant enrollment' ,
+concat('first HIV dispensing: ',min(e.encounter_datetime))
+from encounter e 
+where e.voided = 0
+and e.encounter_type = @hiv_dispensing
+and not exists
+    (select 1 from patient_program pp
+    where pp.voided = 0
+    and pp.program_id in (@hiv_program, @hiv_exposed_infant_enrollment_program)
+    and pp.patient_id = e.patient_id )
+group by e.patient_id;
+
+-- --------------------------------------------------------- exclude voided patients (LIB-427)
+-- all_patients only includes non-voided patients (patient.voided = 0), so remove any
+-- warning whose patient is voided or missing. Covers every warning type above.
+delete t from temp_warnings t
+where not exists
+	(select 1 from patient p
+	where p.patient_id = t.patient_id
+	and p.voided = 0);
+
+-- final select
+select emr_id,
+concat(@partition,'-',patient_id) "patient_id",
+warning_type,
+warning_details
+from temp_warnings;
