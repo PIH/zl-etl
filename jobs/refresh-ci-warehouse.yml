@@ -2,6 +2,7 @@ type: "job-pipeline"
 description: "Refreshing ZL CI data"
 configuration:
   jobs:
+    # The CI warehouse has only this server, so it loads both the common and HIV tables the derived tables need
     - type: "iterating-job"
       configuration:
         iterations:
@@ -9,4 +10,11 @@ configuration:
             partitionNum: "1"
         jobTemplate:
           path: "load-common-data-from-openmrs.yml"
+    - type: "iterating-job"
+      configuration:
+        iterations:
+          - siteName: "zlci"
+            partitionNum: "1"
+        jobTemplate:
+          path: "load-hiv-data-from-openmrs.yml"
     - path: "refresh-derived-tables.yml"

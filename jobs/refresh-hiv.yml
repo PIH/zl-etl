@@ -8,5 +8,5 @@ configuration:
           - siteName: "hiv"
             partitionNum: "8"
         jobTemplate:
-          path: "load-common-data-from-openmrs.yml"
+          path: "load-hiv-data-from-openmrs.yml"
     - path: "force-site-for-hiv-server.yml"
