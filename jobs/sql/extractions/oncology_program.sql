@@ -24,7 +24,7 @@ CAST(date_completed AS date) status_end_date,
 'enrollment_status' status_type,
 'enrolled' status
 FROM patient_program pp 
-WHERE  pp.patient_id = 267645 AND pp.program_id = @prog_id
+WHERE  pp.program_id = @prog_id
 AND pp.voided = 0
 ;
 
@@ -38,7 +38,7 @@ CAST(date_completed AS date) status_end_date,
 'outcome' status_type,
 concept_name(outcome_concept_id,'en') status
 FROM patient_program pp 
-WHERE  pp.patient_id = 267645 AND pp.program_id = @prog_id
+WHERE  pp.program_id = @prog_id
 AND pp.voided = 0
 ;
 
@@ -86,5 +86,4 @@ status_end_date,
 status_type,
 status
 FROM oncology_program 
-ORDER BY emr_id, status_start_date asc
-;
+ORDER BY emr_id, status_start_date asc;
