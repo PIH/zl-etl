@@ -71,7 +71,6 @@ configuration:
           - tableName: "summary_db_restore"
           - tableName: "tb_lab_results"
           - tableName: "tb_screening"
-          - tableName: "append_data_warnings"
           - tableName: "user_logins"
           - tableName: "user_roles"
           - tableName: "users"
