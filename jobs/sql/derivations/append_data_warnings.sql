@@ -9,6 +9,7 @@
 delete from data_warnings
 where warning_type in (
 	'Followup without Intake',
+	'Intake after Followup',
 	'Duplicate encounters within visit',
 	'Duplicate encounters within program',
 	'Inpatient encounters before admission',
@@ -101,6 +102,64 @@ and not exists
 	where e2.patient_id = f.patient_id
 	and e2.encounter_type_name = 'NCD Initial Consult'
 	and e2.encounter_datetime <= f.encounter_datetime);
+
+-- -------------------------------------------------- intake after followup
+-- every intake that has a followup before it in the same program (or patient, for NCD).
+-- other_details shows the earliest followup that came before the intake
+
+-- HIV (within HIV program enrollment)
+insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id, patient_program_id,
+encounter_datetime, datetime_entered, user_entered, server, partition_num, other_details)
+select 'Intake after Followup', e.encounter_type_name, e.patient_id, e.emr_id, e.visit_id, e.encounter_id, v.hiv_program_id,
+e.encounter_datetime, e.entered_datetime, e.user_entered, e.server, e.partition_num,
+concat('earlier followup: ', f.encounter_datetime, ' (encounter_id ', f.encounter_id, ')')
+from hiv_visit v
+inner join all_encounters e on e.encounter_id = v.encounter_id
+cross apply
+	(select top 1 e2.encounter_id, e2.encounter_datetime
+	from hiv_visit v2
+	inner join all_encounters e2 on e2.encounter_id = v2.encounter_id
+	where v2.hiv_program_id = v.hiv_program_id
+	and v2.encounter_type = 'HIV Followup'
+	and e2.encounter_datetime < e.encounter_datetime
+	order by e2.encounter_datetime asc, e2.encounter_id asc) f
+where v.encounter_type = 'HIV Intake'
+and v.hiv_program_id is not null;
+
+-- ANC (within MCH program enrollment)
+insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id, patient_program_id,
+encounter_datetime, datetime_entered, user_entered, server, partition_num, other_details)
+select 'Intake after Followup', e.encounter_type_name, e.patient_id, e.emr_id, e.visit_id, e.encounter_id, v.mch_program_id,
+e.encounter_datetime, e.entered_datetime, e.user_entered, e.server, e.partition_num,
+concat('earlier followup: ', f.encounter_datetime, ' (encounter_id ', f.encounter_id, ')')
+from mch_visit v
+inner join all_encounters e on e.encounter_id = v.encounter_id
+cross apply
+	(select top 1 e2.encounter_id, e2.encounter_datetime
+	from mch_visit v2
+	inner join all_encounters e2 on e2.encounter_id = v2.encounter_id
+	where v2.mch_program_id = v.mch_program_id
+	and e2.encounter_type_name = 'ANC Followup'
+	and e2.encounter_datetime < e.encounter_datetime
+	order by e2.encounter_datetime asc, e2.encounter_id asc) f
+where e.encounter_type_name = 'ANC Intake'
+and v.mch_program_id is not null;
+
+-- NCD (by patient)
+insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id,
+encounter_datetime, datetime_entered, user_entered, server, partition_num, other_details)
+select 'Intake after Followup', e.encounter_type_name, e.patient_id, e.emr_id, e.visit_id, e.encounter_id,
+e.encounter_datetime, e.entered_datetime, e.user_entered, e.server, e.partition_num,
+concat('earlier followup: ', f.encounter_datetime, ' (encounter_id ', f.encounter_id, ')')
+from all_encounters e
+cross apply
+	(select top 1 e2.encounter_id, e2.encounter_datetime
+	from all_encounters e2
+	where e2.patient_id = e.patient_id
+	and e2.encounter_type_name = 'NCD Followup Consult'
+	and e2.encounter_datetime < e.encounter_datetime
+	order by e2.encounter_datetime asc, e2.encounter_id asc) f
+where e.encounter_type_name = 'NCD Initial Consult';
 
 -- -------------------------------------------------- duplicate encounters within visit
 -- one row per patient/visit/encounter type, pointing at the latest duplicate
