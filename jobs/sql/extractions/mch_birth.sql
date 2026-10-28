@@ -142,7 +142,7 @@ update temp_mch_birth t
 inner join temp_obs o on o.obs_group_id = t.birth_obs_group_id
 	and o.concept_id = concept_from_mapping('PIH','13573')
 	and o.value_coded = concept_from_mapping('PIH','5622')
-set  other_c_section_fetal_reason = o.comments;
+set  other_c_section_obstetrical_reason = o.comments;
 
 -- Sets visit_id from the encounter.
 update temp_mch_birth t
