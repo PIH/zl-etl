@@ -211,7 +211,7 @@ from obs o where o.voided =0
 UPDATE echo_summary_table t 
 SET t.beta_blocker_carvedilol= FALSE WHERE t.beta_blocker_carvedilol IS NULL;
 
-set @lisinopril = concept_from_mapping ('PIH','3183');
+set @Phenoxymethylpenicillin = concept_from_mapping ('PIH','9185');
 set @benzylpenicillin = concept_from_mapping ('PIH','12345');
 set @benzathine = concept_from_mapping ('PIH','4034');
 
@@ -222,14 +222,13 @@ from obs o where o.voided =0
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
 	and o.concept_id = @med_name
-	and (o.value_coded  = @lisinopril
+	and (o.value_coded  = @Phenoxymethylpenicillin
 			OR o.value_coded  =  @benzylpenicillin 
 			OR o.value_coded  = @benzathine) 
 	limit 1);
 UPDATE echo_summary_table t 
 SET t.penicillin= FALSE WHERE t.penicillin IS NULL;
 
-set @Phenoxymethylpenicillin = concept_from_mapping ('PIH','9185');
 set @Enalapril_maleate = concept_from_mapping ('PIH','9230');
 set @Enalapril = concept_from_mapping ('PIH','1242');
 set @Hydrochlorothiazide_Losartan = concept_from_mapping ('PIH','13740');
@@ -244,8 +243,7 @@ from obs o where o.voided =0
 	AND o.person_id = t.patient_id 
 	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
 	and o.concept_id = @med_name
-	and (o.value_coded  = @Phenoxymethylpenicillin 
-			OR o.value_coded  = @Enalapril_maleate
+	and (o.value_coded  = @Enalapril_maleate
 			OR o.value_coded  = @Enalapril
 			OR o.value_coded  = @Hydrochlorothiazide_Losartan
 			OR o.value_coded  = @Losartan
