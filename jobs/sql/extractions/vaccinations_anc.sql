@@ -258,7 +258,7 @@ set e.rotavirus_2 = v.vaccine_date;
 update temp_encounter e
     inner join temp_vaccinations v on e.encounter_id = v.encounter_id and
                                       v.vaccine = '162586AAAAAAAAAAAAAAAAAAAAAAAAAAAAAA' and v.dose_number = 1
-set e.rotavirus_1 = v.vaccine_date;
+set e.mmr_1 = v.vaccine_date;
 
 # DIPTHERIA / TETANUS
 
