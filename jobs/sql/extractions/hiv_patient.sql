@@ -427,7 +427,8 @@ CREATE INDEX temp_socio_economics_encounter_id ON temp_socio_economics (encounte
 INSERT INTO temp_socio_economics (patient_id, encounter_id)
 SELECT patient_id, MAX(encounter_id) FROM encounter WHERE encounter_id IN
 (SELECT encounter_id FROM encounter WHERE voided = 0 AND encounter_type = @socio_economics_encounter_type) 
-AND voided = 0;
+AND voided = 0
+GROUP BY patient_id;
 
 UPDATE temp_socio_economics t SET emr_id = PATIENT_IDENTIFIER(patient_id, METADATA_UUID('org.openmrs.module.emrapi', 'emr.primaryIdentifierType'));
 UPDATE temp_socio_economics t SET socio_people_in_house = OBS_VALUE_NUMERIC(t.encounter_id, 'PIH', 'NUMBER OF PEOPLE WHO LIVE IN HOUSE INCLUDING PATIENT');
