@@ -315,7 +315,8 @@ set t.age_at_encounter = e.age_at_encounter,
 	t.visit_id = e.visit_id;
 
 update temp_diagnoses t
-set t.retrospective = IF(TIME_TO_SEC(date_created) - TIME_TO_SEC(obs_datetime) > 1800,1,0) ;
+-- entered more than 30 minutes after the obs datetime (full datetime, so later-day entries count)
+set t.retrospective = IF(TIMESTAMPDIFF(SECOND, obs_datetime, date_created) > 1800,1,0) ;
 
 create index temp_diagnoses_vi on temp_diagnoses(visit_id);
 -- Sets visit_location from the visit's location.
