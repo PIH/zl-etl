@@ -15,7 +15,8 @@ CREATE TABLE [dim_date_staging]
 		[DayOfWeekUK] CHAR(1),-- First Day Monday=1 and Sunday=7
 		[DayOfWeekInMonth] VARCHAR(2), --1st Monday or 2nd Monday in Month
 		[DayOfWeekInYear] VARCHAR(2),
-		[DayOfQuarter] VARCHAR(3),
+		[DayOfWeekInQuarter] VARCHAR(2), --1st Monday or 2nd Monday in Quarter
+		[DayOfQuarter] VARCHAR(3), -- Day number within the quarter, 1 to 92
 		[DayOfYear] VARCHAR(3),
 		[WeekOfMonth] VARCHAR(1),-- Week Number of Month
 		[WeekOfQuarter] VARCHAR(2), --Week Number of the Quarter
@@ -83,7 +84,7 @@ counted AS (
 INSERT INTO dim_date_staging (
     [DateKey], [Date], [FullDateUK], [FullDateUSA],
     [DayOfMonth], [DaySuffix], [DayName], [DayOfWeekUSA], [DayOfWeekUK],
-    [DayOfWeekInMonth], [DayOfWeekInYear], [DayOfQuarter],
+    [DayOfWeekInMonth], [DayOfWeekInYear], [DayOfWeekInQuarter], [DayOfQuarter],
     [DayOfYear], [WeekOfMonth], [WeekOfQuarter], [WeekOfYear],
     [Month], [MonthName], [MonthOfQuarter], [Quarter], [QuarterName], [Fiscal_Quarter],
     [Year], [YearName], [MonthYear], [MMYYYY],
@@ -113,7 +114,9 @@ SELECT
     END AS CHAR(1))                AS DayOfWeekUK,
     CAST(dow_in_month    AS VARCHAR(2)) AS DayOfWeekInMonth,
     CAST(dow_in_year     AS VARCHAR(2)) AS DayOfWeekInYear,
-    CAST(dow_in_quarter  AS VARCHAR(3)) AS DayOfQuarter,
+    CAST(dow_in_quarter  AS VARCHAR(2)) AS DayOfWeekInQuarter,
+    CAST(DATEDIFF(DAY, DATEADD(QQ, DATEDIFF(QQ, 0, dt), 0), dt) + 1
+         AS VARCHAR(3))            AS DayOfQuarter,
     CAST(DATEPART(DY, dt) AS VARCHAR(3))                                         AS DayOfYear,
     CAST(DATEPART(WW, dt) + 1 - DATEPART(WW, DATEFROMPARTS(yr, mo, 1))
          AS VARCHAR(1))            AS WeekOfMonth,
@@ -157,37 +160,56 @@ FROM counted;
 
 -- ------------------------------------------------------------------
 
--- Good Friday  April 18
-UPDATE dim_date_staging
-SET HolidayUK = 'Good Friday'
-WHERE [Month] = 4 AND [DayOfMonth]  = 18
+-- Good Friday (Easter Sunday - 2) and Easter Monday (Easter Sunday + 1).
+-- Easter Sunday is calculated for each year with the anonymous Gregorian algorithm.
+UPDATE dds
+SET HolidayUK = eh.holiday
+FROM dim_date_staging dds
+INNER JOIN (
+    SELECT DATEADD(DAY, v.day_offset, es.easter_sunday) AS holiday_date, v.holiday
+    FROM (SELECT DISTINCT CAST([Year] AS INT) AS y FROM dim_date_staging) yrs
+    CROSS APPLY (SELECT y % 19 AS a, y / 100 AS b, y % 100 AS c) s1
+    CROSS APPLY (SELECT b / 4 AS bd, b % 4 AS e, (b + 8) / 25 AS f, c / 4 AS i, c % 4 AS k) s2
+    CROSS APPLY (SELECT (19 * a + b - bd - (b - f + 1) / 3 + 15) % 30 AS h) s3
+    CROSS APPLY (SELECT (32 + 2 * e + 2 * i - h - k) % 7 AS l) s4
+    CROSS APPLY (SELECT (a + 11 * h + 22 * l) / 451 AS m) s5
+    CROSS APPLY (SELECT DATEFROMPARTS(y, (h + l - 7 * m + 114) / 31, (h + l - 7 * m + 114) % 31 + 1) AS easter_sunday) es
+    CROSS APPLY (VALUES (-2, 'Good Friday'), (1, 'Easter Monday')) v(day_offset, holiday)
+) eh ON CAST(dds.[Date] AS DATE) = eh.holiday_date;
 
--- Easter Monday  April 21
-UPDATE dim_date_staging
-SET HolidayUK = 'Easter Monday'
-WHERE [Month] = 4 AND [DayOfMonth]  = 21
-
--- Early May Bank Holiday   May 5
+-- Early May Bank Holiday - first Monday in May
 UPDATE dim_date_staging
 SET HolidayUK = 'Early May Bank Holiday'
-WHERE [Month] = 5 AND [DayOfMonth]  = 5
+WHERE DateKey IN (
+    SELECT MIN(DateKey) FROM dim_date_staging
+    WHERE [Month] = 5 AND [DayOfWeekUSA] = '2'
+    GROUP BY [Year]
+);
 
--- Spring Bank Holiday  May 26
+-- Spring Bank Holiday - last Monday in May
 UPDATE dim_date_staging
 SET HolidayUK = 'Spring Bank Holiday'
-WHERE [Month] = 5 AND [DayOfMonth]  = 26
+WHERE DateKey IN (
+    SELECT MAX(DateKey) FROM dim_date_staging
+    WHERE [Month] = 5 AND [DayOfWeekUSA] = '2'
+    GROUP BY [Year]
+);
 
--- Summer Bank Holiday  August 25
+-- Summer Bank Holiday - last Monday in August
 UPDATE dim_date_staging
 SET HolidayUK = 'Summer Bank Holiday'
-WHERE [Month] = 8 AND [DayOfMonth]  = 25
+WHERE DateKey IN (
+    SELECT MAX(DateKey) FROM dim_date_staging
+    WHERE [Month] = 8 AND [DayOfWeekUSA] = '2'
+    GROUP BY [Year]
+);
 
--- Boxing Day  December 26
+-- Christmas Day  December 25
 UPDATE dim_date_staging
 SET HolidayUK = 'Christmas Day'
 WHERE [Month] = 12 AND [DayOfMonth]  = 25
 
---CHRISTMAS
+-- Boxing Day  December 26
 UPDATE dim_date_staging
 SET HolidayUK = 'Boxing Day'
 WHERE [Month] = 12 AND [DayOfMonth]  = 26
