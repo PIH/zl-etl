@@ -16,5 +16,6 @@ create table all_encounters
     users_modified      text,
     dates_modified      text,
     index_asc           int,
-    index_desc          int
+    index_desc          int,
+    encounter_type_uuid varchar(38)
 );
