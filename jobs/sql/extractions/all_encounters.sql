@@ -118,6 +118,7 @@ create temporary table temp_all_encounters
     site                varchar(255),
     encounter_type_id   int(11),
     encounter_type_name varchar(50),
+    encounter_type_uuid char(38),
     entered_datetime    datetime,
     emr_id              varchar(50),
     next_appt_date      date,
@@ -133,7 +134,7 @@ insert into temp_all_encounters
 (
     encounter_id, encounter_datetime, patient_id, visit_id, visit_location,
     creator, user_entered, location_id, encounter_location, site,
-    encounter_type_id, encounter_type_name, entered_datetime, emr_id,
+    encounter_type_id, encounter_type_name, encounter_type_uuid, entered_datetime, emr_id,
     next_appt_date, disposition, voided, users_modified, dates_modified
 )
 select e.encounter_id,
@@ -150,6 +151,7 @@ select e.encounter_id,
        coalesce(vl.location_name, el.site),
        e.encounter_type,
        et.name,                                   -- encounter_type_name
+       et.uuid,                                   -- encounter_type_uuid
        e.date_created,
        em.emr_id,
        o.next_appt_date,
@@ -187,6 +189,7 @@ select emr_id,
        users_modified,
        dates_modified,
        index_asc,
-       index_desc
+       index_desc,
+       encounter_type_uuid
 from temp_all_encounters t
 ORDER BY t.patient_id, t.encounter_id;

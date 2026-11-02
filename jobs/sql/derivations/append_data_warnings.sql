@@ -2,6 +2,8 @@
 -- ported from sl-etl/jobs/sql/derivations/append_data_warnings.sql for ZL.
 -- runs in the warehouse after every site has loaded (refresh-derived-tables.yml).
 -- avoid semicolons inside comments and strings: petl splits this file on the semicolon delimiter
+-- encounter types are matched on encounter_type_uuid, not encounter_type_name, because the names
+-- are translated on some servers (e.g. French in Haiti). names are kept in comments for readability
 
 -- --------------------------------------------------- remove any previously appended rows
 -- each site refresh replaces its own partition of data_warnings, but if a site failed to refresh
@@ -41,7 +43,8 @@ partition_num      int
 );
 
 -- -------------------------------------------------- followup without intake
--- flags the first followup in each program (or patient, for NCD) that has no intake on or before it
+-- flags the first followup in each program (or patient, for NCD) when there is no intake at all.
+-- if the intake exists but came later, only the 'Intake after Followup' warning is raised
 
 -- HIV (within HIV program enrollment)
 with first_followup as (
@@ -61,8 +64,7 @@ and not exists
 	(select 1 from hiv_visit v2
 	inner join all_encounters e2 on e2.encounter_id = v2.encounter_id
 	where v2.hiv_program_id = f.hiv_program_id
-	and v2.encounter_type = 'HIV Intake'
-	and e2.encounter_datetime <= f.encounter_datetime);
+	and v2.encounter_type = 'HIV Intake');
 
 -- ANC (within MCH program enrollment)
 with first_followup as (
@@ -70,7 +72,7 @@ with first_followup as (
 		row_number() over (partition by v.mch_program_id order by e.encounter_datetime, e.encounter_id) as rn
 	from mch_visit v
 	inner join all_encounters e on e.encounter_id = v.encounter_id
-	where e.encounter_type_name = 'ANC Followup'
+	where e.encounter_type_uuid = '00e5e946-90ec-11e8-9eb6-529269fb1459' /* ANC Followup */
 	and v.mch_program_id is not null)
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id, patient_program_id,
 encounter_datetime, datetime_entered, user_entered, server, partition_num)
@@ -82,15 +84,14 @@ and not exists
 	(select 1 from mch_visit v2
 	inner join all_encounters e2 on e2.encounter_id = v2.encounter_id
 	where v2.mch_program_id = f.mch_program_id
-	and e2.encounter_type_name = 'ANC Intake'
-	and e2.encounter_datetime <= f.encounter_datetime);
+	and e2.encounter_type_uuid = '00e5e810-90ec-11e8-9eb6-529269fb1459' /* ANC Intake */);
 
 -- NCD (by patient, no program id available in all_encounters)
 with first_followup as (
 	select e.*,
 		row_number() over (partition by e.patient_id order by e.encounter_datetime, e.encounter_id) as rn
 	from all_encounters e
-	where e.encounter_type_name = 'NCD Followup Consult')
+	where e.encounter_type_uuid = '5cbfd6a2-92d9-4ad0-b526-9d29bfe1d10c' /* NCD Followup Consult */)
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id,
 encounter_datetime, datetime_entered, user_entered, server, partition_num)
 select 'Followup without Intake', f.encounter_type_name, f.patient_id, f.emr_id, f.visit_id, f.encounter_id,
@@ -100,8 +101,7 @@ where f.rn = 1
 and not exists
 	(select 1 from all_encounters e2
 	where e2.patient_id = f.patient_id
-	and e2.encounter_type_name = 'NCD Initial Consult'
-	and e2.encounter_datetime <= f.encounter_datetime);
+	and e2.encounter_type_uuid = 'ae06d311-1866-455b-8a64-126a9bd74171' /* NCD Initial Consult */);
 
 -- -------------------------------------------------- intake after followup
 -- every intake that has a followup before it in the same program (or patient, for NCD).
@@ -139,10 +139,10 @@ cross apply
 	from mch_visit v2
 	inner join all_encounters e2 on e2.encounter_id = v2.encounter_id
 	where v2.mch_program_id = v.mch_program_id
-	and e2.encounter_type_name = 'ANC Followup'
+	and e2.encounter_type_uuid = '00e5e946-90ec-11e8-9eb6-529269fb1459' /* ANC Followup */
 	and e2.encounter_datetime < e.encounter_datetime
 	order by e2.encounter_datetime asc, e2.encounter_id asc) f
-where e.encounter_type_name = 'ANC Intake'
+where e.encounter_type_uuid = '00e5e810-90ec-11e8-9eb6-529269fb1459' /* ANC Intake */
 and v.mch_program_id is not null;
 
 -- NCD (by patient)
@@ -156,10 +156,10 @@ cross apply
 	(select top 1 e2.encounter_id, e2.encounter_datetime
 	from all_encounters e2
 	where e2.patient_id = e.patient_id
-	and e2.encounter_type_name = 'NCD Followup Consult'
+	and e2.encounter_type_uuid = '5cbfd6a2-92d9-4ad0-b526-9d29bfe1d10c' /* NCD Followup Consult */
 	and e2.encounter_datetime < e.encounter_datetime
 	order by e2.encounter_datetime asc, e2.encounter_id asc) f
-where e.encounter_type_name = 'NCD Initial Consult';
+where e.encounter_type_uuid = 'ae06d311-1866-455b-8a64-126a9bd74171' /* NCD Initial Consult */;
 
 -- -------------------------------------------------- duplicate encounters within visit
 -- one row per patient/visit/encounter type, pointing at the latest duplicate
@@ -168,23 +168,23 @@ select e.patient_id, e.visit_id, e.encounter_type_name, max(e.encounter_id) max_
 into #temp_dup_encounters
 from all_encounters e
 where e.visit_id is not null
-and e.encounter_type_name in
-('Check-in',
-'Primary Care Adult Initial Consult',
-'Primary Care Adult Followup Consult',
-'Primary Care Pediatric Initial Consult',
-'Primary Care Pediatric Followup Consult',
-'NCD Initial Consult',
-'NCD Followup Consult',
-'ANC Intake',
-'ANC Followup',
-'HIV Intake',
-'HIV Followup',
-'Mental Health Consult',
-'Emergency Triage',
-'Admission',
-'Exit from Inpatient Care')
-group by e.patient_id, e.visit_id, e.encounter_type_name
+and e.encounter_type_uuid in
+('55a0d3ea-a4d7-4e88-8f01-5aceb2d3c61b' /* Check-in */,
+'27d3a180-031b-11e6-a837-0800200c9a66' /* Primary Care Adult Initial Consult */,
+'27d3a181-031b-11e6-a837-0800200c9a66' /* Primary Care Adult Followup Consult */,
+'5b812660-0262-11e6-a837-0800200c9a66' /* Primary Care Pediatric Initial Consult */,
+'229e5160-031b-11e6-a837-0800200c9a66' /* Primary Care Pediatric Followup Consult */,
+'ae06d311-1866-455b-8a64-126a9bd74171' /* NCD Initial Consult */,
+'5cbfd6a2-92d9-4ad0-b526-9d29bfe1d10c' /* NCD Followup Consult */,
+'00e5e810-90ec-11e8-9eb6-529269fb1459' /* ANC Intake */,
+'00e5e946-90ec-11e8-9eb6-529269fb1459' /* ANC Followup */,
+'c31d306a-40c4-11e7-a919-92ebcb67fe33' /* HIV Intake */,
+'c31d3312-40c4-11e7-a919-92ebcb67fe33' /* HIV Followup */,
+'a8584ab8-cc2a-11e5-9956-625662870761' /* Mental Health Consult */,
+'74cef0a6-2801-11e6-b67b-9e71128cae77' /* Emergency Triage */,
+'260566e1-c909-4d61-a96f-c1019291a09d' /* Admission */,
+'b6631959-2105-49dd-b154-e1249e0fbcd7' /* Exit from Inpatient Care */)
+group by e.patient_id, e.visit_id, e.encounter_type_uuid, e.encounter_type_name
 having count(*) > 1;
 
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id,
@@ -202,7 +202,7 @@ select v.mch_program_id, max(e.encounter_id) max_encounter_id, count(*) count
 into #temp_dup_encounters
 from mch_visit v
 inner join all_encounters e on e.encounter_id = v.encounter_id
-where e.encounter_type_name = 'ANC Intake'
+where e.encounter_type_uuid = '00e5e810-90ec-11e8-9eb6-529269fb1459' /* ANC Intake */
 and v.mch_program_id is not null
 group by v.mch_program_id
 having count(*) > 1;
@@ -258,7 +258,7 @@ with first_inpatient as (
 		row_number() over (partition by e.visit_id order by e.encounter_datetime, e.encounter_id) as rn
 	from all_encounters e
 	where e.visit_id is not null
-	and e.encounter_type_name in ('Exit from Inpatient Care', 'Transfer'))
+	and e.encounter_type_uuid in ('b6631959-2105-49dd-b154-e1249e0fbcd7' /* Exit from Inpatient Care */, '436cfe33-6b81-40ef-a455-f134a9f7e580' /* Transfer */))
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id,
 encounter_datetime, datetime_entered, user_entered, server, partition_num)
 select 'Inpatient encounters before admission', f.encounter_type_name, f.patient_id, f.emr_id, f.visit_id, f.encounter_id,
@@ -268,7 +268,7 @@ where f.rn = 1
 and not exists
 	(select 1 from all_encounters e2
 	where e2.visit_id = f.visit_id
-	and e2.encounter_type_name = 'Admission'
+	and e2.encounter_type_uuid = '260566e1-c909-4d61-a96f-c1019291a09d' /* Admission */
 	and e2.encounter_datetime <= f.encounter_datetime);
 
 -- -------------------------------------------------- duplicate emr_id
@@ -288,7 +288,7 @@ outer apply
 	(select top 1 r1.encounter_id, r1.visit_id, r1.encounter_datetime
 	from all_encounters r1
 	where r1.patient_id = p.patient_id
-	and r1.encounter_type_name = 'Patient Registration'
+	and r1.encounter_type_uuid = '873f968a-73a8-4f9c-ac78-9f4778b751b6' /* Patient Registration */
 	order by r1.encounter_datetime desc, r1.encounter_id desc) r
 where p.emr_id is not null;
 
