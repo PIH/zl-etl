@@ -159,14 +159,18 @@ and e.patient_id in (select patient_id from temp_reg);
 
 create index temp_reg_encounters_pi on temp_reg_encounters(patient_id);
 
+-- resolve the encounter_id first, then join on it by primary key
+-- (joining encounter ON a correlated subquery forces a full encounter scan per row)
 update temp_reg t
-inner join encounter e on e.encounter_id =
+set t.encounter_id =
 	(select e2.encounter_id from temp_reg_encounters e2
 	where e2.patient_id = t.patient_id
 	order by e2.encounter_datetime desc, e2.encounter_id desc
-	limit 1)
-set t.encounter_id = e.encounter_id,
-	t.encounter_datetime = e.encounter_datetime;
+	limit 1);
+
+update temp_reg t
+inner join encounter e on e.encounter_id = t.encounter_id
+set t.encounter_datetime = e.encounter_datetime;
 
 insert into temp_warnings (patient_id, datetime_entered, encounter_id, encounter_datetime, creator, warning_type, event_type, other_details)
 select patient_id, datetime_entered, encounter_id, encounter_datetime, creator, warning_type, 'patient_registration', other_details
@@ -275,6 +279,19 @@ and not exists
 	and pp.patient_id = e.patient_id)
 group by e.patient_id, e.encounter_type;
 
+-- resolve the encounter_id first, then join on it by primary key
+alter table temp_hiv_no_enrollment add column encounter_id int(11);
+
+update temp_hiv_no_enrollment t
+set t.encounter_id =
+	(select e2.encounter_id from encounter e2
+	where e2.patient_id = t.patient_id
+	and e2.encounter_type = t.encounter_type
+	and e2.encounter_datetime = t.first_datetime
+	and e2.voided = 0
+	order by e2.encounter_id asc
+	limit 1);
+
 insert into temp_warnings (warning_type, event_type, patient_id, encounter_id, encounter_datetime, datetime_entered, creator)
 select
 	case t.encounter_type
@@ -285,14 +302,7 @@ select
 	end,
 	et.name, e.patient_id, e.encounter_id, e.encounter_datetime, e.date_created, e.creator
 from temp_hiv_no_enrollment t
-inner join encounter e on e.encounter_id =
-	(select e2.encounter_id from encounter e2
-	where e2.patient_id = t.patient_id
-	and e2.encounter_type = t.encounter_type
-	and e2.encounter_datetime = t.first_datetime
-	and e2.voided = 0
-	order by e2.encounter_id asc
-	limit 1)
+inner join encounter e on e.encounter_id = t.encounter_id
 inner join encounter_type et on et.encounter_type_id = e.encounter_type;
 
 -- --------------------------------------------------------- HIV dispensing without any prescriptions (from ZL)
@@ -309,17 +319,23 @@ and not exists
 	and o.patient_id = e.patient_id)
 group by e.patient_id;
 
-insert into temp_warnings (warning_type, event_type, patient_id, encounter_id, encounter_datetime, datetime_entered, creator)
-select 'HIV dispensing without any prescriptions', et.name, e.patient_id, e.encounter_id, e.encounter_datetime, e.date_created, e.creator
-from temp_hiv_disp_no_orders t
-inner join encounter e on e.encounter_id =
+-- resolve the encounter_id first, then join on it by primary key
+alter table temp_hiv_disp_no_orders add column encounter_id int(11);
+
+update temp_hiv_disp_no_orders t
+set t.encounter_id =
 	(select e2.encounter_id from encounter e2
 	where e2.patient_id = t.patient_id
 	and e2.encounter_type = @hiv_dispensing
 	and e2.encounter_datetime = t.first_datetime
 	and e2.voided = 0
 	order by e2.encounter_id asc
-	limit 1)
+	limit 1);
+
+insert into temp_warnings (warning_type, event_type, patient_id, encounter_id, encounter_datetime, datetime_entered, creator)
+select 'HIV dispensing without any prescriptions', et.name, e.patient_id, e.encounter_id, e.encounter_datetime, e.date_created, e.creator
+from temp_hiv_disp_no_orders t
+inner join encounter e on e.encounter_id = t.encounter_id
 inner join encounter_type et on et.encounter_type_id = e.encounter_type;
 
 -- --------------------------------------------------------- exclude voided patients (LIB-427)
