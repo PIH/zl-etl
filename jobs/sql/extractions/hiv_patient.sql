@@ -646,18 +646,42 @@ set @arv3 = CONCEPT_FROM_MAPPING('PIH', '13960');
 -- will be one row per dispensing construct 
 DROP TEMPORARY TABLE IF EXISTS temp_art_obs;
 create temporary table temp_art_obs
-SELECT person_id, obs_group_id, value_coded ,obs_datetime FROM 
+SELECT person_id, encounter_id, obs_group_id, value_coded ,obs_datetime FROM 
 obs WHERE voided = 0 AND
 concept_id = CONCEPT_FROM_MAPPING('PIH', '1535') AND encounter_id IN (SELECT encounter_id FROM encounter
 WHERE voided = 0 AND encounter_type = @hiv_dispensing_encounter)
  AND value_coded IN (@arv1, @arv2, @arv3)
 ;
+create index temp_art_obs1 on temp_art_obs(person_id, obs_datetime);
+create index temp_art_obs2 on temp_art_obs(encounter_id, value_coded);
 
+-- first ART dispensing encounter per patient: earliest dispensing with any ARV obs
+-- (ties on datetime broken by lowest encounter_id). All ARV slots are read from
+-- this one encounter, so ARVs first given at a later visit are not mixed in.
 DROP TEMPORARY TABLE IF EXISTS temp_min_art_obs_dates;
 CREATE TEMPORARY TABLE temp_min_art_obs_dates
-select person_id, value_coded, min(obs_datetime) "min_obs_datetime"
+select person_id, min(obs_datetime) "min_obs_datetime"
 from temp_art_obs
-group by person_id,value_coded;
+group by person_id;
+create index temp_min_art_obs_dates1 on temp_min_art_obs_dates(person_id, min_obs_datetime);
+
+DROP TEMPORARY TABLE IF EXISTS temp_first_art_encounter;
+CREATE TEMPORARY TABLE temp_first_art_encounter
+select o.person_id, min(o.encounter_id) "encounter_id"
+from temp_art_obs o
+inner join temp_min_art_obs_dates mo on mo.person_id = o.person_id
+	and mo.min_obs_datetime = o.obs_datetime
+group by o.person_id;
+create index temp_first_art_encounter1 on temp_first_art_encounter(encounter_id);
+
+-- one row per ARV slot on the first encounter
+DROP TEMPORARY TABLE IF EXISTS temp_first_art_slots;
+CREATE TEMPORARY TABLE temp_first_art_slots
+select o.person_id, o.value_coded, min(o.obs_group_id) "obs_group_id", min(o.obs_datetime) "obs_datetime"
+from temp_art_obs o
+inner join temp_first_art_encounter fe on fe.encounter_id = o.encounter_id
+group by o.person_id, o.value_coded;
+create index temp_first_art_slots1 on temp_first_art_slots(person_id, value_coded);
 
 DROP TEMPORARY TABLE IF EXISTS temp_art_summary;
 CREATE TEMPORARY TABLE temp_art_summary
@@ -674,36 +698,24 @@ arv3_drug			varchar(255)
 );
 
 insert into temp_art_summary(patient_id)
-select distinct person_id from temp_min_art_obs_dates;
+select person_id from temp_first_art_encounter;
 
 CREATE INDEX temp_art_summary_pid ON temp_art_summary(patient_id);
 
-create index temp_min_art_obs_dates1 on temp_min_art_obs_dates(person_id, value_coded);
-create index temp_art_obs1 on temp_art_obs(person_id, obs_datetime, value_coded);
+update temp_art_summary t 
+inner join temp_first_art_slots s on s.person_id = t.patient_id and s.value_coded = @arv1
+set t.arv1_obs_group_id = s.obs_group_id,
+	t.arv1_obs_date = s.obs_datetime;
 
 update temp_art_summary t 
-inner join temp_min_art_obs_dates mo on mo.person_id = t.patient_id and mo.value_coded = @arv1
-inner join temp_art_obs o on t.patient_id = o.person_id 
-	and o.obs_datetime = mo.min_obs_datetime
-	and o.value_coded = @arv1
-set t.arv1_obs_group_id = o.obs_group_id,
-	t.arv1_obs_date = o.obs_datetime;
+inner join temp_first_art_slots s on s.person_id = t.patient_id and s.value_coded = @arv2
+set t.arv2_obs_group_id = s.obs_group_id,
+	t.arv2_obs_date = s.obs_datetime;
 
 update temp_art_summary t 
-inner join temp_min_art_obs_dates mo on mo.person_id = t.patient_id and mo.value_coded = @arv2
-inner join temp_art_obs o on t.patient_id = o.person_id 
-	and o.obs_datetime = mo.min_obs_datetime
-	and o.value_coded = @arv2
-set t.arv2_obs_group_id = o.obs_group_id,
-	t.arv2_obs_date = o.obs_datetime;
-
-update temp_art_summary t 
-inner join temp_min_art_obs_dates mo on mo.person_id = t.patient_id and mo.value_coded = @arv3
-inner join temp_art_obs o on t.patient_id = o.person_id 
-	and o.obs_datetime = mo.min_obs_datetime
-	and o.value_coded = @arv3
-set t.arv3_obs_group_id = o.obs_group_id,
-	t.arv3_obs_date = o.obs_datetime;
+inner join temp_first_art_slots s on s.person_id = t.patient_id and s.value_coded = @arv3
+set t.arv3_obs_group_id = s.obs_group_id,
+	t.arv3_obs_date = s.obs_datetime;
 
 update temp_art_summary t 
 set arv1_drug = obs_from_group_id_value_coded_list(arv1_obs_group_id, 'PIH','1282',@locale);
@@ -717,7 +729,7 @@ set arv3_drug = obs_from_group_id_value_coded_list(arv3_obs_group_id, 'PIH','128
 update temp_patient t 
 inner join temp_art_summary tas on tas.patient_id = t.patient_id
 set art_dispensing_start_date = COALESCE(arv1_obs_date, arv2_obs_date, arv3_obs_date),
-	first_art_dispensing_regimen = CONCAT(ifnull(tas.arv1_drug,''),if(tas.arv2_drug is null, '',concat(',',tas.arv2_drug)),if(tas.arv3_drug is null, '',concat(',',tas.arv3_drug))) ;
+	first_art_dispensing_regimen = CONCAT_WS(',', tas.arv1_drug, tas.arv2_drug, tas.arv3_drug);
 
 
 
