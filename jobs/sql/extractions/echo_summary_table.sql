@@ -164,170 +164,118 @@ AND patient_id=t.patient_id);
 UPDATE echo_summary_table t 
 SET t.cardiomyopathy = CASE WHEN answerEverExists(t.patient_id,'PIH','11499','PIH','5016',null)=1 THEN TRUE ELSE FALSE END;
 
--- ########### beta_blocker | Dispensing ################################
-set @med_name = concept_from_mapping ('PIH','1282');
+-- ########### Dispensing (old form + new dispensing app) ##################
+-- Drugs can be dispensed two ways:
+--   Old: legacy "Medication Dispensed" form -> obs (PIH 1282 = drug concept) in a dispensing encounter
+--   New: O3 dispensing app -> medication_dispense rows (concept = drug concept), completed only
+-- Both are collected into one table of (patient, drug concept) for echo patients,
+-- and each drug flag below checks that table.
 
-set @atenolol = concept_from_mapping ('PIH','3186');
+set @med_name        = concept_from_mapping ('PIH','1282');
+set @complete_status = concept_from_mapping ('PIH','1267');
 
+DROP TEMPORARY TABLE IF EXISTS temp_echo_dispensed;
+CREATE TEMPORARY TABLE temp_echo_dispensed
+(patient_id   int(11),
+ drug_concept int(11),
+ PRIMARY KEY (patient_id, drug_concept));
 
-UPDATE echo_summary_table t 
-SET t.beta_blocker_atenolol= (
-select if(obs_id is null,FALSE,TRUE)
-from obs o where o.voided =0 
-	AND o.person_id = t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = @med_name
-	and o.value_coded  = @atenolol
-	limit 1);
+-- old form
+INSERT IGNORE INTO temp_echo_dispensed (patient_id, drug_concept)
+SELECT DISTINCT o.person_id, o.value_coded
+FROM obs o
+INNER JOIN encounter e ON e.encounter_id = o.encounter_id
+	AND e.encounter_type = @dis_encounter_id
+	AND e.voided = 0
+INNER JOIN echo_summary_table t ON t.patient_id = o.person_id
+WHERE o.voided = 0
+	AND o.concept_id = @med_name
+	AND o.value_coded IS NOT NULL;
 
-UPDATE echo_summary_table t 
-SET t.beta_blocker_atenolol= FALSE WHERE t.beta_blocker_atenolol IS NULL;
+-- new dispensing app
+INSERT IGNORE INTO temp_echo_dispensed (patient_id, drug_concept)
+SELECT DISTINCT md.patient_id, md.concept
+FROM medication_dispense md
+INNER JOIN echo_summary_table t ON t.patient_id = md.patient_id
+WHERE md.voided = 0
+	AND md.status = @complete_status
+	AND md.concept IS NOT NULL;
 
+-- ########### beta blockers ###########
+set @atenolol   = concept_from_mapping ('PIH','3186');
 set @metoprolol = concept_from_mapping ('PIH','12491');
-
-UPDATE echo_summary_table t 
-SET t.beta_blocker_metoprolol = (
-select if(obs_id is null,FALSE,TRUE)
-from obs o where o.voided =0 
-	AND o.person_id = t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = @med_name
-	and o.value_coded  = @metoprolol
-	limit 1);
-UPDATE echo_summary_table t 
-SET t.beta_blocker_metoprolol= FALSE WHERE t.beta_blocker_metoprolol IS NULL;
-
 set @carvedilol = concept_from_mapping ('PIH','3185');
 
-UPDATE echo_summary_table t 
-SET t.beta_blocker_carvedilol = (
-select CASE WHEN obs_id is NOT NULL THEN TRUE ELSE FALSE END
-from obs o where o.voided =0 
-	AND o.person_id =  t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id= t.patient_id)
-	and o.concept_id = @med_name
-	and o.value_coded  = @carvedilol
-	limit 1);
-UPDATE echo_summary_table t 
-SET t.beta_blocker_carvedilol= FALSE WHERE t.beta_blocker_carvedilol IS NULL;
+UPDATE echo_summary_table t
+SET t.beta_blocker_atenolol = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id AND d.drug_concept = @atenolol);
 
+UPDATE echo_summary_table t
+SET t.beta_blocker_metoprolol = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id AND d.drug_concept = @metoprolol);
+
+UPDATE echo_summary_table t
+SET t.beta_blocker_carvedilol = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id AND d.drug_concept = @carvedilol);
+
+-- ########### penicillin ###########
 set @Phenoxymethylpenicillin = concept_from_mapping ('PIH','9185');
-set @benzylpenicillin = concept_from_mapping ('PIH','12345');
-set @benzathine = concept_from_mapping ('PIH','4034');
+set @benzylpenicillin        = concept_from_mapping ('PIH','12345');
+set @benzathine              = concept_from_mapping ('PIH','4034');
 
-UPDATE echo_summary_table t 
-SET t.penicillin  = (
-select if(obs_id is null,0,1)
-from obs o where o.voided =0 
-	AND o.person_id = t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = @med_name
-	and (o.value_coded  = @Phenoxymethylpenicillin
-			OR o.value_coded  =  @benzylpenicillin 
-			OR o.value_coded  = @benzathine) 
-	limit 1);
-UPDATE echo_summary_table t 
-SET t.penicillin= FALSE WHERE t.penicillin IS NULL;
+UPDATE echo_summary_table t
+SET t.penicillin = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id
+	AND d.drug_concept IN (@Phenoxymethylpenicillin, @benzylpenicillin, @benzathine));
 
-set @Enalapril_maleate = concept_from_mapping ('PIH','9230');
-set @Enalapril = concept_from_mapping ('PIH','1242');
+-- ########### ACE inhibitor (includes ARBs: losartan, losartan/HCTZ, valsartan) ###########
+set @Enalapril_maleate           = concept_from_mapping ('PIH','9230');
+set @Enalapril                   = concept_from_mapping ('PIH','1242');
 set @Hydrochlorothiazide_Losartan = concept_from_mapping ('PIH','13740');
-set @Losartan = concept_from_mapping ('PIH','6769');
-set @Valsartan = concept_from_mapping ('PIH','10601');
-set @Lisinopril = concept_from_mapping ('PIH','3183');
+set @Losartan                    = concept_from_mapping ('PIH','6769');
+set @Valsartan                   = concept_from_mapping ('PIH','10601');
+set @Lisinopril                  = concept_from_mapping ('PIH','3183');
 
-UPDATE echo_summary_table t 
-SET t.ace_inhibitor = (
-select if(obs_id is null,0,1)
-from obs o where o.voided =0 
-	AND o.person_id = t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = @med_name
-	and (o.value_coded  = @Enalapril_maleate
-			OR o.value_coded  = @Enalapril
-			OR o.value_coded  = @Hydrochlorothiazide_Losartan
-			OR o.value_coded  = @Losartan
-			OR o.value_coded  = @Lisinopril
-			OR o.value_coded  = @Valsartan) 
-	limit 1);
-UPDATE echo_summary_table t 
-SET t.ace_inhibitor= FALSE WHERE t.ace_inhibitor IS NULL;
+UPDATE echo_summary_table t
+SET t.ace_inhibitor = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id
+	AND d.drug_concept IN (@Enalapril_maleate, @Enalapril, @Hydrochlorothiazide_Losartan,
+	                       @Losartan, @Valsartan, @Lisinopril));
 
-set @Spironolactone = concept_from_mapping ('PIH','4061');
-
-UPDATE echo_summary_table t 
-SET t.spironolactone = (
-select if(obs_id is null,0,1)
-from obs o where o.voided =0 
-	AND o.person_id = t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = @med_name
-	AND o.value_coded  = @Spironolactone
-	limit 1);
-UPDATE echo_summary_table t 
-SET t.spironolactone= FALSE WHERE t.spironolactone IS NULL;
-
+-- ########### other heart failure drugs ###########
+set @Spironolactone            = concept_from_mapping ('PIH','4061');
 set @Hydralazine_hydrochloride = concept_from_mapping ('PIH','9084');
+set @Isosorbide_dinitrate      = concept_from_mapping ('PIH','3428');
 
-UPDATE echo_summary_table t 
-SET t.hydralazine_hydrochloride = (
-select if(obs_id is null,0,1)
-from obs o where o.voided =0 
-	AND o.person_id = t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = @med_name
-	AND o.value_coded  = @Hydralazine_hydrochloride
-	limit 1);
-UPDATE echo_summary_table t 
-SET t.hydralazine_hydrochloride= FALSE WHERE t.hydralazine_hydrochloride IS NULL;
+UPDATE echo_summary_table t
+SET t.spironolactone = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id AND d.drug_concept = @Spironolactone);
 
-set @Isosorbide_dinitrate = concept_from_mapping ('PIH','3428');
+UPDATE echo_summary_table t
+SET t.hydralazine_hydrochloride = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id AND d.drug_concept = @Hydralazine_hydrochloride);
 
-UPDATE echo_summary_table t 
-SET t.isosorbide_dinitrate = (
-select if(obs_id is null,0,1)
-from obs o where o.voided =0 
-	AND o.person_id = t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = @med_name
-	AND o.value_coded  = @Isosorbide_dinitrate
-	limit 1);
-UPDATE echo_summary_table t 
-SET t.isosorbide_dinitrate= FALSE WHERE t.isosorbide_dinitrate IS NULL;
+UPDATE echo_summary_table t
+SET t.isosorbide_dinitrate = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id AND d.drug_concept = @Isosorbide_dinitrate);
 
+-- ########### diuretic ###########
 set @hydrochlorothiazide = concept_from_mapping ('PIH','1243');
-set @LASIX = concept_from_mapping ('PIH','99');
+set @LASIX               = concept_from_mapping ('PIH','99');
 
-UPDATE echo_summary_table t 
-SET t.diuretic = (
-select if(obs_id is null,0,1)
-from obs o where o.voided =0 
-	AND o.person_id = t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = @med_name
-	AND (o.value_coded  = @hydrochlorothiazide
-	OR o.value_coded  = @LASIX 
-	)
-	limit 1);
-UPDATE echo_summary_table t 
-SET t.diuretic= FALSE WHERE t.diuretic IS NULL;
+UPDATE echo_summary_table t
+SET t.diuretic = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id
+	AND d.drug_concept IN (@hydrochlorothiazide, @LASIX));
 
+-- ########### calcium channel blocker ###########
 set @Amlodipine_besylate = concept_from_mapping ('PIH','9083');
-set @Nifedipine = concept_from_mapping ('PIH','250');
+set @Nifedipine          = concept_from_mapping ('PIH','250');
 
-UPDATE echo_summary_table t 
-SET t.calcium_channel_blocker = (
-select if(obs_id is null,0,1)
-from obs o where o.voided =0 
-	AND o.person_id = t.patient_id 
-	AND o.encounter_id IN (SELECT encounter_id FROM encounter e WHERE encounter_type =@dis_encounter_id AND patient_id=t.patient_id)
-	and o.concept_id = @med_name
-	AND (o.value_coded  = @Amlodipine_besylate
-	OR o.value_coded  = @Nifedipine
-	)
-	limit 1);
-UPDATE echo_summary_table t 
-SET t.calcium_channel_blocker= FALSE WHERE t.calcium_channel_blocker IS NULL;
+UPDATE echo_summary_table t
+SET t.calcium_channel_blocker = EXISTS (SELECT 1 FROM temp_echo_dispensed d
+	WHERE d.patient_id = t.patient_id
+	AND d.drug_concept IN (@Amlodipine_besylate, @Nifedipine));
 
 -- ############## Follow Up Echo ################################
 
@@ -483,13 +431,14 @@ UPDATE echo_summary_table
 SET copd=FALSE WHERE copd IS NULL;
 
 -- ############ ncd_comorbidity ################################################
-UPDATE echo_summary_table t 
-SET t.ncd_comorbidity = CASE WHEN ( dm1 IS TRUE OR
-                                                               dm2 IS TRUE OR
-                                                               hypertension  IS TRUE OR
-                                                               asthma  IS TRUE OR
-                                                               sickle_cell  IS TRUE OR
-                                                               copd  IS TRUE) THEN TRUE ELSE FALSE  END;
+UPDATE echo_summary_table t
+SET t.ncd_comorbidity = CASE WHEN (dm1 IS TRUE
+                                   OR dm2 IS TRUE
+                                   OR hypertension IS TRUE
+                                   OR asthma IS TRUE
+                                   OR sickle_cell IS TRUE
+                                   OR copd IS TRUE)
+                             THEN TRUE ELSE FALSE END;
 DROP TABLE patient_echo_encounters;
 
 SELECT 
