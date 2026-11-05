@@ -42,63 +42,87 @@ server             varchar(100),
 partition_num      int
 );
 
--- -------------------------------------------------- followup without intake
--- flags the first followup in each program (or patient, for NCD) when there is no intake at all.
--- if the intake exists but came later, only the 'Intake after Followup' warning is raised
+-- -------------------------------------------------- first followup per program (or patient, for NCD)
+-- computed once and reused by both 'Followup without Intake' and 'Intake after Followup'.
+-- the earliest followup in a program is also the earliest followup before any intake that comes
+-- after it, so 'Intake after Followup' becomes a plain join instead of a per-intake CROSS APPLY
+-- (all_encounters has no indexes, so each CROSS APPLY iteration was a full table scan)
 
 -- HIV (within HIV program enrollment)
-with first_followup as (
-	select e.*, v.hiv_program_id,
+drop table if exists #first_hiv_fu;
+select x.encounter_type_name, x.patient_id, x.emr_id, x.visit_id, x.encounter_id, x.hiv_program_id,
+x.encounter_datetime, x.entered_datetime, x.user_entered, x.server, x.partition_num
+into #first_hiv_fu
+from
+	(select e.*, v.hiv_program_id,
 		row_number() over (partition by v.hiv_program_id order by e.encounter_datetime, e.encounter_id) as rn
 	from hiv_visit v
 	inner join all_encounters e on e.encounter_id = v.encounter_id
 	where v.encounter_type = 'HIV Followup'
-	and v.hiv_program_id is not null)
+	and v.hiv_program_id is not null) x
+where x.rn = 1;
+
+-- ANC (within MCH program enrollment)
+drop table if exists #first_anc_fu;
+select x.encounter_type_name, x.patient_id, x.emr_id, x.visit_id, x.encounter_id, x.mch_program_id,
+x.encounter_datetime, x.entered_datetime, x.user_entered, x.server, x.partition_num
+into #first_anc_fu
+from
+	(select e.*, v.mch_program_id,
+		row_number() over (partition by v.mch_program_id order by e.encounter_datetime, e.encounter_id) as rn
+	from mch_visit v
+	inner join all_encounters e on e.encounter_id = v.encounter_id
+	where e.encounter_type_uuid = '00e5e946-90ec-11e8-9eb6-529269fb1459' /* ANC Followup */
+	and v.mch_program_id is not null) x
+where x.rn = 1;
+
+-- NCD (by patient, no program id available in all_encounters)
+drop table if exists #first_ncd_fu;
+select x.encounter_type_name, x.patient_id, x.emr_id, x.visit_id, x.encounter_id,
+x.encounter_datetime, x.entered_datetime, x.user_entered, x.server, x.partition_num
+into #first_ncd_fu
+from
+	(select e.*,
+		row_number() over (partition by e.patient_id order by e.encounter_datetime, e.encounter_id) as rn
+	from all_encounters e
+	where e.encounter_type_uuid = '5cbfd6a2-92d9-4ad0-b526-9d29bfe1d10c' /* NCD Followup Consult */) x
+where x.rn = 1;
+
+-- -------------------------------------------------- followup without intake
+-- flags the first followup in each program (or patient, for NCD) when there is no intake at all.
+-- if the intake exists but came later, only the 'Intake after Followup' warning is raised
+
+-- HIV
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id, patient_program_id,
 encounter_datetime, datetime_entered, user_entered, server, partition_num)
 select 'Followup without Intake', f.encounter_type_name, f.patient_id, f.emr_id, f.visit_id, f.encounter_id, f.hiv_program_id,
 f.encounter_datetime, f.entered_datetime, f.user_entered, f.server, f.partition_num
-from first_followup f
-where f.rn = 1
-and not exists
+from #first_hiv_fu f
+where not exists
 	(select 1 from hiv_visit v2
 	inner join all_encounters e2 on e2.encounter_id = v2.encounter_id
 	where v2.hiv_program_id = f.hiv_program_id
 	and v2.encounter_type = 'HIV Intake');
 
--- ANC (within MCH program enrollment)
-with first_followup as (
-	select e.*, v.mch_program_id,
-		row_number() over (partition by v.mch_program_id order by e.encounter_datetime, e.encounter_id) as rn
-	from mch_visit v
-	inner join all_encounters e on e.encounter_id = v.encounter_id
-	where e.encounter_type_uuid = '00e5e946-90ec-11e8-9eb6-529269fb1459' /* ANC Followup */
-	and v.mch_program_id is not null)
+-- ANC
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id, patient_program_id,
 encounter_datetime, datetime_entered, user_entered, server, partition_num)
 select 'Followup without Intake', f.encounter_type_name, f.patient_id, f.emr_id, f.visit_id, f.encounter_id, f.mch_program_id,
 f.encounter_datetime, f.entered_datetime, f.user_entered, f.server, f.partition_num
-from first_followup f
-where f.rn = 1
-and not exists
+from #first_anc_fu f
+where not exists
 	(select 1 from mch_visit v2
 	inner join all_encounters e2 on e2.encounter_id = v2.encounter_id
 	where v2.mch_program_id = f.mch_program_id
 	and e2.encounter_type_uuid = '00e5e810-90ec-11e8-9eb6-529269fb1459' /* ANC Intake */);
 
--- NCD (by patient, no program id available in all_encounters)
-with first_followup as (
-	select e.*,
-		row_number() over (partition by e.patient_id order by e.encounter_datetime, e.encounter_id) as rn
-	from all_encounters e
-	where e.encounter_type_uuid = '5cbfd6a2-92d9-4ad0-b526-9d29bfe1d10c' /* NCD Followup Consult */)
+-- NCD
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id,
 encounter_datetime, datetime_entered, user_entered, server, partition_num)
 select 'Followup without Intake', f.encounter_type_name, f.patient_id, f.emr_id, f.visit_id, f.encounter_id,
 f.encounter_datetime, f.entered_datetime, f.user_entered, f.server, f.partition_num
-from first_followup f
-where f.rn = 1
-and not exists
+from #first_ncd_fu f
+where not exists
 	(select 1 from all_encounters e2
 	where e2.patient_id = f.patient_id
 	and e2.encounter_type_uuid = 'ae06d311-1866-455b-8a64-126a9bd74171' /* NCD Initial Consult */);
@@ -107,7 +131,7 @@ and not exists
 -- every intake that has a followup before it in the same program (or patient, for NCD).
 -- other_details shows the earliest followup that came before the intake
 
--- HIV (within HIV program enrollment)
+-- HIV
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id, patient_program_id,
 encounter_datetime, datetime_entered, user_entered, server, partition_num, other_details)
 select 'Intake after Followup', e.encounter_type_name, e.patient_id, e.emr_id, e.visit_id, e.encounter_id, v.hiv_program_id,
@@ -115,18 +139,12 @@ e.encounter_datetime, e.entered_datetime, e.user_entered, e.server, e.partition_
 concat('earlier followup: ', f.encounter_datetime, ' (encounter_id ', f.encounter_id, ')')
 from hiv_visit v
 inner join all_encounters e on e.encounter_id = v.encounter_id
-cross apply
-	(select top 1 e2.encounter_id, e2.encounter_datetime
-	from hiv_visit v2
-	inner join all_encounters e2 on e2.encounter_id = v2.encounter_id
-	where v2.hiv_program_id = v.hiv_program_id
-	and v2.encounter_type = 'HIV Followup'
-	and e2.encounter_datetime < e.encounter_datetime
-	order by e2.encounter_datetime asc, e2.encounter_id asc) f
+inner join #first_hiv_fu f on f.hiv_program_id = v.hiv_program_id
+	and f.encounter_datetime < e.encounter_datetime
 where v.encounter_type = 'HIV Intake'
 and v.hiv_program_id is not null;
 
--- ANC (within MCH program enrollment)
+-- ANC
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id, patient_program_id,
 encounter_datetime, datetime_entered, user_entered, server, partition_num, other_details)
 select 'Intake after Followup', e.encounter_type_name, e.patient_id, e.emr_id, e.visit_id, e.encounter_id, v.mch_program_id,
@@ -134,31 +152,20 @@ e.encounter_datetime, e.entered_datetime, e.user_entered, e.server, e.partition_
 concat('earlier followup: ', f.encounter_datetime, ' (encounter_id ', f.encounter_id, ')')
 from mch_visit v
 inner join all_encounters e on e.encounter_id = v.encounter_id
-cross apply
-	(select top 1 e2.encounter_id, e2.encounter_datetime
-	from mch_visit v2
-	inner join all_encounters e2 on e2.encounter_id = v2.encounter_id
-	where v2.mch_program_id = v.mch_program_id
-	and e2.encounter_type_uuid = '00e5e946-90ec-11e8-9eb6-529269fb1459' /* ANC Followup */
-	and e2.encounter_datetime < e.encounter_datetime
-	order by e2.encounter_datetime asc, e2.encounter_id asc) f
+inner join #first_anc_fu f on f.mch_program_id = v.mch_program_id
+	and f.encounter_datetime < e.encounter_datetime
 where e.encounter_type_uuid = '00e5e810-90ec-11e8-9eb6-529269fb1459' /* ANC Intake */
 and v.mch_program_id is not null;
 
--- NCD (by patient)
+-- NCD
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id,
 encounter_datetime, datetime_entered, user_entered, server, partition_num, other_details)
 select 'Intake after Followup', e.encounter_type_name, e.patient_id, e.emr_id, e.visit_id, e.encounter_id,
 e.encounter_datetime, e.entered_datetime, e.user_entered, e.server, e.partition_num,
 concat('earlier followup: ', f.encounter_datetime, ' (encounter_id ', f.encounter_id, ')')
 from all_encounters e
-cross apply
-	(select top 1 e2.encounter_id, e2.encounter_datetime
-	from all_encounters e2
-	where e2.patient_id = e.patient_id
-	and e2.encounter_type_uuid = '5cbfd6a2-92d9-4ad0-b526-9d29bfe1d10c' /* NCD Followup Consult */
-	and e2.encounter_datetime < e.encounter_datetime
-	order by e2.encounter_datetime asc, e2.encounter_id asc) f
+inner join #first_ncd_fu f on f.patient_id = e.patient_id
+	and f.encounter_datetime < e.encounter_datetime
 where e.encounter_type_uuid = 'ae06d311-1866-455b-8a64-126a9bd74171' /* NCD Initial Consult */;
 
 -- -------------------------------------------------- duplicate encounters within visit
@@ -274,7 +281,18 @@ and not exists
 -- -------------------------------------------------- duplicate emr_id
 -- compared within the same server only: the HIV server holds its own copy of patients
 -- who are also on a site server, so the same emr_id across servers is expected
--- linked to the patient's most recent registration encounter, as in the extract
+-- linked to the patient's most recent registration encounter, as in the extract.
+-- the latest registration is computed once with row_number instead of a per-row OUTER APPLY
+drop table if exists #latest_reg;
+select x.patient_id, x.encounter_id, x.visit_id, x.encounter_datetime
+into #latest_reg
+from
+	(select r1.patient_id, r1.encounter_id, r1.visit_id, r1.encounter_datetime,
+		row_number() over (partition by r1.patient_id order by r1.encounter_datetime desc, r1.encounter_id desc) as rn
+	from all_encounters r1
+	where r1.encounter_type_uuid = '873f968a-73a8-4f9c-ac78-9f4778b751b6' /* Patient Registration */) x
+where x.rn = 1;
+
 insert into #temp_data_warnings (warning_type, event_type, patient_id, emr_id, visit_id, encounter_id, encounter_datetime, datetime_entered,
 user_entered, server, partition_num, other_details)
 select 'Duplicate emr_ids', 'patient_registration', p.patient_id, p.emr_id, r.visit_id, r.encounter_id,
@@ -284,12 +302,7 @@ from all_patients p
 inner join all_patients p2 on p2.emr_id = p.emr_id
 	and p2.server = p.server
 	and p2.patient_id <> p.patient_id
-outer apply
-	(select top 1 r1.encounter_id, r1.visit_id, r1.encounter_datetime
-	from all_encounters r1
-	where r1.patient_id = p.patient_id
-	and r1.encounter_type_uuid = '873f968a-73a8-4f9c-ac78-9f4778b751b6' /* Patient Registration */
-	order by r1.encounter_datetime desc, r1.encounter_id desc) r
+left join #latest_reg r on r.patient_id = p.patient_id
 where p.emr_id is not null;
 
 -- --------------------------------------------------- return_visit_date not in future
