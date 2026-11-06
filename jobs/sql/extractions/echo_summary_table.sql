@@ -204,6 +204,7 @@ WHERE md.voided = 0
 -- ########### beta blockers ###########
 set @atenolol   = concept_from_mapping ('PIH','3186');
 set @metoprolol = concept_from_mapping ('PIH','12491');
+set @metoprolol_tartrate = concept_from_mapping ('PIH','9220'); -- formulary metoprolol tartrate drugs (UHM-9660)
 set @carvedilol = concept_from_mapping ('PIH','3185');
 
 UPDATE echo_summary_table t
@@ -212,7 +213,7 @@ SET t.beta_blocker_atenolol = EXISTS (SELECT 1 FROM temp_echo_dispensed d
 
 UPDATE echo_summary_table t
 SET t.beta_blocker_metoprolol = EXISTS (SELECT 1 FROM temp_echo_dispensed d
-	WHERE d.patient_id = t.patient_id AND d.drug_concept = @metoprolol);
+	WHERE d.patient_id = t.patient_id AND d.drug_concept IN (@metoprolol, @metoprolol_tartrate));
 
 UPDATE echo_summary_table t
 SET t.beta_blocker_carvedilol = EXISTS (SELECT 1 FROM temp_echo_dispensed d
@@ -222,11 +223,12 @@ SET t.beta_blocker_carvedilol = EXISTS (SELECT 1 FROM temp_echo_dispensed d
 set @Phenoxymethylpenicillin = concept_from_mapping ('PIH','9185');
 set @benzylpenicillin        = concept_from_mapping ('PIH','12345');
 set @benzathine              = concept_from_mapping ('PIH','4034');
+set @penicillin_g_benzathine = concept_from_mapping ('PIH','12855'); -- formulary benzathine benzylpenicillin (UHM-9660)
 
 UPDATE echo_summary_table t
 SET t.penicillin = EXISTS (SELECT 1 FROM temp_echo_dispensed d
 	WHERE d.patient_id = t.patient_id
-	AND d.drug_concept IN (@Phenoxymethylpenicillin, @benzylpenicillin, @benzathine));
+	AND d.drug_concept IN (@Phenoxymethylpenicillin, @benzylpenicillin, @benzathine, @penicillin_g_benzathine));
 
 -- ########### ACE inhibitor (includes ARBs: losartan, losartan/HCTZ, valsartan) ###########
 set @Enalapril_maleate           = concept_from_mapping ('PIH','9230');
