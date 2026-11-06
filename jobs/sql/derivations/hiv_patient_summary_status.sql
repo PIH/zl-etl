@@ -114,19 +114,20 @@ from hiv_dispensing hd
 where (arv_1_med is not null or arv_2_med is not null or arv_3_med is not NULL)
 group by emr_id;
 
+-- use the lowest ARV encounter on the first dispensing date, to match hiv_patient.first_art_dispensing_regimen,
+-- and comma-separate whichever ARVs are present (UHM-9661)
 update  #temp_min_dispensing
 set initial_dispensed_regimen =
-        CONCAT(arv_1_med,
-               CASE when arv_1_med is not null and arv_2_med is not null then ',' END,
-               arv_2_med,
-               CASE when arv_2_med is not null and arv_3_med is not null then ',' END,
-               arv_3_med)
+        STUFF(ISNULL(',' + arv_1_med, '')
+            + ISNULL(',' + arv_2_med, '')
+            + ISNULL(',' + arv_3_med, ''), 1, 1, '')
     from #temp_min_dispensing t
 inner join  hiv_dispensing hd on hd.encounter_id =
     (select top 1 hd2.encounter_id from hiv_dispensing hd2
     where hd2.emr_id = t.emr_id
     and hd2.dispense_date = t.min_dispense_date
-    order by hd2.encounter_id desc )
+    and (hd2.arv_1_med is not null or hd2.arv_2_med is not null or hd2.arv_3_med is not null)
+    order by hd2.encounter_id asc )
 ;
 
 drop table if exists #temp_min_arv_date;
